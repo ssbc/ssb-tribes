@@ -24,8 +24,8 @@ const content = {
   type: 'profile/person',
   //....
   recps: {
-    <FeedId>,
-    <GroupId>
+    <GroupId>,
+    <FeedId>
   }
 }
 ssb.publish(content, (err, data) => {
@@ -37,8 +37,8 @@ Later, any of the following will result in a happiliy readable message (for you 
 - you run any db query which might have matched that message
 
 **NOTE**:
-- `<FeedId>` is synonymous with the public key of a particular device (`@...sha256`)
 - `<GroupId>` is a unique identifier which can be mapped to the `<GroupKey>` for that Group. The importance of these being distinct is that a `<GroupId>` is designed to leak no information about who is in the group, and is therefore safe to reference in public contexts.
+- `<FeedId>` is synonymous with the public key of a particular device (`@...sha256`). Said another way, the id of a feed is currently synonymous with it's (public) key.
 
 ## Requirements
 

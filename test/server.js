@@ -8,6 +8,6 @@ module.exports = function (opts) {
   // }
 
   return Server // eslint-disable-line
-    .use(require('../..')) // ssb-private2
+    .use(require('../')) // ssb-private2
     .call(opts)
 }

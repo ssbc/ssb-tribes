@@ -1,9 +1,9 @@
 const test = require('tape')
 const pull = require('pull-stream')
-const Server = require('./lib/server')
-const { Key, GroupId } = require('./lib/crypto')
+const Server = require('./server')
+const { Key, GroupId } = require('./crypto')
 
-test('key-store', t => {
+test('key-store (happy path)', t => {
   const name = `test-${Date.now()}`
 
   var server = Server({ name })
@@ -40,17 +40,22 @@ test('key-store', t => {
   )
 })
 
+test('key-store (unhappy path)', t => {
+  const server = Server()
+  const groupId = Key()
+  const groupKey = 'dog' // << no
+
+  server.private2.keys.add({ groupId, groupKey }, (err, success) => {
+    t.true(err && err.message.match(/invalid groupKey/), 'cannot add invalid groupKey')
+    server.close()
+    t.end()
+  })
+})
+
 /*
- *
- * TODO 
- * - test peristance
- *
-    // close and start server to test persistence
-    // currently broken as startUnclean no longer works!
-    //
-    // server.close(() => {
-    //
-    //   server = Server({ name, startUnclean: true })
-    //   ...
-    // })
+ * TODO
+ * - test peristance?
+ *   - currently this api is broken: Server({ name, startUnclean: true })
+ * - test bad groupId
+ * - test bad groupKey
 */

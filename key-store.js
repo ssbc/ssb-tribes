@@ -1,5 +1,10 @@
 const fs = require('fs')
 const { join } = require('path')
+const { isGroupKey } = require('./util/validators')
+
+// this is very minimal / deliberately ugly
+// I want to discuss whether leveldb would be a good store here
+// or whether that's too much overhead and we should go something different
 
 module.exports = function KeyStore (ssb, config) {
   const storePath = join(config.path, 'private2/key-store.json')
@@ -7,39 +12,33 @@ module.exports = function KeyStore (ssb, config) {
 
   loadStore()
 
-  return {
-    add,
-    list,
-    remove
-  }
-
   function add (input, cb) {
-    if (store === 'loading') {
-      return setTimeout(() => add(input, cb), 500)
-    }
-
     const { groupId, groupKey } = input
+
+    if (!isGroupKey(groupKey)) {
+      return cb(new Error('ssb-private2: invalid groupKey'))
+    }
 
     store[groupId] = groupKey
     saveStore((err) => err ? cb(err) : cb(null, true))
   }
 
   function list (cb) {
-    if (store === 'loading') {
-      return setTimeout(() => list(cb), 500)
-    }
-
     cb(null, store)
   }
 
   function remove (groupId, cb) {
-    if (store === 'loading') {
-      return setTimeout(() => remove(groupId, cb), 500)
-    }
-
     delete store[groupId]
     saveStore((err) => err ? cb(err) : cb(null, true))
   }
+
+  return {
+    add: onReady(add),
+    list: onReady(list),
+    remove: onReady(remove)
+  }
+
+  /* private */
 
   function loadStore () {
     fs.mkdir(join(config.path, 'private2'), (err) => {
@@ -60,6 +59,16 @@ module.exports = function KeyStore (ssb, config) {
 
   function saveStore (cb) {
     fs.writeFile(storePath, encode(store), cb)
+  }
+
+  function onReady (fn) {
+    return function check () {
+      if (store === 'loading') {
+        return setTimeout(() => check.apply(null, arguments), 500)
+      }
+
+      fn.apply(null, arguments)
+    }
   }
 }
 
