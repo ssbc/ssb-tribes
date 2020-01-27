@@ -1,0 +1,36 @@
+{
+  "name": "ssb-private2",
+  "version": "0.0.1",
+  "description": "a scuttlebutt (secret-stack) plugin which adds box2 encryption capabilities",
+  "main": "index.js",
+  "dependencies": {
+    "private-box2": "github:ssbc/private-box2#box2_tests"
+  },
+  "scripts": {
+    "test": "tape 'test/**/*.test.js' | tap-spec"
+  },
+  "homepage": "https://github.com/ssbc/ssb-private2#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ssbc/ssb-private2.git"
+  },
+  "keywords": [
+    "scuttlebutt",
+    "encyption",
+    "box2",
+    "private-groups"
+  ],
+  "author": "mixmix",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/ssbc/ssb-private2/issues"
+  },
+  "devDependencies": {
+    "pull-stream": "^3.6.14",
+    "scuttle-testbot": "^1.1.7",
+    "ssb-db": "^19.3.2",
+    "standard": "^14.3.1",
+    "tap-spec": "^5.0.0",
+    "tape": "^4.13.0"
+  }
+}
