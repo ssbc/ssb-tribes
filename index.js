@@ -11,7 +11,6 @@ module.exports = {
     }
   },
   init: (ssb, config) => {
-
     return {
       keys: KeyStore(ssb, config)
     }
