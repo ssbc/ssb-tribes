@@ -46,24 +46,53 @@ A Secret-Stack server running the plugins `ssb-db` and `ssb-private2`
 
 ## API
 
-### `ssb.private2.keys.add({ groupId, groupKey }, cb)`
+### `ssb.private2.group.create(cb)`
+
+Mint a new private group.
+This generates a new key for the group, and a new `groupId`.
+
+_This method calls `group.add` and `members.add` for you (adding you)_
+
+
+### `ssb.private2.group.add(groupId, groupKey, cb)`
 
 where 
 - `groupId` *String* - ... TODO
 - `groupKey` *String* - a 32 byte symmetric key that as a `base64` encoded string
 - `cb`[ *Function* - a callback with signature `cb(err: Error, success: Boolean)`
 
-### `ssb.private2.keys.list(cb)`
 
-calls back with an object with keys and values:
+### `ssb.private2.group.remove(groupId, cb)`
 
-```js
-{
-  <GroupId>: <GroupKey>
-}
-```
 
-### `ssb.private2.keys.remove(groupId, cb)`
+### `ssb.private2.members.add(groupId, [ids], cb)`
 
-where cb has signature `cb(err: Error, success: Boolean)`
 
+### `ssb.private2.members.invite(groupId, [ids], cb)`
+
+This published entrust messages to the new messages, sending them a copy of the `groupKey`.
+
+_This method calls `members.add` for you._
+
+
+### `ssb.private2.members.remove(groupId, [ids], cb)`
+
+Where cb has signature `cb(err: Error, success: Boolean)`
+
+
+### `ssb.private2.getKeys(id, cb)`
+
+Get all the keys that a message published by `id` could have used to encrypt with.
+This is used for suppliying `trial_keys` to `private-box2`'s unbox method.
+
+
+
+## Questions
+
+- how does this "key store" interact with flume views?
+  - if we discover a new key entrust part way through indexing ... we have to trigger re-indexing of other views
+    - might need to reset this view too, as opening existing groups will reveal other entrusts sent to members ....
+      - oh god this could get recurrsive. As in ok I know Ben has given me a key so I re-index with and try this key on Ben's encrypted messages, but then I reveal from here that Ben has entrusted the key to Cherese .. ok add Cherese as a member, start again because Cherese may have said something before....
+      - I think this means when we entrust we need to know the root message + author.
+  - should the key-store sit outside flume views?
+    - if it does then we can manually add things from outside system...

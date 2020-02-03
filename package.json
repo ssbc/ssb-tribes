@@ -28,7 +28,7 @@
   "devDependencies": {
     "pull-stream": "^3.6.14",
     "scuttle-testbot": "^1.1.7",
-    "ssb-db": "^19.3.2",
+    "ssb-db": "^19.4.0",
     "standard": "^14.3.1",
     "tap-spec": "^5.0.0",
     "tape": "^4.13.0"

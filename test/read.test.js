@@ -39,6 +39,8 @@ test('read', t => {
 // - add unboxer which recognises .box2 strings
 // - get this test about to pass
 // - write spec + tests for external_nonce calcuation
+// - ssb-db
+//   - add "addBoxer" method
 
 
 // SSB-specs to write
