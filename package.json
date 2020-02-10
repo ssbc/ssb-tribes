@@ -4,7 +4,12 @@
   "description": "a scuttlebutt (secret-stack) plugin which adds box2 encryption capabilities",
   "main": "index.js",
   "dependencies": {
-    "private-box2": "github:ssbc/private-box2#box2_tests"
+    "charwise": "^3.0.1",
+    "is-my-ssb-valid": "^1.0.1",
+    "level": "^6.0.0",
+    "private-box2": "github:ssbc/private-box2#box2_tests",
+    "pull-level": "^2.0.4",
+    "stream-to-pull-stream": "^1.7.3"
   },
   "scripts": {
     "test": "tape 'test/**/*.test.js' | tap-spec"

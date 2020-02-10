@@ -1,23 +1,24 @@
-const KeyStore = require('./key-store')
+const { join } = require('path')
+const Keychain = require('./keychain')
 
 module.exports = {
   name: 'private2',
   version: require('./package.json').version,
   manifest: {
     group: {
-      create: 'async',
       add: 'async',
-      remove: 'async'
+      // create: 'async',
+      // remove: 'async'
     },
-    members: {
+    member: {
       add: 'async',
-      invite: 'async',
-      remove: 'async'
+      // invite: 'async',
+      // remove: 'async',
+      getKeys: 'async'
     },
-    getKeys: 'async'
   },
   init: (ssb, config) => {
-    const keys = KeyStore(ssb, config)
+    const keychain = Keychain(join(config.path, 'keychain'))
     // key store can provide these methods
     //   - group.add
     //   - group.remove
@@ -28,6 +29,11 @@ module.exports = {
     // special methods that use key store + publish other things
     //   - group.create
     //   - members.invite
+
+    ssb.close.hook(function (fn, args) {
+      keychain.close()
+      return fn.apply(this, args)
+    })
 
     /* register the box / unbox */
     ssb.addBoxer((content, recps) => {

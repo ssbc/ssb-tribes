@@ -85,6 +85,17 @@ Where cb has signature `cb(err: Error, success: Boolean)`
 Get all the keys that a message published by `id` could have used to encrypt with.
 This is used for suppliying `trial_keys` to `private-box2`'s unbox method.
 
+groupId
+  - members: memberA, memberB
+  - key
+
+['mem', authorId, ts]: groupId
+['key', groupId, ts]: groupKey
+
+// pseudocode:
+// - get all groups this author is a member of
+// - map those groups to keys
+
 
 
 ## Questions
