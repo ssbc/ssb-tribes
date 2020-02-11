@@ -52,23 +52,40 @@ module.exports = function Keychain (path) {
     }
   }
 
+  function authorGroups (authorId, cb) {
+    pull(
+      read(db, {
+        lt: [MEMBER, authorId + '~', undefined],
+        gt: [MEMBER, authorId, null]
+      }),
+      pull.map(({ value }) => value),
+      pull.collect((err, keys) => {
+        if (err) return cb(err)
+        cb(null, keys)
+      })
+    )
+  }
+
+  function authorKeys (authorId, cb) {
+    pull(
+      read(db, {
+        lt: [MEMBER, authorId + '~', undefined],
+        gt: [MEMBER, authorId, null]
+      }),
+      pull.map(({ value }) => value),
+      pull.asyncMap(group.key),
+      pull.collect((err, keys) => {
+        if (err) return cb(err)
+        cb(null, keys)
+      })
+    )
+  }
+
   return {
     group,
     author: {
-      keys (authorId, cb) {
-        pull(
-          read(db, {
-            // lt: [MEMBER + '~', authorId + '~', undefined],
-            gt: [MEMBER, authorId, null]
-          }),
-          pull.map(({ value }) => value),
-          pull.asyncMap(group.key),
-          pull.collect((err, keys) => {
-            if (err) return cb(err)
-            cb(null, keys)
-          })
-        )
-      }
+      groups: authorGroups,
+      keys: authorKeys
     },
     close: db.close.bind(db)
   }
