@@ -3,6 +3,7 @@ const level = require('level')
 const charwise = require('charwise')
 const pull = require('pull-stream')
 const { read }  = require('pull-level')
+const KEY_LENGTH = require('sodium-native').crypto_secretbox_KEYBYTES
 
 const GROUP = 'group'
 const MEMBER = 'member'
@@ -14,8 +15,11 @@ module.exports = function Keychain (path) {
 
   const group = {
     add (groupId, groupKey, cb) {
-      // TODO check groupId and groupKey are valid...
-      db.put([GROUP, groupId, Date.now()], groupKey, cb)
+      var key
+      try { key = toKeyBuffer(groupKey) }
+      catch (e) { return cb(e) }
+
+      db.put([GROUP, groupId, Date.now()], toKeyString(key), cb)
     },
     addAuthor (groupId, authorId, cb) {
       db.put([MEMBER, authorId, groupId], groupId, cb)
@@ -28,7 +32,7 @@ module.exports = function Keychain (path) {
         }),
         pull.map(({ key, value }) => {
           var groupId = key.split(',')[1]
-          return { [groupId]: value }
+          return { [groupId]: toKeyBuffer(value) }
         }),
         pull.collect((err, pairs) => {
           if (err) return cb(err)
@@ -46,7 +50,7 @@ module.exports = function Keychain (path) {
         pull.take(1),
         pull.collect((err, keys) => {
           if (err) return cb(err)
-          cb(null, keys[0])
+          cb(null, toKeyBuffer(keys[0]))
         })
       )
     }
@@ -89,4 +93,17 @@ module.exports = function Keychain (path) {
     },
     close: db.close.bind(db)
   }
+}
+
+function toKeyBuffer (thing) {
+  const buf = Buffer.isBuffer(thing)
+    ? thing
+    : Buffer.from(thing, 'base64')
+
+  if (buf.length !== KEY_LENGTH) throw new Error(`invalid groupKey, expected ${KEY_LENGTH} Bytes, got ${buf.length}`)
+  return buf
+}
+
+function toKeyString (buf) {
+  return buf.toString('base64')
 }

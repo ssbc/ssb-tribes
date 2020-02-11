@@ -1,16 +1,37 @@
 const test = require('tape')
+const na = require('sodium-native')
 const Keychain = require('../keychain')
+
+function Key () {
+  var key = Buffer.alloc(32)
+  na.randombytes_buf(key)
+
+  return key
+}
 
 test('keychain', t => {
   const tests = [
     () => {
+      const DESCRIPTION = 'group.add (error if invalid)'
+
+      const keychain = Keychain(`/tmp/keychain-${Date.now()}`)
+      const keyA = 'junk'
+
+      keychain.group.add('groupId_A', keyA, (err, data) =>{
+        t.true(err, DESCRIPTION)
+        keychain.close()
+      })
+    },
+
+    () => {
       const DESCRIPTION = 'group.add + group.list'
 
       const keychain = Keychain(`/tmp/keychain-${Date.now()}`)
+      const keyA = Key()
 
-      keychain.group.add('groupId_A', 'groupKey_A', (err, data) =>{
+      keychain.group.add('groupId_A', keyA, (err, data) =>{
         keychain.group.list((err, data) => {
-          t.deepEqual(data, { groupId_A: 'groupKey_A' }, DESCRIPTION)
+          t.deepEqual(data, { groupId_A: keyA }, DESCRIPTION)
 
           keychain.close()
         })
@@ -21,9 +42,11 @@ test('keychain', t => {
       const DESCRIPTION = 'group.addAuthor + author.groups'
 
       const keychain = Keychain(`/tmp/keychain-${Date.now()}`)
+      const keyA = Key()
+      const keyB = Key()
 
-      keychain.group.add('groupId_A', 'groupKey_A', (_, __) =>{
-        keychain.group.add('groupId_B', 'groupKey_B', (_, __) =>{
+      keychain.group.add('groupId_A', keyA, (_, __) =>{
+        keychain.group.add('groupId_B', keyB, (_, __) =>{
           keychain.group.addAuthor('groupId_A', '@mix', (_, __) => {
             keychain.group.addAuthor('groupId_B', '@mix', (_, __) => {
               keychain.author.groups('@mix', (err, keys) => {
@@ -41,13 +64,37 @@ test('keychain', t => {
       const DESCRIPTION = 'group.addAuthor + author.keys'
 
       const keychain = Keychain(`/tmp/keychain-${Date.now()}`)
+      const keyA = Key()
+      const keyB = Key()
 
-      keychain.group.add('groupId_A', 'groupKey_A', (_, __) =>{
-        keychain.group.add('groupId_B', 'groupKey_B', (_, __) =>{
+      keychain.group.add('groupId_A', keyA, (_, __) =>{
+        keychain.group.add('groupId_B', keyB, (_, __) =>{
           keychain.group.addAuthor('groupId_A', '@mix', (_, __) => {
             keychain.group.addAuthor('groupId_B', '@mix', (_, __) => {
               keychain.author.keys('@mix', (err, keys) => {
-                t.deepEqual(keys, ['groupKey_A', 'groupKey_B'], DESCRIPTION)
+                t.deepEqual(keys, [ keyA, keyB ], DESCRIPTION)
+
+                keychain.close()
+              })
+            })
+          })
+        })
+      })
+    },
+
+    () => {
+      const DESCRIPTION = 'group.addAuthor + author.keys'
+
+      const keychain = Keychain(`/tmp/keychain-${Date.now()}`)
+      const keyA = Key()
+      const keyB = Key()
+
+      keychain.group.add('groupId_A', keyA, (_, __) =>{
+        keychain.group.add('groupId_B', keyB, (_, __) =>{
+          keychain.group.addAuthor('groupId_A', '@mix', (_, __) => {
+            keychain.group.addAuthor('groupId_B', '@mix', (_, __) => {
+              keychain.author.keys('@mix', (err, keys) => {
+                t.deepEqual(keys, [ keyA, keyB ], DESCRIPTION)
 
                 keychain.close()
               })
