@@ -9,12 +9,16 @@ function Key () {
   return key
 }
 
+function TmpPath () {
+  return `/tmp/keychain-${Date.now()}-${Math.floor(Math.random()*100)}`
+}
+
 test('keychain', t => {
   const tests = [
     () => {
       const DESCRIPTION = 'group.add (error if invalid)'
 
-      const keychain = Keychain(`/tmp/keychain-${Date.now()}`)
+      const keychain = Keychain(TmpPath())
       const keyA = 'junk'
 
       keychain.group.add('groupId_A', keyA, (err, data) =>{
@@ -26,7 +30,7 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.add + group.list'
 
-      const keychain = Keychain(`/tmp/keychain-${Date.now()}`)
+      const keychain = Keychain(TmpPath())
       const keyA = Key()
 
       keychain.group.add('groupId_A', keyA, (err, data) =>{
@@ -41,7 +45,7 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.addAuthor + author.groups'
 
-      const keychain = Keychain(`/tmp/keychain-${Date.now()}`)
+      const keychain = Keychain(TmpPath())
       const keyA = Key()
       const keyB = Key()
 
@@ -63,7 +67,7 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.addAuthor + author.keys'
 
-      const keychain = Keychain(`/tmp/keychain-${Date.now()}`)
+      const keychain = Keychain(TmpPath())
       const keyA = Key()
       const keyB = Key()
 
@@ -85,7 +89,7 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.addAuthor + author.keys'
 
-      const keychain = Keychain(`/tmp/keychain-${Date.now()}`)
+      const keychain = Keychain(TmpPath())
       const keyA = Key()
       const keyB = Key()
 

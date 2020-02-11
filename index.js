@@ -7,29 +7,17 @@ module.exports = {
   manifest: {
     group: {
       add: 'async',
+      addAuthors: 'async',
+      // removeAuthors: 'async'
       // create: 'async',
-      // remove: 'async'
     },
-    member: {
-      add: 'async',
+    author: {
+      keys: 'async' // should this even be public?
       // invite: 'async',
-      // remove: 'async',
-      getKeys: 'async'
     },
   },
   init: (ssb, config) => {
     const keychain = Keychain(join(config.path, 'keychain'))
-    // key store can provide these methods
-    //   - group.add
-    //   - group.remove
-    //   - members.add
-    //   - members.remove
-    //   - getKeys
-
-    // special methods that use key store + publish other things
-    //   - group.create
-    //   - members.invite
-
     ssb.close.hook(function (fn, args) {
       keychain.close()
       return fn.apply(this, args)
@@ -58,7 +46,26 @@ module.exports = {
     //   - discovering new keys triggers re-indexes of other views
 
     return {
-      // methods
+      group: {
+        add: keychain.add,
+        addAuthors (groupId, authorIds, cb) {
+          pull(
+            pull.values(authorIds),
+            pull.asyncMap((authorId, cb) => keychain.addAuthor(groupId, authorId, cb)),
+            pull.collect((err) => {
+              if (err) cb(err)
+              else cb(null, true)
+            })
+          )
+        },
+        // create
+        // remove
+        // removeAuthors
+      },
+      author: {
+        keys: keychain.keys,
+        // invite
+      }
     }
   }
 }

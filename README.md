@@ -46,14 +46,6 @@ A Secret-Stack server running the plugins `ssb-db` and `ssb-private2`
 
 ## API
 
-### `ssb.private2.group.create(cb)`
-
-Mint a new private group.
-This generates a new key for the group, and a new `groupId`.
-
-_This method calls `group.add` and `members.add` for you (adding you)_
-
-
 ### `ssb.private2.group.add(groupId, groupKey, cb)`
 
 where 
@@ -61,41 +53,46 @@ where
 - `groupKey` *String* - a 32 byte symmetric key that as a `base64` encoded string
 - `cb`[ *Function* - a callback with signature `cb(err: Error, success: Boolean)`
 
+### `ssb.private2.group.addAuthors(groupId, [authorId], cb)`
 
-### `ssb.private2.group.remove(groupId, cb)`
+where callback `cb` has signature `cb(err, success)`
 
+### `ssb.private2.author.keys(authorId, cb)`
 
-### `ssb.private2.members.add(groupId, [ids], cb)`
+Get all the keys that a message published by `authorId` could have used to encrypt with.
+`cb` has signature `cb(err, keys)` where `keys` is an Array of Buffers.
 
-
-### `ssb.private2.members.invite(groupId, [ids], cb)`
-
-This published entrust messages to the new messages, sending them a copy of the `groupKey`.
-
-_This method calls `members.add` for you._
+This is used for suppliying `trial_keys` to `private-box2`'s unbox method.
 
 
-### `ssb.private2.members.remove(groupId, [ids], cb)`
+---
+
+
+### `ssb.private2.group.removeAuthors(groupId, [authorId], cb)`
+:warning: NOT YET IMPLEMENTED
 
 Where cb has signature `cb(err: Error, success: Boolean)`
 
 
-### `ssb.private2.getKeys(id, cb)`
+### `ssb.private2.group.create(cb)`
+:warning: NOT YET IMPLEMENTED
 
-Get all the keys that a message published by `id` could have used to encrypt with.
-This is used for suppliying `trial_keys` to `private-box2`'s unbox method.
+Mint a new private group.
+This generates a new key for the group, and a new `groupId`.
 
-groupId
-  - members: memberA, memberB
-  - key
+_This method calls `group.add` and `group.addAuthors` for you (adding you)_
 
-['mem', authorId, ts]: groupId
-['key', groupId, ts]: groupKey
 
-// pseudocode:
-// - get all groups this author is a member of
-// - map those groups to keys
+### `ssb.private2.group.remove(groupId, cb)`
+:warning: NOT YET IMPLEMENTED
 
+
+### `ssb.private2.author.invite(groupId, [authorId], cb)`
+:warning: NOT YET IMPLEMENTED
+
+This published entrust messages to the new messages, sending them a copy of the `groupKey`.
+
+_This method calls `members.add` for you._
 
 
 ## Questions
