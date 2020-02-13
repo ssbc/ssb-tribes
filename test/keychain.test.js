@@ -1,13 +1,6 @@
 const test = require('tape')
-const na = require('sodium-native')
 const Keychain = require('../keychain')
-
-function Key () {
-  var key = Buffer.alloc(32)
-  na.randombytes_buf(key)
-
-  return key
-}
+const { GroupKey } = require('./helpers')
 
 function TmpPath () {
   return `/tmp/keychain-${Date.now()}-${Math.floor(Math.random()*100)}`
@@ -31,7 +24,7 @@ test('keychain', t => {
       const DESCRIPTION = 'group.add + group.list'
 
       const keychain = Keychain(TmpPath())
-      const keyA = Key()
+      const keyA = GroupKey()
 
       keychain.group.add('groupId_A', keyA, (err, data) =>{
         keychain.group.list((err, data) => {
@@ -46,8 +39,8 @@ test('keychain', t => {
       const DESCRIPTION = 'group.addAuthor + author.groups'
 
       const keychain = Keychain(TmpPath())
-      const keyA = Key()
-      const keyB = Key()
+      const keyA = GroupKey()
+      const keyB = GroupKey()
 
       keychain.group.add('groupId_A', keyA, (_, __) =>{
         keychain.group.add('groupId_B', keyB, (_, __) =>{
@@ -68,8 +61,8 @@ test('keychain', t => {
       const DESCRIPTION = 'group.addAuthor + author.keys'
 
       const keychain = Keychain(TmpPath())
-      const keyA = Key()
-      const keyB = Key()
+      const keyA = GroupKey()
+      const keyB = GroupKey()
 
       keychain.group.add('groupId_A', keyA, (_, __) =>{
         keychain.group.add('groupId_B', keyB, (_, __) =>{
@@ -90,8 +83,8 @@ test('keychain', t => {
       const DESCRIPTION = 'group.addAuthor + author.keys'
 
       const keychain = Keychain(TmpPath())
-      const keyA = Key()
-      const keyB = Key()
+      const keyA = GroupKey()
+      const keyB = GroupKey()
 
       keychain.group.add('groupId_A', keyA, (_, __) =>{
         keychain.group.add('groupId_B', keyB, (_, __) =>{

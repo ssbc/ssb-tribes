@@ -1,5 +1,6 @@
 const { join } = require('path')
 const Keychain = require('./keychain')
+const isCloaked = require('./spec/cloaked/is-cloaked-msg-id')
 
 module.exports = {
   name: 'private2',
@@ -20,22 +21,27 @@ module.exports = {
     const keychain = Keychain(join(config.path, 'keychain'))
     ssb.close.hook(function (fn, args) {
       keychain.close()
+      console.log('close.hook', fn, args)
       return fn.apply(this, args)
     })
 
-    /* register the box / unbox */
-    ssb.addBoxer((content, recps) => {
-      // check the recps to see if this is ma jam!
-      //
-      // look up correct groupKey from groupId in recps
+    /* register the boxer / unboxer */
+    ssb.addBoxer((content, recps, cb) => {
+      if (!recps.every(isCloaked)) return cb(null, null)
+      // TODO accept (cloaked | feedId)
+
+      // look up / derive recp_keys
+
+      cb(null, 'doop.box2')
     })
     ssb.addUnboxer({
-      key: function keyBoxKey (ciphertext, value) {
+      key: function unboxKey (ciphertext, value, cb) {
         // change stuff into buffers,
         // load up the trial keys
         // try and access the msg_key
+        cb(null, null)
       },
-      value: function getBoxBody (ciphertext, msg_key) {
+      value: function unboxBody (ciphertext, msg_key, value, cb) {
         // get the body
       }
     })
@@ -47,7 +53,7 @@ module.exports = {
 
     return {
       group: {
-        add: keychain.add,
+        add: keychain.group.add,
         addAuthors (groupId, authorIds, cb) {
           pull(
             pull.values(authorIds),
@@ -63,7 +69,7 @@ module.exports = {
         // removeAuthors
       },
       author: {
-        keys: keychain.keys,
+        keys: keychain.author.keys,
         // invite
       }
     }
