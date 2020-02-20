@@ -1,5 +1,5 @@
 const test = require('tape')
-const Keychain = require('../keychain')
+const KeyStore = require('../key-store')
 const { GroupKey } = require('./helpers')
 
 function TmpPath () {
@@ -11,7 +11,7 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.add (error if invalid)'
 
-      const keychain = Keychain(TmpPath())
+      const keychain = KeyStore(TmpPath())
       const keyA = 'junk'
 
       keychain.group.add('groupId_A', keyA, (err, data) =>{
@@ -23,7 +23,7 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.add + group.list'
 
-      const keychain = Keychain(TmpPath())
+      const keychain = KeyStore(TmpPath())
       const keyA = GroupKey()
 
       keychain.group.add('groupId_A', keyA, (err, data) =>{
@@ -38,7 +38,7 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.addAuthor + author.groups'
 
-      const keychain = Keychain(TmpPath())
+      const keychain = KeyStore(TmpPath())
       const keyA = GroupKey()
       const keyB = GroupKey()
 
@@ -60,7 +60,7 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.addAuthor + author.keys'
 
-      const keychain = Keychain(TmpPath())
+      const keychain = KeyStore(TmpPath())
       const keyA = GroupKey()
       const keyB = GroupKey()
 
@@ -82,7 +82,7 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.addAuthor + author.keys'
 
-      const keychain = Keychain(TmpPath())
+      const keychain = KeyStore(TmpPath())
       const keyA = GroupKey()
       const keyB = GroupKey()
 

@@ -1,5 +1,5 @@
 const { join } = require('path')
-const Keychain = require('./keychain')
+const KeyStore = require('./key-store')
 const isCloaked = require('./spec/cloaked/is-cloaked-msg-id')
 
 module.exports = {
@@ -15,33 +15,35 @@ module.exports = {
     author: {
       keys: 'async' // should this even be public?
       // invite: 'async',
-    },
+    }
   },
   init: (ssb, config) => {
-    const keychain = Keychain(join(config.path, 'keychain'))
+    const keystore = KeyStore(join(config.path, 'private2/keystore'))
     ssb.close.hook(function (fn, args) {
-      keychain.close()
-      console.log('close.hook', fn, args)
+      keystore.close()
       return fn.apply(this, args)
     })
 
     /* register the boxer / unboxer */
     ssb.addBoxer((content, recps, cb) => {
-      if (!recps.every(isCloaked)) return cb(null, null)
+      if (!recps.every(isCloaked)) return null
       // TODO accept (cloaked | feedId)
 
       // look up / derive recp_keys
 
-      cb(null, 'doop.box2')
+      return 'doop.box2'
     })
     ssb.addUnboxer({
-      key: function unboxKey (ciphertext, value, cb) {
+      init: function (done) {
+        done()
+      },
+      key: function unboxKey (ciphertext, value) {
         // change stuff into buffers,
         // load up the trial keys
         // try and access the msg_key
-        cb(null, null)
+        return
       },
-      value: function unboxBody (ciphertext, msg_key, value, cb) {
+      value: function unboxBody (ciphertext, msg_key) {
         // get the body
       }
     })
@@ -53,11 +55,11 @@ module.exports = {
 
     return {
       group: {
-        add: keychain.group.add,
+        add: keystore.group.add,
         addAuthors (groupId, authorIds, cb) {
           pull(
             pull.values(authorIds),
-            pull.asyncMap((authorId, cb) => keychain.addAuthor(groupId, authorId, cb)),
+            pull.asyncMap((authorId, cb) => keystore.addAuthor(groupId, authorId, cb)),
             pull.collect((err) => {
               if (err) cb(err)
               else cb(null, true)
@@ -69,7 +71,7 @@ module.exports = {
         // removeAuthors
       },
       author: {
-        keys: keychain.author.keys,
+        keys: keystore.author.keys,
         // invite
       }
     }

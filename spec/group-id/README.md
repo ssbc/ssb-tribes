@@ -2,7 +2,7 @@
 
 We want to be able to mention a group without revealing info about it.
 We'll also use this `group_id` in the `recps` field, and when we go to publish a message,
-map that `groupId` into that groups symmetric keys (`groupKey`) which we then use for box2 encryption
+map that `group_id` into that groups symmetric keys (`group_key`) which we then use for box2 encryption
 
 **Properties we want**
 - leaks nothing about the group _e.g. who started it, where it started_
@@ -10,11 +10,11 @@ map that `groupId` into that groups symmetric keys (`groupKey`) which we then us
 
 ## Definition
 
-The `groupId` is defined as:
+The `group_id` is defined as:
 
 ```
-var infos = ["group_id", init_msg_id]
-var groupId = HKDF.Expand(group_key, encode(info), 32)
+var info = ["group_id", init_msg_id]
+var group_id = HKDF.Expand(group_key, encode(info), 32)
 ```
 
 where:

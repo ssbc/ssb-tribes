@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "charwise": "^3.0.1",
+    "is-canonical-base64": "^1.1.1",
     "is-my-ssb-valid": "^1.0.1",
     "level": "^6.0.0",
     "private-box2": "github:ssbc/private-box2#box2_tests",

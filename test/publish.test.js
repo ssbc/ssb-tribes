@@ -8,7 +8,7 @@ test('publish', t => {
   const groupId = GroupId()
   const groupKey = GroupKey()
 
-  server.private2.group.add(groupId, groupKey, (err, success) =>{
+  server.private2.group.add(groupId, groupKey, (err, success) => {
     const content = {
       type: 'announce',
       text: 'summer has arrived in wellington!',
@@ -16,6 +16,8 @@ test('publish', t => {
     }
 
     server.publish(content, (err, msg) => {
+      if (err) throw err
+
       t.true(msg.value.content.endsWith('.box2'), 'publishes box2 cipherstring')
 
       server.close(() => {
