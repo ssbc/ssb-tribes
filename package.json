@@ -10,6 +10,7 @@
     "level": "^6.0.0",
     "private-box2": "github:ssbc/private-box2#box2_tests",
     "pull-level": "^2.0.4",
+    "ssb-ref": "^2.13.9",
     "stream-to-pull-stream": "^1.7.3"
   },
   "scripts": {
