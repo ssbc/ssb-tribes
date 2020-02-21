@@ -1,5 +1,5 @@
 const test = require('tape')
-const isCloaked = require('./is-cloaked-msg-id')
+const isCloaked = require('../../lib/is-cloaked-msg-id')
 
 
 test('is-cloaked-msg-id', t => {

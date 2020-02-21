@@ -1,6 +1,6 @@
 const { join } = require('path')
 const KeyStore = require('./key-store')
-const isCloaked = require('./spec/cloaked/is-cloaked-msg-id')
+const isCloaked = require('./lib/is-cloaked-msg-id')
 
 module.exports = {
   name: 'private2',
@@ -25,7 +25,7 @@ module.exports = {
     })
 
     /* register the boxer / unboxer */
-    ssb.addBoxer((content, recps, cb) => {
+    ssb.addBoxer((content, recps) => {
       if (!recps.every(isCloaked)) return null
       // TODO accept (cloaked | feedId)
 
@@ -38,6 +38,7 @@ module.exports = {
         done()
       },
       key: function unboxKey (ciphertext, value) {
+        if (!ciphertext.endsWith('.box2')) return null
         // change stuff into buffers,
         // load up the trial keys
         // try and access the msg_key
@@ -45,6 +46,10 @@ module.exports = {
       },
       value: function unboxBody (ciphertext, msg_key) {
         // get the body
+        return {
+          type: 'doop',
+          text: 'your order here!'
+        }
       }
     })
 

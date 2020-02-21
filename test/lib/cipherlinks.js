@@ -1,4 +1,5 @@
 const test = require('tape')
+const { isMsg, isFeedId } = require('ssb-ref')
 const { FeedId, MsgId } = require('../../lib/cipherlinks')
 
 test('Cipherlink/FeedId', t => {
@@ -13,6 +14,9 @@ test('Cipherlink/FeedId', t => {
 
   t.deepEqual(id.toTFK(), expected, 'toTFK')
   t.deepEqual(id.toSSB(), feedId, 'toSSB')
+
+  t.true(isFeedId(new FeedId().mock().toSSB()), 'mock feedId')
+
   t.end()
 })
 
@@ -28,5 +32,7 @@ test('Cipherlink/MsgId', t => {
 
   t.deepEqual(id.toTFK(), expected, 'toTFK')
   t.deepEqual(id.toSSB(), msgId, 'toSSB')
+
+  t.true(isMsg(new MsgId().mock().toSSB()), 'mock msgId')
   t.end()
 })
