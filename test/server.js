@@ -7,7 +7,9 @@ module.exports = function (opts) {
   //   keys: SecretKeys
   // }
 
-  return Server // eslint-disable-line
+  const server = Server // eslint-disable-line
     .use(require('../')) // ssb-private2
     .call(opts)
+
+  return server
 }
