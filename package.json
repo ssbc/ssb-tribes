@@ -8,10 +8,14 @@
     "is-canonical-base64": "^1.1.1",
     "is-my-ssb-valid": "^1.0.1",
     "level": "^6.0.0",
-    "private-box2": "github:ssbc/private-box2#box2_tests",
+    "private-box2": "github:ssbc/private-box2#master",
+    "box2-spec": "github:ssbc/box2-spec#master",
     "pull-level": "^2.0.4",
     "ssb-ref": "^2.13.9",
     "stream-to-pull-stream": "^1.7.3"
+  },
+  "devDependancies": {
+    "private-groups-spec": "github:ssbc/private-groups-spec#master"
   },
   "scripts": {
     "test": "tape 'test/**/*.test.js' | tap-spec"
