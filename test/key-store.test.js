@@ -3,34 +3,34 @@ const KeyStore = require('../key-store')
 const { GroupKey } = require('./helpers')
 
 function TmpPath () {
-  return `/tmp/keychain-${Date.now()}-${Math.floor(Math.random()*100)}`
+  return `/tmp/key-store-${Date.now()}-${Math.floor(Math.random()*100)}`
 }
 
-test('keychain', t => {
+test('key-store', t => {
   const tests = [
     () => {
       const DESCRIPTION = 'group.add (error if invalid)'
 
-      const keychain = KeyStore(TmpPath())
+      const keyStore = KeyStore(TmpPath())
       const keyA = 'junk'
 
-      keychain.group.add('groupId_A', keyA, (err, data) =>{
+      keyStore.group.add('groupId_A', { key: keyA }, (err, data) => {
         t.true(err, DESCRIPTION)
-        keychain.close()
+        keyStore.close()
       })
     },
 
     () => {
       const DESCRIPTION = 'group.add + group.list'
 
-      const keychain = KeyStore(TmpPath())
+      const keyStore = KeyStore(TmpPath())
       const keyA = GroupKey()
 
-      keychain.group.add('groupId_A', keyA, (err, data) =>{
-        keychain.group.list((err, data) => {
-          t.deepEqual(data, { groupId_A: keyA }, DESCRIPTION)
+      keyStore.group.add('groupId_A', { key: keyA }, (_, data) => {
+        keyStore.group.list((_, data) => {
+          t.deepEqual(data, { groupId_A: { key: keyA } }, DESCRIPTION)
 
-          keychain.close()
+          keyStore.close()
         })
       })
     },
@@ -38,19 +38,18 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.addAuthor + author.groups'
 
-      const keychain = KeyStore(TmpPath())
+      const keyStore = KeyStore(TmpPath())
       const keyA = GroupKey()
       const keyB = GroupKey()
 
-      keychain.group.add('groupId_A', keyA, (_, __) =>{
-        keychain.group.add('groupId_B', keyB, (_, __) =>{
-          keychain.group.addAuthor('groupId_A', '@mix', (_, __) => {
-            keychain.group.addAuthor('groupId_B', '@mix', (_, __) => {
-              keychain.author.groups('@mix', (err, keys) => {
-                t.deepEqual(keys, ['groupId_A', 'groupId_B'], DESCRIPTION)
+      keyStore.group.add('groupId_A', { key: keyA }, (_, __) => {
+        keyStore.group.add('groupId_B', { key: keyB }, (_, __) => {
+          keyStore.group.addAuthor('groupId_A', '@mix', (_, __) => {
+            keyStore.group.addAuthor('groupId_B', '@mix', (_, __) => {
+              const groups = keyStore.author.groups('@mix')
+              t.deepEqual(groups, ['groupId_A', 'groupId_B'], DESCRIPTION)
 
-                keychain.close()
-              })
+              keyStore.close()
             })
           })
         })
@@ -60,19 +59,18 @@ test('keychain', t => {
     () => {
       const DESCRIPTION = 'group.addAuthor + author.keys'
 
-      const keychain = KeyStore(TmpPath())
+      const keyStore = KeyStore(TmpPath(), null, { init: false })
       const keyA = GroupKey()
       const keyB = GroupKey()
 
-      keychain.group.add('groupId_A', keyA, (_, __) =>{
-        keychain.group.add('groupId_B', keyB, (_, __) =>{
-          keychain.group.addAuthor('groupId_A', '@mix', (_, __) => {
-            keychain.group.addAuthor('groupId_B', '@mix', (_, __) => {
-              keychain.author.keys('@mix', (err, keys) => {
-                t.deepEqual(keys, [ keyA, keyB ], DESCRIPTION)
+      keyStore.group.add('groupId_A', { key: keyA }, (_, __) => {
+        keyStore.group.add('groupId_B', { key: keyB }, (_, __) => {
+          keyStore.group.addAuthor('groupId_A', '@mix', (_, __) => {
+            keyStore.group.addAuthor('groupId_B', '@mix', (_, __) => {
+              const keys = keyStore.author.keys('@mix')
+              t.deepEqual(keys, [keyA, keyB], DESCRIPTION)
 
-                keychain.close()
-              })
+              keyStore.close()
             })
           })
         })
@@ -80,20 +78,45 @@ test('keychain', t => {
     },
 
     () => {
-      const DESCRIPTION = 'group.addAuthor + author.keys'
+      const DESCRIPTION = 'author.keys (no groups)'
 
-      const keychain = KeyStore(TmpPath())
+      const keyStore = KeyStore(TmpPath(), null, { init: false })
       const keyA = GroupKey()
       const keyB = GroupKey()
 
-      keychain.group.add('groupId_A', keyA, (_, __) =>{
-        keychain.group.add('groupId_B', keyB, (_, __) =>{
-          keychain.group.addAuthor('groupId_A', '@mix', (_, __) => {
-            keychain.group.addAuthor('groupId_B', '@mix', (_, __) => {
-              keychain.author.keys('@mix', (err, keys) => {
-                t.deepEqual(keys, [ keyA, keyB ], DESCRIPTION)
+      keyStore.group.add('groupId_A', { key: keyA }, (_, __) => {
+        keyStore.group.add('groupId_B', { key: keyB }, (_, __) => {
+          keyStore.group.addAuthor('groupId_A', '@mix', (_, __) => {
+            keyStore.group.addAuthor('groupId_B', '@mix', (_, __) => {
+              const keys = keyStore.author.keys('@daisy')
+              t.deepEqual(keys, [], DESCRIPTION)
 
-                keychain.close()
+              keyStore.close()
+            })
+          })
+        })
+      })
+    },
+
+    () => {
+      const DESCRIPTION = 'author.keys works after persistence (and ready())'
+
+      const storePath = TmpPath()
+      const keyStore = KeyStore(storePath, null, { init: false })
+      const keyA = GroupKey()
+      const keyB = GroupKey()
+
+      keyStore.group.add('groupId_A', { key: keyA }, (_, __) => {
+        keyStore.group.add('groupId_B', { key: keyB }, (_, __) => {
+          keyStore.group.addAuthor('groupId_A', '@mix', (_, __) => {
+            keyStore.group.addAuthor('groupId_B', '@mix', (_, __) => {
+              keyStore.close(() => {
+                const newKeyStore = KeyStore(storePath, () => {
+                  const keys = newKeyStore.author.keys('@mix')
+                  t.deepEqual(keys, [keyA, keyB], DESCRIPTION)
+
+                  keyStore.close()
+                })
               })
             })
           })
