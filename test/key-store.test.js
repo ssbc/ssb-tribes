@@ -21,6 +21,20 @@ test('key-store', t => {
     },
 
     () => {
+      const DESCRIPTION = 'group.add + group.get'
+
+      const keyStore = KeyStore(TmpPath(), null, { init: false })
+      const keyA = GroupKey()
+
+      keyStore.group.add('groupId_A', { key: keyA }, (_, data) => {
+        const info = keyStore.group.get('groupId_A')
+        t.deepEqual(info, { key: keyA }, DESCRIPTION)
+
+        keyStore.close()
+      })
+    },
+
+    () => {
       const DESCRIPTION = 'group.add + group.list'
 
       const keyStore = KeyStore(TmpPath())

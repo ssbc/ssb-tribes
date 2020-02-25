@@ -10,9 +10,11 @@ const MEMBER = 'member'
 
 module.exports = function Keychain (path, ready = noop, opts = {}) {
   const { init = true } = opts
+  if (init && typeof ready !== 'function') throw new Error('KeyStore expects a "ready" function')
+
   mkdirSync(path, { recursive: true })
 
-  const cache = {
+  var cache = {
     // map groupId > group.info
     groups: {},
     // map authorId > [groupId]
@@ -50,19 +52,8 @@ module.exports = function Keychain (path, ready = noop, opts = {}) {
         })
       )
     },
-    get (groupId, cb) {
-      pull(
-        read(db, {
-          lt: [GROUP, groupId + '~', undefined], // "group~" is just above "group" in charwise sort
-          gt: [GROUP, groupId, null]
-        }),
-        pull.map(({ value }) => hydrate(value)),
-        pull.take(1),
-        pull.collect((err, results) => {
-          if (err) return cb(err)
-          cb(null, { id: groupId, ...results[0] })
-        })
-      )
+    get (groupId) {
+      return cache.groups[groupId]
     }
   }
 
