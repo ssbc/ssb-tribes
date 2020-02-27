@@ -1,6 +1,6 @@
 # ssb-private2
 
-Introduces the box2 encryption to scuttlebutt.
+Introduces evelope encryption to scuttlebutt.
 
 **STATUS: WIP**
 
@@ -62,7 +62,7 @@ where callback `cb` has signature `cb(err, success)`
 Get all the keys that a message published by `authorId` could have used to encrypt with.
 `cb` has signature `cb(err, keys)` where `keys` is an Array of Buffers.
 
-This is used for suppliying `trial_keys` to `private-box2`'s unbox method.
+This is used for suppliying `trial_keys` to `@envelope/core`'s unbox method.
 
 
 ---

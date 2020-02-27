@@ -1,6 +1,7 @@
 const { FeedId, MsgId, GroupId } = require('../../lib/cipherlinks')
 const { GroupKey, print } = require('../helpers')
 
+// TODO change this is to use cloaked-id from envelope-spec
 const generators = [
   (i) => {
     const init_msg = new MsgId().mock()
@@ -17,7 +18,7 @@ const generators = [
         group_id: new GroupId(init_msg.toTFK(), group_key).toSSB()
       }
     }
-    print(`group/group-id/vector${i + 1}.json`, vector)
+    print(`group-id${i + 1}.json`, vector)
   }
 ]
 

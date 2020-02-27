@@ -1,6 +1,6 @@
 const { join } = require('path')
 const pull = require('pull-stream')
-const { box, unbox } = require('private-box2')
+const { box, unbox } = require('@envelope/core')
 
 const KeyStore = require('./key-store')
 const { FeedId, MsgId } = require('./lib/cipherlinks')
@@ -37,12 +37,11 @@ module.exports = {
       const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
       const msgKey = new SecretKey().toBuffer()
 
-      const recipentKeys = recps
-        .map(r => keystore.group.get(r).key)
+      const recipentKeys = recps.map(r => keystore.group.get(r))
 
-      // try-catch?
+      console.log(recipentKeys)
       const ciphertext = box(plaintext, state.feedId, state.previous, msgKey, recipentKeys)
-        
+
       return ciphertext.toString('base64') + '.box2'
     })
     ssb.addUnboxer({
@@ -128,7 +127,7 @@ module.exports = {
 
 // TODO:
 // - design key-entrust messages
-//   - see if box2 can support feedId + groupId type messages
+//   - see if envelope can support feedId + groupId type messages
 // - figure out how to programmatically trigger re-indexing
 //
 // TODO (later):

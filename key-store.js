@@ -4,29 +4,37 @@ const charwise = require('charwise')
 const pull = require('pull-stream')
 const { read } = require('pull-level')
 const KEY_LENGTH = require('sodium-native').crypto_secretbox_KEYBYTES
+const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
 const GROUP = 'group'
 const MEMBER = 'member'
 
-module.exports = function Keychain (path, ready = noop, opts = {}) {
-  const { init = true } = opts
-  if (init && typeof ready !== 'function') throw new Error('KeyStore expects a "ready" function')
+// TODO should add requirement for all group.add to have: { key, scheme }
+// at the moment we're assuming all scheme are for private groups but that will change soon
+
+module.exports = function Keychain (path, onReady = noop, opts = {}) {
+  const {
+    loadState = true
+  } = opts
 
   mkdirSync(path, { recursive: true })
 
+  /* state */
+  var isReady = !loadState
   var cache = {
-    // map groupId > group.info
-    groups: {},
-    // map authorId > [groupId]
-    memberships: {}
+    groups: {},     // maps groupId > group.info
+    memberships: {} // maps authorId > [groupId]
   }
+
   const db = level(path, { valueEncoding: charwise })
 
   const group = {
     add (groupId, info, cb) {
-      // check the key is right shape (can be converted to a 32 Byte buffer)
+      // checks key is right shape (can be converted to a 32 Byte buffer)
       try { info.key = toKeyBuffer(info.key) }
       catch (e) { return cb(e) }
+
+      if (!isReady) return setTimeout(() => group.add(groupId, info, cb), 500)
 
       cache.groups[groupId] = info
       db.put(
@@ -53,12 +61,17 @@ module.exports = function Keychain (path, ready = noop, opts = {}) {
       )
     },
     get (groupId) {
-      return cache.groups[groupId]
+      return Object.assign(
+        { scheme: SCHEMES.private_group },
+        cache.groups[groupId]
+      )
     }
   }
 
   const membership = {
     add (groupId, authorId, cb) {
+      if (!isReady) return setTimeout(() => membership.add(groupId, authorId, cb), 500)
+
       if (!cache.memberships[authorId]) cache.memberships[authorId] = new Set()
 
       cache.memberships[authorId].add(groupId)
@@ -95,13 +108,11 @@ module.exports = function Keychain (path, ready = noop, opts = {}) {
 
   function getAuthorKeys (authorId) {
     return membership.getAuthorGroups(authorId)
-      .map(groupId => {
-        return cache.groups[groupId].key
-      })
+      .map(group.get)
   }
 
   /* load persisted state into cache */
-  if (init) {
+  if (loadState) {
     group.list((err, groups) => {
       if (err) throw err
       cache.groups = groups
@@ -110,7 +121,8 @@ module.exports = function Keychain (path, ready = noop, opts = {}) {
         if (err) throw err
         cache.memberships = memberships
 
-        ready()
+        isReady = true
+        onReady()
       })
     })
   }

@@ -1,22 +1,8 @@
 {
   "name": "ssb-private2",
   "version": "0.0.1",
-  "description": "a scuttlebutt (secret-stack) plugin which adds box2 encryption capabilities",
+  "description": "a scuttlebutt (secret-stack) plugin which adds envelope encryption capabilities",
   "main": "index.js",
-  "dependencies": {
-    "charwise": "^3.0.1",
-    "is-canonical-base64": "^1.1.1",
-    "is-my-ssb-valid": "^1.0.1",
-    "level": "^6.0.0",
-    "private-box2": "github:ssbc/private-box2#master",
-    "box2-spec": "github:ssbc/box2-spec#master",
-    "pull-level": "^2.0.4",
-    "ssb-ref": "^2.13.9",
-    "stream-to-pull-stream": "^1.7.3"
-  },
-  "devDependancies": {
-    "private-groups-spec": "github:ssbc/private-groups-spec#master"
-  },
   "scripts": {
     "test": "tape 'test/**/*.test.js' | tap-spec"
   },
@@ -25,18 +11,18 @@
     "type": "git",
     "url": "git+https://github.com/ssbc/ssb-private2.git"
   },
-  "keywords": [
-    "scuttlebutt",
-    "encyption",
-    "box2",
-    "private-groups"
-  ],
-  "author": "mixmix",
-  "license": "AGPL-3.0",
-  "bugs": {
-    "url": "https://github.com/ssbc/ssb-private2/issues"
+  "dependencies": {
+    "charwise": "^3.0.1",
+    "is-canonical-base64": "^1.1.1",
+    "is-my-ssb-valid": "^1.0.1",
+    "level": "^6.0.0",
+    "@envelope/spec": "github:ssbc/envelope-spec#master",
+    "@envelope/core": "github:ssbc/envelope-core#master",
+    "pull-level": "^2.0.4",
+    "ssb-ref": "^2.13.9"
   },
   "devDependencies": {
+    "private-groups-spec": "github:ssbc/private-groups-spec#master",
     "pull-stream": "^3.6.14",
     "scuttle-testbot": "^1.1.7",
     "sodium-native": "^2.4.9",
@@ -44,5 +30,16 @@
     "standard": "^14.3.1",
     "tap-spec": "^5.0.0",
     "tape": "^4.13.0"
-  }
-}
+  },
+  "keywords": [
+    "scuttlebutt",
+    "encyption",
+    "envelope",
+    "private-groups"
+  ],
+  "author": "mixmix",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/ssbc/ssb-private2/issues"
+  },
+

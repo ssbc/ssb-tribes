@@ -1,6 +1,7 @@
 const test = require('tape')
 const KeyStore = require('../key-store')
 const { GroupKey } = require('./helpers')
+const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
 function TmpPath () {
   return `/tmp/key-store-${Date.now()}-${Math.floor(Math.random()*100)}`
@@ -23,12 +24,12 @@ test('key-store', t => {
     () => {
       const DESCRIPTION = 'group.add + group.get'
 
-      const keyStore = KeyStore(TmpPath(), null, { init: false })
+      const keyStore = KeyStore(TmpPath(), null, { loadState: false })
       const keyA = GroupKey()
 
       keyStore.group.add('groupId_A', { key: keyA }, (_, data) => {
         const info = keyStore.group.get('groupId_A')
-        t.deepEqual(info, { key: keyA }, DESCRIPTION)
+        t.deepEqual(info, { key: keyA, scheme: SCHEMES.private_group }, DESCRIPTION)
 
         keyStore.close()
       })
@@ -73,7 +74,7 @@ test('key-store', t => {
     () => {
       const DESCRIPTION = 'group.addAuthor + author.keys'
 
-      const keyStore = KeyStore(TmpPath(), null, { init: false })
+      const keyStore = KeyStore(TmpPath(), null, { loadState: false })
       const keyA = GroupKey()
       const keyB = GroupKey()
 
@@ -82,7 +83,11 @@ test('key-store', t => {
           keyStore.group.addAuthor('groupId_A', '@mix', (_, __) => {
             keyStore.group.addAuthor('groupId_B', '@mix', (_, __) => {
               const keys = keyStore.author.keys('@mix')
-              t.deepEqual(keys, [keyA, keyB], DESCRIPTION)
+              const expected = [
+                { key: keyA, scheme: SCHEMES.private_group },
+                { key: keyB, scheme: SCHEMES.private_group }
+              ]
+              t.deepEqual(keys, expected, DESCRIPTION)
 
               keyStore.close()
             })
@@ -94,7 +99,7 @@ test('key-store', t => {
     () => {
       const DESCRIPTION = 'author.keys (no groups)'
 
-      const keyStore = KeyStore(TmpPath(), null, { init: false })
+      const keyStore = KeyStore(TmpPath(), null, { loadState: false })
       const keyA = GroupKey()
       const keyB = GroupKey()
 
@@ -116,7 +121,7 @@ test('key-store', t => {
       const DESCRIPTION = 'author.keys works after persistence (and ready())'
 
       const storePath = TmpPath()
-      const keyStore = KeyStore(storePath, null, { init: false })
+      const keyStore = KeyStore(storePath, null, { loadState: false })
       const keyA = GroupKey()
       const keyB = GroupKey()
 
@@ -127,7 +132,11 @@ test('key-store', t => {
               keyStore.close(() => {
                 const newKeyStore = KeyStore(storePath, () => {
                   const keys = newKeyStore.author.keys('@mix')
-                  t.deepEqual(keys, [keyA, keyB], DESCRIPTION)
+                  const expected = [
+                    { key: keyA, scheme: SCHEMES.private_group },
+                    { key: keyB, scheme: SCHEMES.private_group }
+                  ]
+                  t.deepEqual(keys, expected, DESCRIPTION)
 
                   keyStore.close()
                 })

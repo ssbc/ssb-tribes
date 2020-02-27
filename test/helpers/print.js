@@ -1,12 +1,12 @@
 const fs = require('fs')
 const { join, dirname } = require('path')
-const error_codes = require('box2-spec/error_codes.json')
+const error_codes = require('envelope-spec/error_codes.json')
 const encodeLeaves = require('./encode-leaves')
 
 module.exports = function print (relativeFilePath, vector) {
   if (vector.error_code) {
     if (!(vector.error_code in error_codes)) {
-      throw new Error(`invalid error_code code: "${vector.error_code}", see box2-spec/constants.json`)
+      throw new Error(`invalid error_code code: "${vector.error_code}", see envelope-spec/constants.json`)
     }
   }
 

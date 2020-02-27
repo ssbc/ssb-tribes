@@ -1,23 +1,10 @@
 module.exports = function encodeLeaves (vector) {
-  Object.entries(vector.input)
+  Object.entries(vector)
     .forEach(([key, value]) => {
-      vector.input[key] = Array.isArray(value)
-        ? value.map(encode)
-        : encode(value)
-    })
-
-  Object.entries(vector.output)
-    .forEach(([key, value]) => {
-      vector.output[key] = Array.isArray(value)
-        ? value.map(encode)
-        : encode(value)
+      if (Buffer.isBuffer(value)) vector[key] = value.toString('base64')
+      else if (value === null) {}
+      else if (typeof value === 'object') vector[key] = encodeLeaves(value)
     })
 
   return vector
-}
-
-function encode (value) {
-  return Buffer.isBuffer(value)
-    ? value.toString('base64')
-    : value
 }

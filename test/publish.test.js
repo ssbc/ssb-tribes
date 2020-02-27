@@ -18,7 +18,7 @@ test('publish', t => {
     server.publish(content, (err, msg) => {
       if (err) throw err
 
-      t.true(msg.value.content.endsWith('.box2'), 'publishes box2 cipherstring')
+      t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
 
       server.close(() => {
         console.log('closed')
