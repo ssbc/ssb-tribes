@@ -17,7 +17,7 @@
     "is-my-ssb-valid": "^1.0.1",
     "level": "^6.0.0",
     "@envelope/spec": "github:ssbc/envelope-spec#master",
-    "@envelope/core": "github:ssbc/envelope-core#master",
+    "@envelope/js": "github:ssbc/envelope-js#master",
     "pull-level": "^2.0.4",
     "ssb-ref": "^2.13.9"
   },

@@ -1,6 +1,6 @@
 const { join } = require('path')
 const pull = require('pull-stream')
-const { box, unbox } = require('@envelope/core')
+const { box, unbox } = require('@envelope/js')
 
 const KeyStore = require('./key-store')
 const { FeedId, MsgId } = require('./lib/cipherlinks')
