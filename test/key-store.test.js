@@ -3,21 +3,36 @@ const KeyStore = require('../key-store')
 const { GroupKey } = require('./helpers')
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
+var i = 0
 function TmpPath () {
-  return `/tmp/key-store-${Date.now()}-${Math.floor(Math.random()*100)}`
+  return `/tmp/key-store-${Date.now()}-${i++}`
 }
 
 test('key-store', t => {
   const tests = [
     () => {
-      const DESCRIPTION = 'group.add (error if invalid)'
+      const DESCRIPTION = 'group.add (error if key)'
 
       const keyStore = KeyStore(TmpPath())
-      const keyA = 'junk'
+      const junkKey = 'junk'
 
-      keyStore.group.add('groupId_A', { key: keyA }, (err, data) => {
+      keyStore.group.add('groupId_A', { key: junkKey }, (err) => {
         t.true(err, DESCRIPTION)
         keyStore.close()
+      })
+    },
+
+    () => {
+      const DESCRIPTION = 'group.add (error if try to double-add)'
+
+      const keyStore = KeyStore(TmpPath(), null, { loadState: false })
+      const keyA = GroupKey()
+
+      keyStore.group.add('groupId_A', { key: keyA }, (_, data) => {
+        keyStore.group.add('groupId_A', { key: keyA }, (err) => {
+          t.true(err, DESCRIPTION)
+          keyStore.close()
+        })
       })
     },
 

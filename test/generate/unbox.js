@@ -3,6 +3,8 @@ const { GroupKey, print } = require('../helpers')
 const Server = require('../server')
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
+// TODO add test case for previous: null
+
 const generators = [
   (i) => {
     const server = Server()

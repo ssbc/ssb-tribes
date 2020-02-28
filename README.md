@@ -46,11 +46,13 @@ A Secret-Stack server running the plugins `ssb-db` and `ssb-private2`
 
 ## API
 
-### `ssb.private2.group.add(groupId, groupKey, cb)`
+### `ssb.private2.group.add(groupId, info, cb)`
 
 where 
-- `groupId` *String* - ... TODO
-- `groupKey` *String* - a 32 byte symmetric key that as a `base64` encoded string
+- `groupId` *String* - is a cloaked group id (see `private-group-spec/group-id/README.md`)
+- `info` *Object* - contains data of form `{ key, scheme }` where:
+  - `key` *String* - a 32 byte symmetric key for the group (as a `base64` encoded string)
+  - `scheme` *String* (optional) - a description of the key management scheme this key is part of
 - `cb`[ *Function* - a callback with signature `cb(err: Error, success: Boolean)`
 
 ### `ssb.private2.group.addAuthors(groupId, [authorId], cb)`
@@ -74,7 +76,8 @@ This is used for suppliying `trial_keys` to `@envelope/js`'s unbox method.
 Where cb has signature `cb(err: Error, success: Boolean)`
 
 
-### `ssb.private2.group.create(cb)`
+### `ssb.private2.group.create(name, cb)`
+
 :warning: NOT YET IMPLEMENTED
 
 Mint a new private group.

@@ -7,15 +7,17 @@ const { FeedId, MsgId } = require('./lib/cipherlinks')
 const SecretKey = require('./lib/secret-key')
 const isCloaked = require('./lib/is-cloaked-msg-id')
 
+const Method = require('./method')
+
 module.exports = {
   name: 'private2',
   version: require('./package.json').version,
   manifest: {
     group: {
       add: 'async',
-      addAuthors: 'async'
+      addAuthors: 'async',
       // removeAuthors: 'async'
-      // create: 'async',
+      create: 'async'
     },
     author: {
       keys: 'sync' // should this even be public?
@@ -32,22 +34,21 @@ module.exports = {
     /* register the boxer / unboxer */
     ssb.addBoxer((content, recps) => {
       if (!recps.every(isCloaked)) return null
-      // TODO accept (cloaked | feedId)
+      // TODO accept (cloaked | feedId) - ready after DM spec
 
       const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
       const msgKey = new SecretKey().toBuffer()
 
       const recipentKeys = recps.map(r => keystore.group.get(r))
 
-      console.log(recipentKeys)
-      const ciphertext = box(plaintext, state.feedId, state.previous, msgKey, recipentKeys)
-
-      return ciphertext.toString('base64') + '.box2'
+      const envelope = box(plaintext, state.feedId, state.previous, msgKey, recipentKeys)
+      return envelope.toString('base64') + '.box2'
     })
     ssb.addUnboxer({
       init: function (done) {
         keystore = KeyStore(join(config.path, 'private2/keystore'), () => {
-          // look up the current 'previous' msg id for this feed
+
+          // we need to know our currrent `previous` because boxing is synchronous!
           pull(
             ssb.createUserStream({ id: ssb.id, reverse: true, limit: 1 }),
             pull.collect((err, msgs) => {
@@ -96,9 +97,13 @@ module.exports = {
     //   - use a dummy flume-view to tap into unseen messages
     //   - discovering new keys triggers re-indexes of other views
 
-    return {
+    const hermes = Method(ssb) // our database helper!
+
+    const api = {
       group: {
         add (groupId, info, cb) {
+          if (!isCloaked(groupId)) return cb(new Error(`private2.group.add expected a cloaked message id, got ${groupId}`))
+
           keystore.group.add(groupId, info, cb)
         },
         addAuthors (groupId, authorIds, cb) {
@@ -111,7 +116,15 @@ module.exports = {
             })
           )
         },
-        // create
+        create (name, cb) {
+          hermes.group.create(state.previous, name, (err, data) => {
+            if (err) return cb(err)
+
+            // add this to keystore
+            console.log(data)
+            cb(null, data)
+          })
+        }
         // remove
         // removeAuthors
       },
@@ -122,13 +135,7 @@ module.exports = {
         // invite
       }
     }
+
+    return api
   }
 }
-
-// TODO:
-// - design key-entrust messages
-//   - see if envelope can support feedId + groupId type messages
-// - figure out how to programmatically trigger re-indexing
-//
-// TODO (later):
-// - design group creation (later)

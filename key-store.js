@@ -9,8 +9,8 @@ const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 const GROUP = 'group'
 const MEMBER = 'member'
 
-// TODO should add requirement for all group.add to have: { key, scheme }
-// at the moment we're assuming all scheme are for private groups but that will change soon
+// TODO add requirement for all group.add to have: { key, scheme } ?
+// at the moment we're assuming all scheme are for private groups but that might change
 
 module.exports = function Keychain (path, onReady = noop, opts = {}) {
   const {
@@ -35,6 +35,10 @@ module.exports = function Keychain (path, onReady = noop, opts = {}) {
       catch (e) { return cb(e) }
 
       if (!isReady) return setTimeout(() => group.add(groupId, info, cb), 500)
+
+      if (cache.groups[groupId]) return cb(new Error(`key-store already constains group ${groupId}, cannot add twice`))
+      // TODO more nuance - don't bother with error if the info is the same?
+
 
       cache.groups[groupId] = info
       db.put(
