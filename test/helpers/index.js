@@ -8,6 +8,7 @@ const print = require('./print')
 
 module.exports = {
   GroupId: () => `%${new Secret().toString()}.cloaked`,
+  GroupKey: () => new Secret().toBuffer(),
   FeedId: () => new FeedId().mock().toTFK(),
   PrevMsgId: () => new MsgId().mock().toTFK(),
 

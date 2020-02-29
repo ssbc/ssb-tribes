@@ -1,6 +1,6 @@
 const { join } = require('path')
 const pull = require('pull-stream')
-const { box, unbox } = require('@envelope/js')
+const { box, unboxKey, unboxBody } = require('@envelope/js')
 
 const KeyStore = require('./key-store')
 const { FeedId, MsgId } = require('./lib/cipherlinks')
@@ -27,6 +27,7 @@ module.exports = {
   init: (ssb, config) => {
     var keystore
     var state = {
+      isReady: false,
       feedId: new FeedId(ssb.id).toTFK(),
       previous: undefined
     }
@@ -45,13 +46,14 @@ module.exports = {
       return envelope.toString('base64') + '.box2'
     })
     ssb.addUnboxer({
-      init: function (done) {
+      init (done) {
+        // ensure keystore is re-loaded from disk before continuing
         keystore = KeyStore(join(config.path, 'private2/keystore'), () => {
-
-          // we need to know our currrent `previous` because boxing is synchronous!
+          // track our current `previous` msg_id (needed for sync boxing)
           pull(
             ssb.createUserStream({ id: ssb.id, reverse: true, limit: 1 }),
             pull.collect((err, msgs) => {
+              if (err) throw err
               state.previous = msgs.length
                 ? new MsgId(msgs[0].key).toTFK()
                 : new MsgId(null).toTFK()
@@ -60,36 +62,48 @@ module.exports = {
                 state.previous = new MsgId(m.key).toTFK()
               })
 
+              state.isReady = true
               done()
             })
           )
         })
-        // close levelDB if ssb closes
+
+        // if ssb closes, stop keystore (runs levelDB)
         ssb.close.hook(function (fn, args) {
           keystore.close()
           return fn.apply(this, args)
         })
       },
-      key: function unboxKey (ciphertext, value) {
-        if (!ciphertext.endsWith('.box2')) return null
-        // change stuff into buffers,
-        // load up the trial keys (from memory)
-        // try and access the msg_key
-        return
-      },
-      value: function unboxBody (ciphertext, msg_key) {
-        // get the body
-        return {
-          type: 'doop',
-          text: 'your order here!'
-        }
-      }
-    })
 
-    // listen for change in current feed
-    ssb.post(msg => {
-      if (msg.value.author === state.feedId) {
-        state.previous = msg.value.previous
+      key (ciphertext, value) {
+        // TODO change this to is-box2 using is-canonical-base64 ?
+        if (!ciphertext.endsWith('.box2')) return null
+
+        const trial_keys = api.author.keys(value.author)
+        if (!trial_keys.length) return null
+
+        const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
+        const feed_id = new FeedId(value.author).toTFK()
+        const prev_msg_id = new MsgId(value.previous).toTFK()
+
+        return unboxKey(envelope, feed_id, prev_msg_id, trial_keys)
+        // TODO perhaps modify the addUnboxer api to allow some of the work done
+        // in this step to be passed on to unboxBody
+      },
+
+      value (ciphertext, value, read_key) {
+        // TODO change this to is-box2 using is-canonical-base64 ?
+        if (!ciphertext.endsWith('.box2')) return null
+
+        const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
+
+        const feed_id = new FeedId(value.author).toTFK()
+        const prev_msg_id = new MsgId(value.previous).toTFK()
+
+        const plaintext = unboxBody(envelope, feed_id, prev_msg_id, read_key)
+        if (!plaintext) return
+
+        return JSON.parse(plaintext.toString('utf8'))
       }
     })
 
@@ -97,7 +111,7 @@ module.exports = {
     //   - use a dummy flume-view to tap into unseen messages
     //   - discovering new keys triggers re-indexes of other views
 
-    const hermes = Method(ssb) // our database helper!
+    const hermes = Method(ssb) // our scutlebutt database helper!
 
     const api = {
       group: {
@@ -109,7 +123,7 @@ module.exports = {
         addAuthors (groupId, authorIds, cb) {
           pull(
             pull.values(authorIds),
-            pull.asyncMap((authorId, cb) => keystore.addAuthor(groupId, authorId, cb)),
+            pull.asyncMap((authorId, cb) => keystore.group.addAuthor(groupId, authorId, cb)),
             pull.collect((err) => {
               if (err) cb(err)
               else cb(null, true)
@@ -117,12 +131,19 @@ module.exports = {
           )
         },
         create (name, cb) {
-          hermes.group.create(state.previous, name, (err, data) => {
+          if (!state.isReady) return setTimeout(() => api.group.create(name, cb), 500)
+
+          hermes.group.create(state, name, (err, data) => {
             if (err) return cb(err)
 
-            // add this to keystore
-            console.log(data)
-            cb(null, data)
+            api.group.add(data.groupId, { name, key: data.groupKey }, (err) => {
+              if (err) return cb(err)
+
+              api.group.addAuthors(data.groupId, [ssb.id], (err) => {
+                if (err) return cb(err)
+                cb(null, data)
+              })
+            })
           })
         }
         // remove
@@ -130,8 +151,9 @@ module.exports = {
       },
       author: {
         keys (authorId) {
+          // TODO add our shared DM key to this set
           return keystore.author.keys(authorId)
-        },
+        }
         // invite
       }
     }

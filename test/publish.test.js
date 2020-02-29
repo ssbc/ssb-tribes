@@ -5,10 +5,11 @@ const { GroupKey, GroupId } = require('./helpers')
 test('publish', t => {
   const server = Server()
 
-  const groupId = GroupId()
-  const groupKey = GroupKey()
+  server.private2.group.create('waynes world', (err, data) => {
+    if (err) throw err
 
-  server.private2.group.add(groupId, groupKey, (err, success) => {
+    const { groupId } = data
+
     const content = {
       type: 'announce',
       text: 'summer has arrived in wellington!',
@@ -20,26 +21,16 @@ test('publish', t => {
 
       t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
 
-      server.close(() => {
-        console.log('closed')
+      server.get({ id: msg.key, private: true, meta: true }, (err, msg) => {
+        if (err) throw err
+
+        t.deepEqual(msg.value.content, content, 'can open envelope!')
+
+        server.close(() => {
+          console.log('closed')
+        })
+        t.end()
       })
-      t.end()
     })
   })
 })
-
-// TODO
-// - add unboxer which recognises .box2 strings
-// - get this test about to pass
-// - write spec + tests for external_nonce calcuation
-// - ssb-db
-//   - add "addBoxer" method
-
-
-// SSB-specs to write
-//
-// - how to calculate external_nonce
-// - how to derive groupId
-// - need a store which tracks:
-//   - groupId > groupKey
-//   - if a box2 message comes from feedId X, which keys should I try (find which groups a feedId has access to)

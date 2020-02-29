@@ -1,10 +1,8 @@
 const test = require('tape')
 const { isMsg, isFeedId } = require('ssb-ref')
 const isCloakedId = require('../../lib/is-cloaked-msg-id')
-const vector = require('private-group-spec/group/group-id/vector1.json')
 
-const { FeedId, MsgId, CloakedMsgId, GroupId } = require('../../lib/cipherlinks')
-const { decodeLeaves } = require('../helpers')
+const { FeedId, MsgId, CloakedMsgId } = require('../../lib/cipherlinks')
 
 test('Cipherlink/FeedId', t => {
   var feedId = '@YXkE3TikkY4GFMX3lzXUllRkNTbj5E+604AkaO1xbz8=.ed25519'
@@ -67,15 +65,3 @@ test('Cipherlink/CloakedMsgId', t => {
   t.end()
 })
 
-test('Cipherlink/GroupId', t => {
-  decodeLeaves(vector)
-  const { group_init_msg_id, group_key } = vector.input
-
-  var group_id = new GroupId(
-    new MsgId(group_init_msg_id).toTFK(),
-    group_key
-  )
-
-  t.equal(group_id.toSSB(), vector.output.group_id, 'correctly construct group_id')
-  t.end()
-})
