@@ -1,3 +1,6 @@
 require('./direct-messages')
-require('./encryption')
-require('./group/group-id')
+require('./group-id')
+require('./unbox')
+
+require('./group-init.schema')
+require('./group-add-member.schema')

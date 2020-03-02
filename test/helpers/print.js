@@ -1,6 +1,6 @@
 const fs = require('fs')
 const { join, dirname } = require('path')
-const error_codes = require('envelope-spec/error_codes.json')
+const error_codes = require('@envelope/spec/error_codes.json')
 const encodeLeaves = require('./encode-leaves')
 
 module.exports = function print (relativeFilePath, vector) {
@@ -11,7 +11,7 @@ module.exports = function print (relativeFilePath, vector) {
   }
 
   const output = JSON.stringify(encodeLeaves(vector), null, 2)
-  const filePath = join(__dirname, '../generate/vectors', relativeFilePath)
+  const filePath = join(__dirname, '../generate', relativeFilePath)
 
   fs.mkdir(dirname(filePath), { recursive: true }, (err) => {
     if (err) throw err

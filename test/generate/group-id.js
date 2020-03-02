@@ -49,7 +49,7 @@ const generators = [
             group_id
           }
         }
-        print(`group-id${i + 1}.json`, vector)
+        print(`vectors/group-id${i + 1}.json`, vector)
       })
     })
   }

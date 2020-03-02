@@ -1,5 +1,5 @@
-const { FeedId, MsgId, GroupId } = require('../../lib/cipherlinks')
-const { GroupKey, print } = require('../helpers')
+const { FeedId, MsgId } = require('../../lib/cipherlinks')
+const { GroupId, GroupKey, print } = require('../helpers')
 const Server = require('../server')
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
@@ -11,7 +11,7 @@ const generators = [
 
     const initMsgId = new MsgId().mock()
     const groupKey = GroupKey()
-    const groupId = new GroupId(initMsgId.toTFK(), groupKey).toSSB()
+    const groupId = GroupId()
 
     server.private2.group.add(groupId, { key: groupKey }, (_, success) => {
       const content = {
@@ -39,7 +39,7 @@ const generators = [
             content
           }
         }
-        print(`unbox${i + 1}.json`, vector)
+        print(`vectors/unbox${i + 1}.json`, vector)
       })
     })
   }

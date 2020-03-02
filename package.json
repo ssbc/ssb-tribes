@@ -27,6 +27,7 @@
     "scuttle-testbot": "^1.1.7",
     "sodium-native": "^2.4.9",
     "ssb-db": "^19.4.0",
+    "ssb-schema-definitions": "^2.0.2",
     "standard": "^14.3.1",
     "tap-spec": "^5.0.0",
     "tape": "^4.13.0"
@@ -43,4 +44,3 @@
     "url": "https://github.com/ssbc/ssb-private2/issues"
   }
 }
-

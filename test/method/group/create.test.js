@@ -1,7 +1,7 @@
 const test = require('tape')
 const Server = require('../../server')
 const Method = require('../../../method')
-const { MsgId } = require('../../../lib/cipherlinks')
+const { FeedId, MsgId } = require('../../../lib/cipherlinks')
 const isCloaked = require('../../../lib/is-cloaked-msg-id')
 
 test('method.group.create', t => {
@@ -11,9 +11,12 @@ test('method.group.create', t => {
   // as in index.js we couple in the key-store
   const method = Method(server)
 
-  const previous = new MsgId().mock().toSSB()
+  const state = {
+    feedId: new FeedId().mock().toTFK(),
+    previous: new MsgId().mock().toTFK()
+  }
 
-  method.group.create(previous, 'musk-rat paradise', (err, data) => {
+  method.group.create(state, 'musk-rat paradise', (err, data) => {
     if (err) throw err
 
     const { groupId, groupKey } = data

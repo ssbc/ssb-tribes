@@ -113,10 +113,13 @@ module.exports = {
 
     const hermes = Method(ssb) // our scutlebutt database helper!
 
+    // TODO put a 'wait' queue around methods which require isReady?
+    // (instead of putting setTimout loops!)
     const api = {
       group: {
         add (groupId, info, cb) {
           if (!isCloaked(groupId)) return cb(new Error(`private2.group.add expected a cloaked message id, got ${groupId}`))
+          if (!state.isReady) return setTimeout(() => api.group.add(groupId, info, cb), 500)
 
           keystore.group.add(groupId, info, cb)
         },
