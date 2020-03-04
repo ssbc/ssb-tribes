@@ -32,7 +32,7 @@ const Mock = (overwrite = {}) => {
   return Object.assign(base, overwrite)
 }
 
-test('is-group-init', t => {
+test('is-group-add-member', t => {
   t.true(isValid(Mock()), 'fully featured')
 
   const min = Mock()
@@ -45,6 +45,14 @@ test('is-group-init', t => {
 
   // TODO // test more edge cases
 
+  /* not sure how to code this in v4 draft compatible JSON schema */
+  // const noGroupRecps = Mock({
+  //   recps: [
+  //     '@zXUllRkNYXkE3TikkY4GFMX3lTbj5E+604AkaO1xbz8=.ed25519',
+  //     '@YXkE3TikkY4GFMX3lzXUllRkNTbj5E+604AkaO1xbz8=.ed25519'
+  //   ]
+  // })
+  // t.false(isValid(noGroupRecps), 'fails if there is no group recp')
 
   t.end()
 })
