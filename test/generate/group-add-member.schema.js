@@ -6,7 +6,6 @@ const cloakedMsgRegex = isCanonicalBase64('%', '\\.cloaked', 32)
 
 const secretKeyRegex = isCanonicalBase64('', '', 32)
 
-
 // {
 //   type: 'group/add-member',
 //   version: 'v1',
@@ -49,12 +48,12 @@ const schema = {
 
     recps: {
       type: 'array',
-      minItems: 1,
+      minItems: 2,
       // maxItems: 8
       items: {
-        oneOf: [
+        anyOf: [
           { $ref: '#/definitions/feedId' },
-          { type: 'string', pattern: cloakedMsgRegex }
+          { $ref: '#/definitions/cloakedMessageId' }
         ]
       }
     },
@@ -71,6 +70,8 @@ const schema = {
     definitions: {
       messageId,
       feedId,
+      // TODO extract to ssb-schema-defintions
+      cloakedMessageId: { type: 'string', pattern: cloakedMsgRegex },
 
       tangleUpdate: {
         type: 'object',
@@ -86,8 +87,5 @@ const schema = {
     }
   }
 }
-
-TODO with the patterns, need to call .toString().replace(/\//g, '')
-lead.constructor === RegExp
 
 print('schema/group-add-member.schema.json', schema)
