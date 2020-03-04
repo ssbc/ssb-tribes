@@ -43,5 +43,8 @@ test('is-group-init', t => {
   delete tooFewRecps.recps.pop()
   t.false(isValid(tooFewRecps), 'fails if less than 2 recps')
 
+  // TODO // test more edge cases
+
+
   t.end()
 })

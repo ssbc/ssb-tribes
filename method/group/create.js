@@ -1,7 +1,6 @@
 const { box } = require('@envelope/js')
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
-const { FeedId } = require('../../lib/cipherlinks')
 const Secret = require('../../lib/secret-key')
 const groupId = require('../../lib/group-id')
 
@@ -33,7 +32,8 @@ module.exports = function GroupCreate (ssb) {
 
       const data = {
         groupId: groupId(groupInitMsg, msgKey),
-        groupKey: groupKey.toBuffer()
+        groupKey: groupKey.toBuffer(),
+        groupInitMsg
       }
       cb(null, data)
     })

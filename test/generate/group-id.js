@@ -14,39 +14,19 @@ const generators = [
     const server = Server()
 
     server.publish({ type: 'first' }, (err, msg) => {
-      const content = {
-        type: 'group/init',
-        name: { set: 'the 3 musketeers (travel planning)' },
-        tangles: {
-          group: { root: null, previous: null }
-        }
-      }
-      const plain = Buffer.from(JSON.stringify(content), 'utf8')
-      const feedId = new FeedId(server.id).toTFK()
-      const previous = new MsgId(msg.key).toTFK()
-      const msgKey = new Secret().toBuffer()
-      const groupKey = new Secret().toBuffer()
-      const recipientKeys = [
-        { key: groupKey, scheme: SCHEMES.private_group }
-      ]
 
-      const envelope = box(plain, feedId, previous, msgKey, recipientKeys)
-      const ciphertext = envelope.toString('base64') + '.box2'
-
-      server.publish(ciphertext, (err, msg) => {
+      server.private2.group.create('3 musketeers', (err, data) => {
         server.close()
-
-        const group_id = groupId(msg, msgKey)
 
         const vector = {
           type: 'group_id',
           description: 'determine the groupId',
           input: {
-            group_init_msg: msg,
-            group_key: groupKey
+            group_key: data.groupKey,
+            group_init_msg: data.groupInitMsg
           },
           output: {
-            group_id
+            group_id: data.groupId
           }
         }
         print(`vectors/group-id${i + 1}.json`, vector)
