@@ -64,7 +64,7 @@ where callback `cb` has signature `cb(err, success)`
 Get all the keys that a message published by `authorId` could have used to encrypt with.
 `cb` has signature `cb(err, keys)` where `keys` is an Array of Buffers.
 
-This is used for suppliying `trial_keys` to `@envelope/js`'s unbox method.
+This is used for suppliying `trial_keys` to `envelope-js`'s unbox method.
 
 
 ---

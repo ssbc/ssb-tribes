@@ -1,4 +1,4 @@
-const { box } = require('@envelope/js')
+const { box } = require('envelope-js')
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
 const Secret = require('../../lib/secret-key')

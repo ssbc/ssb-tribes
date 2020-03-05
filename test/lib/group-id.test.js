@@ -1,7 +1,7 @@
 const test = require('tape')
 const vector = require('private-group-spec/vectors/group-id1.json')
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
-const { unboxKey } = require('@envelope/js')
+const { unboxKey } = require('envelope-js')
 
 const { FeedId, MsgId } = require('../../lib/cipherlinks')
 const groupId = require('../../lib/group-id')
