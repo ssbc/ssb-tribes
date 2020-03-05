@@ -28,13 +28,12 @@ test('unbox', t => {
       pull.asyncMap(({ key }, done) => {
         const groupId = GroupId() // doesn't matter
 
-        server.private2.group.add(groupId, { key }, (_, data) => {
-          server.private2.group.addAuthors(groupId, authorIds, done)
+        server.private2.group.register(groupId, { key }, (_, data) => {
+          server.private2.group.registerAuthors(groupId, authorIds, done)
         })
       }),
       pull.collect((err) => {
         if (err) throw err
-
 
         pull(
           /* add messages to our log */

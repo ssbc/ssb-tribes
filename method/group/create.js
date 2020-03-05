@@ -4,8 +4,8 @@ const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 const Secret = require('../../lib/secret-key')
 const groupId = require('../../lib/group-id')
 
-module.exports = function GroupCreate (ssb) {
-  return function groupCreate (state, name = '', cb) {
+module.exports = function GroupCreate (ssb, _, state) {
+  return function groupCreate (name = '', cb) {
     const groupKey = new Secret()
     const content = {
       type: 'group/init',

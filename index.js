@@ -14,8 +14,8 @@ module.exports = {
   version: require('./package.json').version,
   manifest: {
     group: {
-      add: 'async',
-      addAuthors: 'async',
+      register: 'async',
+      registerAuthors: 'async',
       // removeAuthors: 'async'
       create: 'async'
     },
@@ -111,19 +111,19 @@ module.exports = {
     //   - use a dummy flume-view to tap into unseen messages
     //   - discovering new keys triggers re-indexes of other views
 
-    const hermes = Method(ssb) // our scutlebutt database helper!
+    const hermes = Method(ssb, keystore, state) // our scutlebutt database helper!
 
     // TODO put a 'wait' queue around methods which require isReady?
     // (instead of putting setTimout loops!)
     const api = {
       group: {
-        add (groupId, info, cb) {
-          if (!isCloaked(groupId)) return cb(new Error(`private2.group.add expected a cloaked message id, got ${groupId}`))
-          if (!state.isReady) return setTimeout(() => api.group.add(groupId, info, cb), 500)
+        register (groupId, info, cb) {
+          if (!isCloaked(groupId)) return cb(new Error(`private2.group.register expected a cloaked message id, got ${groupId}`))
+          if (!state.isReady) return setTimeout(() => api.group.register(groupId, info, cb), 500)
 
           keystore.group.add(groupId, info, cb)
         },
-        addAuthors (groupId, authorIds, cb) {
+        registerAuthors (groupId, authorIds, cb) {
           pull(
             pull.values(authorIds),
             pull.asyncMap((authorId, cb) => keystore.group.addAuthor(groupId, authorId, cb)),
@@ -136,28 +136,30 @@ module.exports = {
         create (name, cb) {
           if (!state.isReady) return setTimeout(() => api.group.create(name, cb), 500)
 
-          hermes.group.create(state, name, (err, data) => {
+          hermes.group.create(name, (err, data) => {
             if (err) return cb(err)
 
-            api.group.add(data.groupId, { name, key: data.groupKey }, (err) => {
+            api.group.register(data.groupId, { name, key: data.groupKey }, (err) => {
               if (err) return cb(err)
 
-              api.group.addAuthors(data.groupId, [ssb.id], (err) => {
+              api.group.registerAuthors(data.groupId, [ssb.id], (err) => {
                 if (err) return cb(err)
                 cb(null, data)
               })
             })
           })
+        },
+        invite (groupId, authorIds, opts, cb) {
+          if (!state.isReady) return setTimeout(() => api.group.invite(groupId, authorIds, opts, cb), 500)
+          hermes.group.invite(groupId, authorIds, opts, cb)
         }
         // remove
         // removeAuthors
       },
       author: {
         keys (authorId) {
-          // TODO add our shared DM key to this set
           return keystore.author.keys(authorId)
         }
-        // invite
       }
     }
 

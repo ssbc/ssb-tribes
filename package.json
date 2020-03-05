@@ -13,17 +13,17 @@
     "url": "git+https://github.com/ssbc/ssb-private2.git"
   },
   "dependencies": {
-    "envelope-js": "0.0.1",
+    "charwise": "^3.0.1",
+    "envelope-js": "0.0.2",
     "envelope-spec": "0.0.1",
-    "private-group-spec": "0.0.1",
     "is-canonical-base64": "^1.1.1",
     "is-my-ssb-valid": "^1.0.1",
-    "pull-stream": "^3.6.14",
-    "ssb-ref": "^2.13.9",
-    "sodium-native": "^2.4.9",
     "level": "^6.0.0",
-    "charwise": "^3.0.1",
-    "pull-level": "^2.0.4"
+    "private-group-spec": "0.0.1",
+    "pull-level": "^2.0.4",
+    "pull-stream": "^3.6.14",
+    "sodium-native": "^2.4.9",
+    "ssb-ref": "^2.13.9"
   },
   "devDependencies": {
     "scuttle-testbot": "^1.1.7",
