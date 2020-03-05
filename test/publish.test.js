@@ -1,6 +1,5 @@
 const test = require('tape')
-const Server = require('./server')
-const { GroupKey, GroupId } = require('./helpers')
+const { Server, GroupKey, GroupId } = require('./helpers')
 
 test('publish', t => {
   const server = Server()

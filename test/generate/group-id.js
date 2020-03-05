@@ -1,14 +1,5 @@
-const { box } = require('@envelope/js')
-const SCHEMES = require('private-group-spec/key-schemes.json').scheme
+const { Server, print } = require('../helpers')
 
-const { FeedId, MsgId } = require('../../lib/cipherlinks')
-const groupId = require('../../lib/group-id')
-const Secret = require('../../lib/secret-key')
-const { print } = require('../helpers')
-const Server = require('../server')
-
-// TODO change this is to use cloaked-id from envelope-spec
-// TODO extact this into "create group" method
 const generators = [
   (i) => {
     const server = Server()
@@ -20,7 +11,7 @@ const generators = [
 
         const vector = {
           type: 'group_id',
-          description: 'determine the groupId',
+          description: 'determine the group_id (remember group_id is derived from read_key of init msg)',
           input: {
             group_key: data.groupKey,
             group_init_msg: data.groupInitMsg

@@ -1,5 +1,5 @@
 const test = require('tape')
-const Server = require('../../server')
+const { Server } = require('../../helpers')
 const Method = require('../../../method')
 const { FeedId, MsgId } = require('../../../lib/cipherlinks')
 const isCloaked = require('../../../lib/is-cloaked-msg-id')

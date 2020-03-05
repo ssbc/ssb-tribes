@@ -76,7 +76,7 @@ module.exports = {
       },
 
       key (ciphertext, value) {
-        // TODO change this to is-box2 using is-canonical-base64 ?
+        // TODO change this to isBox2 (using is-canonical-base64)
         if (!ciphertext.endsWith('.box2')) return null
 
         const trial_keys = api.author.keys(value.author)
