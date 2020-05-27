@@ -33,14 +33,14 @@ module.exports = {
     }
 
     /* register the boxer / unboxer */
-    ssb.addBoxer((content, recps) => {
-      if (!recps.every(isCloaked)) return null
+    ssb.addBoxer(content => {
+      if (!content.recps.every(isCloaked)) return null
       // TODO accept (cloaked | feedId) - ready after DM spec
 
       const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
       const msgKey = new SecretKey().toBuffer()
 
-      const recipentKeys = recps.map(r => keystore.group.get(r))
+      const recipentKeys = content.recps.map(r => keystore.group.get(r))
 
       const envelope = box(plaintext, state.feedId, state.previous, msgKey, recipentKeys)
       return envelope.toString('base64') + '.box2'
