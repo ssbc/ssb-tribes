@@ -6,24 +6,30 @@ const { read } = require('pull-level')
 const KEY_LENGTH = require('sodium-native').crypto_secretbox_KEYBYTES
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
+const directMessageKey = require('./lib/direct-message-key')
+const { FeedId } = require('./lib/cipherlinks')
+
 const GROUP = 'group'
 const MEMBER = 'member'
 
 // TODO add requirement for all group.add to have: { key, scheme } ?
 // at the moment we're assuming all scheme are for private groups but that might change
 
-module.exports = function Keychain (path, onReady = noop, opts = {}) {
+module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   const {
     loadState = true
   } = opts
+
+  const buildDMKey = BuildDMKey(ssbKeys)
 
   mkdirSync(path, { recursive: true })
 
   /* state */
   var isReady = !loadState
   var cache = {
-    groups: {},     // maps groupId > group.info
-    memberships: {} // maps authorId > [groupId]
+    groups: {},      // maps groupId > group.info
+    memberships: {}, // maps authorId > [groupId]
+    authors: {}      // maps authorId > { key, scheme: SharedDMKey } for that author
   }
 
   const db = level(path, { valueEncoding: charwise })
@@ -33,6 +39,8 @@ module.exports = function Keychain (path, onReady = noop, opts = {}) {
       // checks key is right shape (can be converted to a 32 Byte buffer)
       try { info.key = toKeyBuffer(info.key) }
       catch (e) { return cb(e) }
+
+      if (!info.scheme) info.scheme = SCHEMES.private_group
 
       if (!isReady) return setTimeout(() => group.add(groupId, info, cb), 500)
 
@@ -65,10 +73,7 @@ module.exports = function Keychain (path, onReady = noop, opts = {}) {
       )
     },
     get (groupId) {
-      return Object.assign(
-        { scheme: SCHEMES.private_group },
-        cache.groups[groupId]
-      )
+      return cache.groups[groupId]
     }
   }
 
@@ -115,6 +120,17 @@ module.exports = function Keychain (path, onReady = noop, opts = {}) {
       .map(group.get)
   }
 
+  function getSharedKey (authorId) {
+    if (!cache.authors[authorId]) {
+      cache.authors[authorId] = buildDMKey(new FeedId(authorId).toBuffer())
+    }
+
+    return {
+      key: cache.authors[authorId],
+      scheme: SCHEMES.feed_id_dm
+    }
+  }
+
   /* load persisted state into cache */
   if (loadState) {
     group.list((err, groups) => {
@@ -139,10 +155,22 @@ module.exports = function Keychain (path, onReady = noop, opts = {}) {
     },
     author: {
       groups: membership.getAuthorGroups,
-      keys: getAuthorKeys
+      keys: getAuthorKeys,
+      getSharedKey
     },
     close: db.close.bind(db)
   }
+}
+
+function BuildDMKey (ssbKeys) {
+  if (!ssbKeys.private) throw new Error('key-store requires ssbKeys.private')
+
+  const mySk = Buffer.from(
+    ssbKeys.private.replace('.ed25519', ''),
+    'base64'
+  )
+
+  return directMessageKey(mySk)
 }
 
 function toKeyBuffer (thing) {
