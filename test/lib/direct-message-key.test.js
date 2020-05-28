@@ -17,6 +17,12 @@ test('direct-message-key', t => {
     'the key is shared!'
   )
 
+  t.isNotDeepEqual(
+    directMessageKey(myKeys.secret)(yourKeys.public),
+    Buffer.alloc(32),
+    'is not empty'
+  )
+
   vectors.forEach(vector => {
     decodeLeaves(vector)
 
@@ -46,7 +52,7 @@ function makeKeys () {
   const keys = generate()
 
   return {
-    public: Buffer.from(keys.public, 'base64'),
-    secret: Buffer.from(keys.private, 'base64')
+    public: Buffer.from(keys.public.replace('.ed25519', ''), 'base64'),
+    secret: Buffer.from(keys.private.replace('.ed25519', ''), 'base64')
   }
 }

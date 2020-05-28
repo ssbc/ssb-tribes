@@ -1,6 +1,7 @@
 const { join } = require('path')
 const pull = require('pull-stream')
 const { box, unboxKey, unboxBody } = require('envelope-js')
+const { isFeed } = require('ssb-ref')
 
 const KeyStore = require('./key-store')
 const { FeedId, MsgId } = require('./lib/cipherlinks')
@@ -34,13 +35,14 @@ module.exports = {
 
     /* register the boxer / unboxer */
     ssb.addBoxer(content => {
-      if (!content.recps.every(isCloaked)) return null
-      // TODO accept (cloaked | feedId) - ready after DM spec
+      if (!content.recps.every(r => isCloaked(r) || isFeed(r))) return null
 
+      const recipentKeys = content.recps.map(r => isCloaked(r)
+        ? keystore.group.get(r)
+        : keystore.author.getSharedKey(r)
+      )
       const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
       const msgKey = new SecretKey().toBuffer()
-
-      const recipentKeys = content.recps.map(r => keystore.group.get(r))
 
       const envelope = box(plaintext, state.feedId, state.previous, msgKey, recipentKeys)
       return envelope.toString('base64') + '.box2'
@@ -48,7 +50,7 @@ module.exports = {
     ssb.addUnboxer({
       init (done) {
         // ensure keystore is re-loaded from disk before continuing
-        keystore = KeyStore(join(config.path, 'private2/keystore'), () => {
+        keystore = KeyStore(join(config.path, 'private2/keystore'), ssb.keys, () => {
           // track our current `previous` msg_id (needed for sync boxing)
           pull(
             ssb.createUserStream({ id: ssb.id, reverse: true, limit: 1 }),
@@ -165,4 +167,7 @@ module.exports = {
 
     return api
   }
+}
+
+function canEncrypt (recps) {
 }

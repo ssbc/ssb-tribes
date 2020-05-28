@@ -22,11 +22,13 @@ test('method.group.invite', t => {
   const method = Method(server, keystore, state)
 
   method.group.create('the pantheon', (err, data) => {
+    t.error(err)
+
     const { groupId, groupKey, groupInitMsg } = data
     const authorIds = [1, 2].map(i => new FeedId().mock().toSSB())
 
     method.group.invite(groupId, authorIds, { text: 'welcome friends' }, (err, invite) => {
-      if (err) throw err
+      t.error(err)
 
       server.get({ id: invite.key, private: true }, (_, value) => {
         const expected = {

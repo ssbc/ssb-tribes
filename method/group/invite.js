@@ -1,5 +1,7 @@
 module.exports = function GroupInvite (ssb, keystore) {
   return function groupInvite (groupId, authorIds, opts = {}, cb) {
+    // TODO cap authorIds to 7 (relevant to maxAttempts for unboxing)
+
     const content = {
       type: 'group/add-member',
       version: 'v1',
@@ -16,7 +18,6 @@ module.exports = function GroupInvite (ssb, keystore) {
     }
 
     if (opts.text) content.text = opts.text
-
 
     // TODO validate before publish
 

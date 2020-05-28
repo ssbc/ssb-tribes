@@ -14,6 +14,7 @@ module.exports = function GroupCreate (ssb, _, state) {
         group: { root: null, previous: null }
       }
     }
+    // TODO spec.isValid(content)
 
     /* enveloping manually - required for just this group initialisation */
     const plain = Buffer.from(JSON.stringify(content), 'utf8')
