@@ -1,4 +1,4 @@
-const { messageId, feedId } = require('ssb-schema-definitions')()
+const { messageId, feedId, tangle } = require('ssb-schema-definitions')()
 const { print } = require('../helpers')
 
 const isCanonicalBase64 = require('is-canonical-base64')
@@ -35,6 +35,7 @@ const secretKeyRegex = isCanonicalBase64('', '', 32)
 // }
 
 const schema = {
+  $schema: 'http://json-schema.org/schema#',
   type: 'object',
   required: ['type', 'version', 'groupKey', 'initialMsg', 'tangles'],
   properties: {
@@ -49,7 +50,7 @@ const schema = {
     recps: {
       type: 'array',
       minItems: 2,
-      // maxItems: 8
+      maxItems: 8,
       items: {
         anyOf: [
           { $ref: '#/definitions/feedId' },
@@ -62,8 +63,8 @@ const schema = {
       type: 'object',
       required: ['group', 'members'],
       properties: {
-        group:   { $ref: '#/definitions/tangleUpdate' },
-        members: { $ref: '#/definitions/tangleUpdate' }
+        group:   { $ref: '#/definitions/tangle/update' },
+        members: { $ref: '#/definitions/tangle/update' }
       }
     },
 
@@ -72,20 +73,10 @@ const schema = {
       feedId,
       // TODO extract to ssb-schema-defintions
       cloakedMessageId: { type: 'string', pattern: cloakedMsgRegex },
-
-      tangleUpdate: {
-        type: 'object',
-        required: ['root', 'previous'],
-        properties: {
-          root: { $ref: '#/definitions/messageId' },
-          previous: {
-            type: 'array',
-            items: { $ref: '#/definitions/messageId' }
-          }
-        }
-      }
+      tangle
     }
-  }
+  },
+  additionalProperties: false
 }
 
 print('schema/group-add-member.schema.json', schema)

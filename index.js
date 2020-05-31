@@ -49,10 +49,13 @@ module.exports = {
     })
     ssb.addUnboxer({
       init (done) {
+        if (!ssb.keys) throw new Error('expect ssb.keys to be present')
+
         // ensure keystore is re-loaded from disk before continuing
         keystore = KeyStore(join(config.path, 'private2/keystore'), ssb.keys, () => {
           // track our current `previous` msg_id (needed for sync boxing)
           pull(
+            // TODO - research best source, is this an index or raw log?
             ssb.createUserStream({ id: ssb.id, reverse: true, limit: 1 }),
             pull.collect((err, msgs) => {
               if (err) throw err
@@ -60,6 +63,7 @@ module.exports = {
                 ? new MsgId(msgs[0].key).toTFK()
                 : new MsgId(null).toTFK()
 
+              // TODO start this immediately, not in this collect
               ssb.post(m => {
                 state.previous = new MsgId(m.key).toTFK()
               })
@@ -77,30 +81,29 @@ module.exports = {
         })
       },
 
-      key (ciphertext, value) {
+      key (ciphertext, { author, previous }) {
         // TODO change this to isBox2 (using is-canonical-base64)
         if (!ciphertext.endsWith('.box2')) return null
 
-        const trial_keys = api.author.keys(value.author)
-        if (!trial_keys.length) return null
+        const trial_keys = api.author.keys(author)
 
         const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
-        const feed_id = new FeedId(value.author).toTFK()
-        const prev_msg_id = new MsgId(value.previous).toTFK()
+        const feed_id = new FeedId(author).toTFK()
+        const prev_msg_id = new MsgId(previous).toTFK()
 
         return unboxKey(envelope, feed_id, prev_msg_id, trial_keys)
         // TODO perhaps modify the addUnboxer api to allow some of the work done
         // in this step to be passed on to unboxBody
       },
 
-      value (ciphertext, value, read_key) {
+      value (ciphertext, { author, previous }, read_key) {
         // TODO change this to is-box2 using is-canonical-base64 ?
         if (!ciphertext.endsWith('.box2')) return null
 
         const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
 
-        const feed_id = new FeedId(value.author).toTFK()
-        const prev_msg_id = new MsgId(value.previous).toTFK()
+        const feed_id = new FeedId(author).toTFK()
+        const prev_msg_id = new MsgId(previous).toTFK()
 
         const plaintext = unboxBody(envelope, feed_id, prev_msg_id, read_key)
         if (!plaintext) return

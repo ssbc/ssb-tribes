@@ -1,4 +1,4 @@
-require('./direct-messages')
+require('./direct-message-key')
 require('./group-id')
 require('./unbox')
 
