@@ -6,6 +6,7 @@ const vectors = [
 
 const { decodeLeaves } = require('../helpers')
 const directMessageKey = require('../../lib/direct-message-key')
+const FeedKeys = require('../../lib/feed-keys')
 
 test('direct-message-key', t => {
   const myKeys = makeKeys()
@@ -51,8 +52,5 @@ test('direct-message-key', t => {
 function makeKeys () {
   const keys = generate()
 
-  return {
-    public: Buffer.from(keys.public.replace('.ed25519', ''), 'base64'),
-    secret: Buffer.from(keys.private.replace('.ed25519', ''), 'base64')
-  }
+  return new FeedKeys(keys).toBuffer()
 }

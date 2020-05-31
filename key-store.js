@@ -5,9 +5,11 @@ const pull = require('pull-stream')
 const { read } = require('pull-level')
 const KEY_LENGTH = require('sodium-native').crypto_secretbox_KEYBYTES
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
+const { isFeed } = require('ssb-ref')
 
 const directMessageKey = require('./lib/direct-message-key')
 const { FeedId } = require('./lib/cipherlinks')
+const FeedKeys = require('./lib/feed-keys')
 
 const GROUP = 'group'
 const MEMBER = 'member'
@@ -79,6 +81,8 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
   const membership = {
     add (groupId, authorId, cb) {
+      if (!isFeed(authorId)) return cb(new Error(`key-store to add authors by feedId, got ${authorId}`))
+
       if (!isReady) return setTimeout(() => membership.add(groupId, authorId, cb), 500)
 
       if (!cache.memberships[authorId]) cache.memberships[authorId] = new Set()
@@ -116,13 +120,23 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   }
 
   function getAuthorKeys (authorId) {
-    return membership.getAuthorGroups(authorId)
-      .map(group.get)
+    const groupKeys = membership.getAuthorGroups(authorId)
+      .map(groupId => {
+        const info = group.get(groupId)
+        if (!info) throw new Error(`unknown group ${groupId}`)
+
+        return info
+      })
+
+    return [
+      ...groupKeys,
+      getSharedDMKey(authorId)
+    ]
   }
 
-  function getSharedKey (authorId) {
+  function getSharedDMKey (authorId) {
     if (!cache.authors[authorId]) {
-      cache.authors[authorId] = buildDMKey(new FeedId(authorId).toBuffer())
+      cache.authors[authorId] = buildDMKey(authorId)
     }
 
     return {
@@ -156,21 +170,20 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     author: {
       groups: membership.getAuthorGroups,
       keys: getAuthorKeys,
-      getSharedKey
+      sharedDMKey: getSharedDMKey
     },
     close: db.close.bind(db)
   }
 }
 
 function BuildDMKey (ssbKeys) {
-  if (!ssbKeys.private) throw new Error('key-store requires ssbKeys.private')
+  const { secret: sk } = new FeedKeys(ssbKeys).toBuffer()
+  const _builder = directMessageKey(sk)
 
-  const mySk = Buffer.from(
-    ssbKeys.private.replace('.ed25519', ''),
-    'base64'
-  )
-
-  return directMessageKey(mySk)
+  return function _buildDMKey (authorId) {
+    const pk = new FeedId(authorId).toBuffer()
+    return _builder(pk)
+  }
 }
 
 function toKeyBuffer (thing) {
