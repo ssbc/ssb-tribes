@@ -4,6 +4,7 @@ const { FeedId, MsgId } = require('../../lib/cipherlinks')
 
 const decodeLeaves = require('./decode-leaves')
 const encodeLeaves = require('./encode-leaves')
+const DHFeedKeys = require('./dh-feed-keys')
 const print = require('./print')
 
 module.exports = {
@@ -11,6 +12,7 @@ module.exports = {
   GroupKey: () => new Secret().toBuffer(),
   FeedId: () => new FeedId().mock().toTFK(),
   PrevMsgId: () => new MsgId().mock().toTFK(),
+  DHFeedKeys,
 
   decodeLeaves,
   encodeLeaves,
@@ -29,3 +31,4 @@ module.exports = {
     return server
   }
 }
+
