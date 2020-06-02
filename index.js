@@ -21,8 +21,8 @@ module.exports = {
       create: 'async'
     },
     author: {
-      keys: 'sync' // should this even be public?
-      // invite: 'async',
+      // groupKeys: 'sync' // should this even be public?
+      // invite: 'async', // TODO
     }
   },
   init: (ssb, config) => {
@@ -37,10 +37,12 @@ module.exports = {
     ssb.addBoxer(content => {
       if (!content.recps.every(r => isCloaked(r) || isFeed(r))) return null
 
-      const recipentKeys = content.recps.map(r => isCloaked(r)
-        ? keystore.group.get(r)
-        : keystore.author.getSharedKey(r)
-      )
+      // TODO ensure only one groupId, and that it's first
+      const recipentKeys = content.recps.map(r => {
+        return isCloaked(r)
+          ? keystore.group.get(r)
+          : keystore.author.sharedDMKey(r)
+      })
       const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
       const msgKey = new SecretKey().toBuffer()
 
@@ -84,21 +86,25 @@ module.exports = {
       key (ciphertext, { author, previous }) {
         // TODO change this to isBox2 (using is-canonical-base64)
         if (!ciphertext.endsWith('.box2')) return null
-
-        const trial_keys = api.author.keys(author)
+        // TODO go upstream and stop this being run 7x times per message!
 
         const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
         const feed_id = new FeedId(author).toTFK()
         const prev_msg_id = new MsgId(previous).toTFK()
 
-        return unboxKey(envelope, feed_id, prev_msg_id, trial_keys)
-        // TODO perhaps modify the addUnboxer api to allow some of the work done
-        // in this step to be passed on to unboxBody
+        const trial_group_keys = keystore.author.groupKeys(author)
+        const key = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
+        // the group recp is only allowed in the first slot,
+        // so we only test group keys in that slot (maxAttempts: 1)
+        if (key) return key
+
+        const trial_dm_key = keystore.author.sharedDMKey(author)
+        return unboxKey(envelope, feed_id, prev_msg_id, [trial_dm_key], { maxAttempts: 16 })
       },
 
       value (ciphertext, { author, previous }, read_key) {
-        // TODO change this to is-box2 using is-canonical-base64 ?
         if (!ciphertext.endsWith('.box2')) return null
+        // TODO change this to is-box2 using is-canonical-base64 ?
 
         const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
 
@@ -162,15 +168,10 @@ module.exports = {
         // removeAuthors
       },
       author: {
-        keys (authorId) {
-          return keystore.author.keys(authorId)
-        }
+        // invite
       }
     }
 
     return api
   }
-}
-
-function canEncrypt (recps) {
 }

@@ -1,9 +1,9 @@
 const test = require('tape')
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
-const keys = require('ssb-keys')
+const { generate } = require('ssb-keys')
 
 const KeyStore = require('../key-store')
-const { GroupKey } = require('./helpers')
+const { GroupKey, DHFeedKeys } = require('./helpers')
 const directMessageKey = require('../lib/direct-message-key')
 const FeedKeys = require('../lib/feed-keys')
 
@@ -13,7 +13,7 @@ function TmpPath () {
 }
 
 test('key-store', t => {
-  const myKeys = buildKeys()
+  const myKeys = generate() // some ssb-keys
 
   const tests = [
     () => {
@@ -100,7 +100,7 @@ test('key-store', t => {
       const keyA = GroupKey()
       const keyB = GroupKey()
 
-      const authorId = keys.generate().id
+      const authorId = generate().id
 
       keyStore.group.add('groupId_A', { key: keyA }, (_, __) => {
         keyStore.group.add('groupId_B', { key: keyB }, (_, __) => {
@@ -117,23 +117,22 @@ test('key-store', t => {
     },
 
     () => {
-      const DESCRIPTION = 'group.addAuthor + author.keys'
+      const DESCRIPTION = 'group.addAuthor + author.groupKeys'
 
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const keyA = GroupKey()
       const keyB = GroupKey()
 
-      const authorId = keys.generate().id
+      const authorId = generate().id
 
       keyStore.group.add('groupId_A', { key: keyA }, (_, __) => {
         keyStore.group.add('groupId_B', { key: keyB }, (_, __) => {
           keyStore.group.addAuthor('groupId_A', authorId, (_, __) => {
             keyStore.group.addAuthor('groupId_B', authorId, (_, __) => {
-              const keys = keyStore.author.keys(authorId)
+              const keys = keyStore.author.groupKeys(authorId)
               const expected = [
                 { key: keyA, scheme: SCHEMES.private_group },
-                { key: keyB, scheme: SCHEMES.private_group },
-                keyStore.author.sharedDMKey(authorId)
+                { key: keyB, scheme: SCHEMES.private_group }
               ]
               t.deepEqual(keys, expected, DESCRIPTION)
 
@@ -145,23 +144,21 @@ test('key-store', t => {
     },
 
     () => {
-      const DESCRIPTION = 'author.keys (no groups)'
+      const DESCRIPTION = 'author.groupKeys (no groups)'
 
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const keyA = GroupKey()
       const keyB = GroupKey()
 
-      const authorId = keys.generate().id
-      const otherAuthorId = keys.generate().id
+      const authorId = generate().id
+      const otherAuthorId = generate().id
 
       keyStore.group.add('groupId_A', { key: keyA }, (_, __) => {
         keyStore.group.add('groupId_B', { key: keyB }, (_, __) => {
           keyStore.group.addAuthor('groupId_A', authorId, (_, __) => {
             keyStore.group.addAuthor('groupId_B', authorId, (_, __) => {
-              const keys = keyStore.author.keys(otherAuthorId)
-              const expected = [
-                keyStore.author.sharedDMKey(otherAuthorId)
-              ]
+              const keys = keyStore.author.groupKeys(otherAuthorId)
+              const expected = []
               t.deepEqual(keys, expected, DESCRIPTION)
 
               keyStore.close()
@@ -172,14 +169,14 @@ test('key-store', t => {
     },
 
     () => {
-      const DESCRIPTION = 'author.keys works after persistence (and ready())'
+      const DESCRIPTION = 'author.groupKeys works after persistence (and ready())'
 
       const storePath = TmpPath()
       const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
       const keyA = GroupKey()
       const keyB = GroupKey()
 
-      const authorId = keys.generate().id
+      const authorId = generate().id
 
       keyStore.group.add('groupId_A', { key: keyA }, (_, __) => {
         keyStore.group.add('groupId_B', { key: keyB }, (_, __) => {
@@ -187,11 +184,10 @@ test('key-store', t => {
             keyStore.group.addAuthor('groupId_B', authorId, (_, __) => {
               keyStore.close(() => {
                 const newKeyStore = KeyStore(storePath, myKeys, () => {
-                  const keys = newKeyStore.author.keys(authorId)
+                  const keys = newKeyStore.author.groupKeys(authorId)
                   const expected = [
                     { key: keyA, scheme: SCHEMES.private_group },
-                    { key: keyB, scheme: SCHEMES.private_group },
-                    keyStore.author.sharedDMKey(authorId)
+                    { key: keyB, scheme: SCHEMES.private_group }
                   ]
                   t.deepEqual(keys, expected, DESCRIPTION)
 
@@ -211,11 +207,9 @@ test('key-store', t => {
       const storePath = TmpPath()
       const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
 
-      const otherKeys = buildKeys() // some other feed
-      const sk = myKeys.buffers.secret
-      const pk = otherKeys.buffers.public
+      const otherKeys = generate() // some other feed
 
-      const expectedDMKey = directMessageKey(sk)(pk)
+      const expectedDMKey = directMessageKey.easy(myKeys)(otherKeys.id)
 
       t.deepEqual(
         keyStore.author.sharedDMKey(otherKeys.id),
@@ -231,16 +225,3 @@ test('key-store', t => {
   t.plan(tests.length)
   tests.forEach(i => i())
 })
-
-function buildKeys () {
-  const ssbKeys = keys.generate()
-
-  return {
-    public: ssbKeys.public,
-    private: ssbKeys.private,
-    // secret: null, // << this is a better name!
-    id: ssbKeys.id,
-
-    buffers: new FeedKeys(ssbKeys).toBuffer()
-  }
-}

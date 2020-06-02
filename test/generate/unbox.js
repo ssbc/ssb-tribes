@@ -1,9 +1,9 @@
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
-const { FeedId } = require('../../lib/cipherlinks')
-const FeedKeys = require('../../lib/feed-keys')
-const directMessageKey = require('../../lib/direct-message-key')
 const { GroupId, GroupKey, Server, print } = require('../helpers')
+// const { FeedId } = require('../../lib/cipherlinks')
+// const FeedKeys = require('../../lib/feed-keys')
+// const directMessageKey = require('../../lib/direct-message-key')
 
 const generators = [
   (i) => {
@@ -84,8 +84,11 @@ const generators = [
         })
       })
     })
-  },
+  }
 
+  // NOTE not sure this is needed as we have direct-message-key vectors
+
+  /*
   (i) => {
     const description = 'open envelope (dm-shared key based on feedId)'
     const server = Server()
@@ -111,10 +114,7 @@ const generators = [
         server.publish(content2, (err, msg) => {
           if (err) throw err
 
-          const { secret: sk } = new FeedKeys(server.keys).toBuffer()
-          const pk = friendId.toBuffer()
-
-          const key = directMessageKey(sk)(pk)
+          const key = directMessageKey.easy(server.keys)(friendId.toSSB())
 
           server.close()
 
@@ -136,6 +136,9 @@ const generators = [
       })
     })
   }
+  */
 ]
 
-generators.forEach((fn, i) => fn(i))
+generators
+  // .slice(2, 3)
+  .forEach((fn, i) => fn(i))

@@ -8,8 +8,6 @@ const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 const { isFeed } = require('ssb-ref')
 
 const directMessageKey = require('./lib/direct-message-key')
-const { FeedId } = require('./lib/cipherlinks')
-const FeedKeys = require('./lib/feed-keys')
 
 const GROUP = 'group'
 const MEMBER = 'member'
@@ -22,7 +20,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     loadState = true
   } = opts
 
-  const buildDMKey = BuildDMKey(ssbKeys)
+  const buildDMKey = directMessageKey.easy(ssbKeys)
 
   mkdirSync(path, { recursive: true })
 
@@ -119,19 +117,14 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     }
   }
 
-  function getAuthorKeys (authorId) {
-    const groupKeys = membership.getAuthorGroups(authorId)
+  function getAuthorGroupKeys (authorId) {
+    return membership.getAuthorGroups(authorId)
       .map(groupId => {
         const info = group.get(groupId)
         if (!info) throw new Error(`unknown group ${groupId}`)
 
         return info
       })
-
-    return [
-      ...groupKeys,
-      getSharedDMKey(authorId)
-    ]
   }
 
   function getSharedDMKey (authorId) {
@@ -169,20 +162,10 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     },
     author: {
       groups: membership.getAuthorGroups,
-      keys: getAuthorKeys,
+      groupKeys: getAuthorGroupKeys,
       sharedDMKey: getSharedDMKey
     },
     close: db.close.bind(db)
-  }
-}
-
-function BuildDMKey (ssbKeys) {
-  const { secret: sk } = new FeedKeys(ssbKeys).toBuffer()
-  const _builder = directMessageKey(sk)
-
-  return function _buildDMKey (authorId) {
-    const pk = new FeedId(authorId).toBuffer()
-    return _builder(pk)
   }
 }
 
