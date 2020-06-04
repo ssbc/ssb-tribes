@@ -1,8 +1,7 @@
 const test = require('tape')
-const { Server } = require('./helpers')
+const { Server, GroupId } = require('./helpers')
 const { FeedId } = require('../lib/cipherlinks')
 
-/*
 test('publish (to groupId)', t => {
   const server = Server()
 
@@ -35,7 +34,23 @@ test('publish (to groupId)', t => {
     })
   })
 })
-*/
+
+test('publish (to groupId we dont have key for)', t => {
+  const server = Server()
+  const groupId = GroupId()
+
+  const content = {
+    type: 'announce',
+    text: 'summer has arrived in wellington!',
+    recps: [groupId]
+  }
+
+  server.publish(content, (err) => {
+    t.true(err.message.match(/unknown groupId/), 'returns arror')
+    server.close()
+    t.end()
+  })
+})
 
 test('publish (DM to feedId)', t => {
   const server = Server()

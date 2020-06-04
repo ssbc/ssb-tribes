@@ -1,10 +1,10 @@
 const { messageId, feedId, tangle } = require('ssb-schema-definitions')()
-const { print } = require('../helpers')
-
 const isCanonicalBase64 = require('is-canonical-base64')
-const cloakedMsgRegex = isCanonicalBase64('%', '\\.cloaked', 32)
 
-const secretKeyRegex = isCanonicalBase64('', '', 32)
+const cloakedMsgRegex = require('../../lib/is-cloaked-msg-id').regex
+const secretKeyRegex = isCanonicalBase64('', '', 32) // no prefix, no suffix, 32 bytes
+
+const { print } = require('../helpers')
 
 // {
 //   type: 'group/add-member',
@@ -50,13 +50,19 @@ const schema = {
     recps: {
       type: 'array',
       minItems: 2,
-      maxItems: 8,
+      maxItems: 16,
       items: {
         anyOf: [
           { $ref: '#/definitions/feedId' },
-          { $ref: '#/definitions/cloakedMessageId' }
+          { type: 'string', pattern: cloakedMsgRegex }
         ]
-      }
+      },
+      additionalProperties: false
+      // if we has JSON schema draft 7 support
+      // items: [
+      //   { type: 'string', pattern: cloakedMsgRegex }
+      // ],
+      // additionalItems: { $ref: '#/definitions/feedId' }
     },
 
     tangles: {
@@ -64,15 +70,13 @@ const schema = {
       required: ['group', 'members'],
       properties: {
         group:   { $ref: '#/definitions/tangle/update' },
-        members: { $ref: '#/definitions/tangle/update' }
+        members: { $ref: '#/definitions/tangle/any' }
       }
     },
 
     definitions: {
       messageId,
       feedId,
-      // TODO extract to ssb-schema-defintions
-      cloakedMessageId: { type: 'string', pattern: cloakedMsgRegex },
       tangle
     }
   },

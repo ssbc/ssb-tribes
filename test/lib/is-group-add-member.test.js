@@ -1,5 +1,9 @@
 const test = require('tape')
 const isValid = require('../../lib/is-group-add-member')
+const { GroupId } = require('../helpers')
+const { FeedId: FI } = require('../../lib/cipherlinks')
+
+const FeedId = () => new FI().mock().toSSB()
 
 const Mock = (overwrite = {}) => {
   const base = {
@@ -9,8 +13,8 @@ const Mock = (overwrite = {}) => {
     initialMsg: '%THxjTGPuXvvxnbnAV7xVuVXdhDcmoNtDDN0j3UTxcd8=.sha256',
     text: 'welcome keks!',                                      // optional
     recps: [
-      '%vof09Dhy3YUat1ylIUVGaCjotAFxE8iGbF6QxLlCWWc=.cloaked',  // group_id
-      '@YXkE3TikkY4GFMX3lzXUllRkNTbj5E+604AkaO1xbz8=.ed25519'   // feed_id (for new person)
+      GroupId()
+      // add 15 feedId
     ],
 
     tangles: {
@@ -29,7 +33,15 @@ const Mock = (overwrite = {}) => {
       }
     }
   }
+  times(15, () => base.recps.push(FeedId()))
+
   return Object.assign(base, overwrite)
+}
+
+function times (n, fn) {
+  for (let i = 0; i < n; i++) {
+    fn(i)
+  }
 }
 
 test('is-group-add-member', t => {
@@ -39,9 +51,28 @@ test('is-group-add-member', t => {
   delete min.text
   t.true(isValid(min), 'minimal')
 
-  const tooFewRecps = Mock()
-  delete tooFewRecps.recps.pop()
-  t.false(isValid(tooFewRecps), 'fails if less than 2 recps')
+  /* recps */
+  const dms = Mock({ recps: [FeedId(), FeedId()] })
+  t.false(isValid(dms), 'must have a group')
+
+  const junkRecps = Mock({ recps: [GroupId(), 'cat'] })
+  console.log('TODO - known failure, not sure why')
+  console.log('recps:', junkRecps.recps)
+  t.false(isValid(junkRecps), 'fails invalid recps')
+
+  const tooManyGroups = Mock({ recps: [GroupId(), GroupId(), FeedId()] })
+  t.false(isValid(tooManyGroups), 'fails if more than one group')
+
+  const groupInWrongSlot = Mock({ recps: [FeedId(), GroupId()] })
+  t.false(isValid(groupInWrongSlot), 'fails if group not in first slot')
+
+  const noAdditions = Mock({ recps: [GroupId()] })
+  t.false(isValid(noAdditions), 'fails if no recps other than group')
+
+  const recps = [GroupId()]
+  times(16, () => recps.push(FeedId()))
+  const tooManyRecps = Mock({ recps })
+  t.false(isValid(tooManyRecps), 'fails if > 16 recps')
 
   // TODO // test more edge cases
 

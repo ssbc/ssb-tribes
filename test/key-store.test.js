@@ -3,9 +3,8 @@ const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 const { generate } = require('ssb-keys')
 
 const KeyStore = require('../key-store')
-const { GroupKey, DHFeedKeys } = require('./helpers')
+const { GroupKey } = require('./helpers')
 const directMessageKey = require('../lib/direct-message-key')
-const FeedKeys = require('../lib/feed-keys')
 
 var i = 0
 function TmpPath () {

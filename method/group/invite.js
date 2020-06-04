@@ -1,18 +1,26 @@
 module.exports = function GroupInvite (ssb, keystore) {
   return function groupInvite (groupId, authorIds, opts = {}, cb) {
-    // TODO cap authorIds to 7 (relevant to maxAttempts for unboxing)
+    const { key, initialMsg } = keystore.group.get(groupId)
+    // const { groupKey, 
+    // TODO cap authorIds to 15 (relevant to maxAttempts for unboxing)
 
     const content = {
       type: 'group/add-member',
       version: 'v1',
-      // groupKey,
-      // initialMsg,
+      groupKey: key.toString('base64'),
+      initialMsg,
       tangles: {
         // TODO figure out root + previous for whole group
-        group: { root: null, previous: null },
+        group: {
+          root: initialMsg,
+          previous: [initialMsg]
+        },
 
         // TODO figure out previous for membership tangle (root is same as group.root)
-        members: { root: null, previous: null }
+        members: {
+          root: initialMsg,
+          previous: [initialMsg]
+        }
       },
       recps: [groupId, ...authorIds]
     }

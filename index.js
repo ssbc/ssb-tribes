@@ -18,11 +18,11 @@ module.exports = {
       register: 'async',
       registerAuthors: 'async',
       // removeAuthors: 'async'
-      create: 'async'
+      create: 'async',
+      invite: 'async' // TODO
     },
     author: {
       // groupKeys: 'sync' // should this even be public?
-      // invite: 'async', // TODO
     }
   },
   init: (ssb, config) => {
@@ -39,9 +39,13 @@ module.exports = {
 
       // TODO ensure only one groupId, and that it's first
       const recipentKeys = content.recps.map(r => {
-        return isCloaked(r)
-          ? keystore.group.get(r)
-          : keystore.author.sharedDMKey(r)
+        if (isCloaked(r)) {
+          const keyInfo = keystore.group.get(r)
+          if (!keyInfo) throw new Error(`unknown groupId ${r}, cannot encrypt message`)
+          return keyInfo
+        }
+
+        return keystore.author.sharedDMKey(r)
       })
       const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
       const msgKey = new SecretKey().toBuffer()
@@ -122,7 +126,7 @@ module.exports = {
     //   - use a dummy flume-view to tap into unseen messages
     //   - discovering new keys triggers re-indexes of other views
 
-    const hermes = Method(ssb, keystore, state) // our scutlebutt database helper!
+    const hermes = Method(ssb, keystore, state) // our helper for sucttlebutt db calls
 
     // TODO put a 'wait' queue around methods which require isReady?
     // (instead of putting setTimout loops!)
@@ -150,7 +154,7 @@ module.exports = {
           hermes.group.create(name, (err, data) => {
             if (err) return cb(err)
 
-            api.group.register(data.groupId, { name, key: data.groupKey }, (err) => {
+            api.group.register(data.groupId, { name, key: data.groupKey, initialMsg: data.groupInitMsg.key }, (err) => {
               if (err) return cb(err)
 
               api.group.registerAuthors(data.groupId, [ssb.id], (err) => {

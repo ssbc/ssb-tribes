@@ -1,33 +1,20 @@
 const test = require('tape')
 const { Server } = require('../../helpers')
-const Method = require('../../../method')
-const { FeedId, MsgId } = require('../../../lib/cipherlinks')
+const { FeedId } = require('../../../lib/cipherlinks')
 
 test('method.group.invite', t => {
   const server = Server()
-  const keystore = {
-  }
 
-  const state = {
-    feedId: new FeedId(server.id).toTFK(),
-    previous: new MsgId(null).toTFK()
-  }
-  server.post(m => {
-    console.log('HERE', m.value.previous)
-    state.previous = new MsgId(m.value.previous).toTFK()
-  })
-
-  // some mock, or a keystore spun up on tmp...
-
-  const method = Method(server, keystore, state)
-
-  method.group.create('the pantheon', (err, data) => {
+  server.private2.group.create('the pantheon', (err, data) => {
     t.error(err)
 
     const { groupId, groupKey, groupInitMsg } = data
-    const authorIds = [1, 2].map(i => new FeedId().mock().toSSB())
+    const authorIds = [
+      new FeedId().mock().toSSB(),
+      new FeedId().mock().toSSB()
+    ]
 
-    method.group.invite(groupId, authorIds, { text: 'welcome friends' }, (err, invite) => {
+    server.private2.group.invite(groupId, authorIds, { text: 'welcome friends' }, (err, invite) => {
       t.error(err)
 
       server.get({ id: invite.key, private: true }, (_, value) => {
@@ -35,16 +22,26 @@ test('method.group.invite', t => {
           type: 'group/add-member',
           version: 'v1',
           groupKey: groupKey.toString('base64'),
-          initialMsg: groupInitMsg,
+          initialMsg: groupInitMsg.key,
 
           text: 'welcome friends',
           recps: [groupId, ...authorIds],
 
           tangles: {
             group: { root: groupInitMsg.key, previous: [groupInitMsg.key] },
-            members: { root: null, previous: null }
+            members: { root: groupInitMsg.key, previous: [groupInitMsg.key] },
           }
         }
+        Object.keys(expected).forEach(k => {
+          if (expected[k] !== value.content[k]) {
+            console.log('---------------')
+            console.log(k)
+            console.log('expected', expected[k])
+            console.log('actually', value.content[k])
+          }
+        })
+        // console.log(JSON.stringify(value.content, null, 2))
+        // console.log('expected', JSON.stringify(expected, null, 2))
 
         t.deepEqual(value.content, expected, 'publishes an invite!')
 
