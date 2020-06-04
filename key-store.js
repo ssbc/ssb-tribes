@@ -73,6 +73,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       )
     },
     get (groupId) {
+      if (!isReady) throw new Error('key-store still loading')
       return cache.groups[groupId]
     }
   }
@@ -169,6 +170,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   }
 }
 
+// TODO refactor lib/secret-key and use that instead here
 function toKeyBuffer (thing) {
   const buf = Buffer.isBuffer(thing)
     ? thing

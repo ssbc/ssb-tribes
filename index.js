@@ -1,11 +1,9 @@
 const { join } = require('path')
 const pull = require('pull-stream')
-const { box, unboxKey, unboxBody } = require('envelope-js')
-const { isFeed } = require('ssb-ref')
 
 const KeyStore = require('./key-store')
+const Envelope = require('./envelope')
 const { FeedId, MsgId } = require('./lib/cipherlinks')
-const SecretKey = require('./lib/secret-key')
 const isCloaked = require('./lib/is-cloaked-msg-id')
 
 const Method = require('./method')
@@ -26,107 +24,61 @@ module.exports = {
     }
   },
   init: (ssb, config) => {
-    var keystore
     var state = {
-      isReady: false,
       feedId: new FeedId(ssb.id).toTFK(),
-      previous: undefined
+      previous: undefined,
+
+      loading: {
+        previous: true,
+        keystore: true
+      },
+      get isReady () {
+        return !this.loading.keystore && !this.loading.previous
+      }
     }
 
-    /* register the boxer / unboxer */
-    ssb.addBoxer(content => {
-      if (!content.recps.every(r => isCloaked(r) || isFeed(r))) return null
+    /* load the keystore for tracking group keys */
+    var keystore = KeyStore(join(config.path, 'private2/keystore'), ssb.keys, () => {
+      state.loading.keystore = false
+    })
+    ssb.close.hook(function (fn, args) {
+      keystore.close()
+      return fn.apply(this, args)
+    })
 
-      // TODO ensure only one groupId, and that it's first
-      const recipentKeys = content.recps.map(r => {
-        if (isCloaked(r)) {
-          const keyInfo = keystore.group.get(r)
-          if (!keyInfo) throw new Error(`unknown groupId ${r}, cannot encrypt message`)
-          return keyInfo
+    /* track our most recent msg key - "previous"` - for boxer */
+    ssb.post(m => {
+      state.previous = new MsgId(m.key).toTFK()
+    })
+    pull(
+      // TODO - research best source, is this an index or raw log?
+      ssb.createUserStream({ id: ssb.id, reverse: true, limit: 1 }),
+      pull.collect((err, msgs) => {
+        if (err) throw err
+
+        if (!state.previous) { // in case it's already been set by listener above
+          state.previous = msgs.length
+            ? new MsgId(msgs[0].key).toTFK()
+            : new MsgId(null).toTFK()
         }
-
-        return keystore.author.sharedDMKey(r)
+        state.loading.previous = false
       })
-      const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
-      const msgKey = new SecretKey().toBuffer()
+    )
 
-      const envelope = box(plaintext, state.feedId, state.previous, msgKey, recipentKeys)
-      return envelope.toString('base64') + '.box2'
-    })
-    ssb.addUnboxer({
-      init (done) {
-        if (!ssb.keys) throw new Error('expect ssb.keys to be present')
+    /* register the boxer / unboxer */
+    const { boxer, unboxer } = Envelope(ssb, keystore, state)
+    ssb.addBoxer(boxer)
+    ssb.addUnboxer({ init: checkReady, ...unboxer })
+    function checkReady (done) {
+      if (state.isReady) done()
+      else setTimeout(() => checkReady(done), 500)
+    }
 
-        // ensure keystore is re-loaded from disk before continuing
-        keystore = KeyStore(join(config.path, 'private2/keystore'), ssb.keys, () => {
-          // track our current `previous` msg_id (needed for sync boxing)
-          pull(
-            // TODO - research best source, is this an index or raw log?
-            ssb.createUserStream({ id: ssb.id, reverse: true, limit: 1 }),
-            pull.collect((err, msgs) => {
-              if (err) throw err
-              state.previous = msgs.length
-                ? new MsgId(msgs[0].key).toTFK()
-                : new MsgId(null).toTFK()
-
-              // TODO start this immediately, not in this collect
-              ssb.post(m => {
-                state.previous = new MsgId(m.key).toTFK()
-              })
-
-              state.isReady = true
-              done()
-            })
-          )
-        })
-
-        // if ssb closes, stop keystore (runs levelDB)
-        ssb.close.hook(function (fn, args) {
-          keystore.close()
-          return fn.apply(this, args)
-        })
-      },
-
-      key (ciphertext, { author, previous }) {
-        // TODO change this to isBox2 (using is-canonical-base64)
-        if (!ciphertext.endsWith('.box2')) return null
-        // TODO go upstream and stop this being run 7x times per message!
-
-        const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
-        const feed_id = new FeedId(author).toTFK()
-        const prev_msg_id = new MsgId(previous).toTFK()
-
-        const trial_group_keys = keystore.author.groupKeys(author)
-        const key = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
-        // the group recp is only allowed in the first slot,
-        // so we only test group keys in that slot (maxAttempts: 1)
-        if (key) return key
-
-        const trial_dm_key = keystore.author.sharedDMKey(author)
-        return unboxKey(envelope, feed_id, prev_msg_id, [trial_dm_key], { maxAttempts: 16 })
-      },
-
-      value (ciphertext, { author, previous }, read_key) {
-        if (!ciphertext.endsWith('.box2')) return null
-        // TODO change this to is-box2 using is-canonical-base64 ?
-
-        const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
-
-        const feed_id = new FeedId(author).toTFK()
-        const prev_msg_id = new MsgId(previous).toTFK()
-
-        const plaintext = unboxBody(envelope, feed_id, prev_msg_id, read_key)
-        if (!plaintext) return
-
-        return JSON.parse(plaintext.toString('utf8'))
-      }
-    })
-
-    // listen for new key-entrust messages
+    // TODO listen for new key-entrust messages
     //   - use a dummy flume-view to tap into unseen messages
     //   - discovering new keys triggers re-indexes of other views
 
-    const hermes = Method(ssb, keystore, state) // our helper for sucttlebutt db calls
+    const scuttle = Method(ssb, keystore, state) // ssb db methods
 
     // TODO put a 'wait' queue around methods which require isReady?
     // (instead of putting setTimout loops!)
@@ -152,7 +104,7 @@ module.exports = {
           // opts currently unused
           if (!state.isReady) return setTimeout(() => api.group.create(opts, cb), 500)
 
-          hermes.group.init((err, data) => {
+          scuttle.group.init((err, data) => {
             if (err) return cb(err)
 
             api.group.register(data.groupId, { key: data.groupKey, initialMsg: data.groupInitMsg.key }, (err) => {
@@ -167,7 +119,7 @@ module.exports = {
         },
         invite (groupId, authorIds, opts, cb) {
           if (!state.isReady) return setTimeout(() => api.group.invite(groupId, authorIds, opts, cb), 500)
-          hermes.group.addMember(groupId, authorIds, opts, cb)
+          scuttle.group.addMember(groupId, authorIds, opts, cb)
         }
         // remove
         // removeAuthors
