@@ -3,18 +3,18 @@ const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
 const Secret = require('../../lib/secret-key')
 const groupId = require('../../lib/group-id')
+const isValid = require('../../lib/is-group-init')
 
 module.exports = function GroupCreate (ssb, _, state) {
-  return function groupCreate (name = '', cb) {
+  return function groupCreate (cb) {
     const groupKey = new Secret()
     const content = {
       type: 'group/init',
-      name: { set: name },
       tangles: {
         group: { root: null, previous: null }
       }
     }
-    // TODO spec.isValid(content)
+    if (!isValid(content)) return cb(new Error(isValid.errorsString))
 
     /* enveloping manually - required for just this group initialisation */
     const plain = Buffer.from(JSON.stringify(content), 'utf8')

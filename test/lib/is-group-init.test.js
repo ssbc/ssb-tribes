@@ -4,7 +4,6 @@ const isValid = require('../../lib/is-group-init')
 const Mock = (overwrite = {}) => {
   const base = {
     type: 'group/init',
-    name: { set: 'pacific butts consortium' },  // optional
     tangles: {
       group: {
         root: null,
@@ -18,7 +17,6 @@ test('is-group-init', t => {
   t.true(isValid(Mock()), 'fully featured')
 
   const min = Mock()
-  delete min.name
   t.true(isValid(min), 'minimal')
 
   const noTangle = Mock()
@@ -38,5 +36,7 @@ test('is-group-init', t => {
   wrongPrev.tangles.group.previous = ['%yip', '%yap']
   t.false(isValid(wrongPrev), 'fails if wrong tangle.previous')
 
+  const extrajunk = Mock({ name: 'doop' })
+  t.false(isValid(extrajunk), 'fails if anything is added')
   t.end()
 })

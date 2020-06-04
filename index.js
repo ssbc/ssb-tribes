@@ -148,13 +148,14 @@ module.exports = {
             })
           )
         },
-        create (name, cb) {
-          if (!state.isReady) return setTimeout(() => api.group.create(name, cb), 500)
+        create (opts, cb) {
+          // opts currently unused
+          if (!state.isReady) return setTimeout(() => api.group.create(opts, cb), 500)
 
-          hermes.group.create(name, (err, data) => {
+          hermes.group.init((err, data) => {
             if (err) return cb(err)
 
-            api.group.register(data.groupId, { name, key: data.groupKey, initialMsg: data.groupInitMsg.key }, (err) => {
+            api.group.register(data.groupId, { key: data.groupKey, initialMsg: data.groupInitMsg.key }, (err) => {
               if (err) return cb(err)
 
               api.group.registerAuthors(data.groupId, [ssb.id], (err) => {
@@ -166,7 +167,7 @@ module.exports = {
         },
         invite (groupId, authorIds, opts, cb) {
           if (!state.isReady) return setTimeout(() => api.group.invite(groupId, authorIds, opts, cb), 500)
-          hermes.group.invite(groupId, authorIds, opts, cb)
+          hermes.group.addMember(groupId, authorIds, opts, cb)
         }
         // remove
         // removeAuthors

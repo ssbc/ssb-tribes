@@ -2,7 +2,7 @@ const test = require('tape')
 const { Server } = require('../../helpers')
 const { FeedId } = require('../../../lib/cipherlinks')
 
-test('method.group.invite', t => {
+test('private2.group.invite', t => {
   const server = Server()
 
   server.private2.group.create('the pantheon', (err, data) => {
@@ -29,19 +29,9 @@ test('method.group.invite', t => {
 
           tangles: {
             group: { root: groupInitMsg.key, previous: [groupInitMsg.key] },
-            members: { root: groupInitMsg.key, previous: [groupInitMsg.key] },
+            members: { root: groupInitMsg.key, previous: [groupInitMsg.key] }
           }
         }
-        Object.keys(expected).forEach(k => {
-          if (expected[k] !== value.content[k]) {
-            console.log('---------------')
-            console.log(k)
-            console.log('expected', expected[k])
-            console.log('actually', value.content[k])
-          }
-        })
-        // console.log(JSON.stringify(value.content, null, 2))
-        // console.log('expected', JSON.stringify(expected, null, 2))
 
         t.deepEqual(value.content, expected, 'publishes an invite!')
 

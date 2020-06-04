@@ -2,7 +2,6 @@ const { print } = require('../helpers')
 
 // {
 //   type: 'group/init'
-//   name: { set: 'pacific butts consortium' },  // optional
 //   tangles: {
 //     group: {
 //       root: null,
@@ -20,14 +19,6 @@ const schema = {
       pattern: '^group/init$'
     },
 
-    name: {
-      type: 'object',
-      required: ['set'],
-      properties: {
-        set: { type: 'string' }
-      }
-    },
-
     tangles: {
       type: 'object',
       required: ['group'],
@@ -42,7 +33,8 @@ const schema = {
         }
       }
     }
-  }
+  },
+  additionalProperties: false
 }
 
 print('schema/group-init.schema.json', schema)

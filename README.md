@@ -46,12 +46,12 @@ A Secret-Stack server running the plugins `ssb-db` and `ssb-private2`
 
 ## API
 
-### `ssb.private2.group.create(name, cb)`
+### `ssb.private2.group.create(opts, cb)`
 
 Mint a new private group.
 
 where:
-- `name` *String* is a name you'd like to give the group
+- `opts` *Object* (currently not used)
 - `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
   - `groupId` *String* - a cipherlink that's safe to use publicly to name the group, and is used in `recps` to trigger enveloping messages to that group
   - `groupKey` *Buffer*  - the symmetric key used for encryption by the group
@@ -60,7 +60,7 @@ where:
 _This method calls `group.add` and `group.addAuthors` for you (adding you)_
 
 
-### `ssb.private2.group.inviteAuthors(groupId, [authorId], opts, cb)`
+### `ssb.private2.group.invite(groupId, [authorId], opts, cb)`
 
 Adds an author to a group you belong to.
 This publishes a message that both this new author AND the group can see, and contains the info
@@ -102,30 +102,6 @@ where:
 - `groupId` *String* - is a the id for the group you want to not these users are part of
 - `[authorId]` - *Array* is a connection of feedIds
 - `cb` *Function* - has signature `cb(err, success)`
-
-
-### `ssb.private2.author.keys(authorId, cb)`
-
-Get all the keys that a message published by `authorId` could have used to encrypt with.
-`cb` has signature `cb(err, keys)` where `keys` is an Array of Buffers.
-
-This is used for suppliying `trial_keys` to `envelope-js`'s unbox method.
-
-_NOTE: mainly used internally_
-
-
----
-
-
-### `ssb.private2.group.removeAuthors(groupId, [authorId], cb)`
-:warning: NOT YET IMPLEMENTED
-
-Where cb has signature `cb(err: Error, success: Boolean)`
-
-
-
-### `ssb.private2.group.remove(groupId, cb)`
-:warning: NOT YET IMPLEMENTED
 
 
 ## Questions
