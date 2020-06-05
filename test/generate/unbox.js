@@ -1,7 +1,7 @@
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
 
 const { GroupId, GroupKey, Server, print } = require('../helpers')
-// const { FeedId } = require('../../lib/cipherlinks')
+const { MsgId } = require('../../lib/cipherlinks')
 // const FeedKeys = require('../../lib/feed-keys')
 // const directMessageKey = require('../../lib/direct-message-key')
 
@@ -10,10 +10,11 @@ const generators = [
     const description = 'open envelope (group_keys + previous === null)'
     const server = Server()
 
-    const groupKey = GroupKey()
     const groupId = GroupId()
+    const groupKey = GroupKey()
+    const root = new MsgId().mock().toSSB()
 
-    server.private2.group.register(groupId, { key: groupKey }, (_, success) => {
+    server.private2.group.register(groupId, { key: groupKey, root }, (_, success) => {
       const content = {
         type: 'alert',
         text: 'get ready to scuttle!',
@@ -51,10 +52,11 @@ const generators = [
     const content1 = { type: 'first' }
 
     server.publish(content1, (_, firstMsg) => {
-      const groupKey = GroupKey()
       const groupId = GroupId()
+      const groupKey = GroupKey()
+      const root = new MsgId().mock().toSSB()
 
-      server.private2.group.register(groupId, { key: groupKey }, (_, success) => {
+      server.private2.group.register(groupId, { key: groupKey, root }, (_, success) => {
         const content2 = {
           type: 'alert',
           text: 'get ready to scuttle!',
@@ -101,8 +103,9 @@ const generators = [
     server.publish(content1, (_, firstMsg) => {
       const groupId = GroupId()
       const groupKey = GroupKey()
+      const root = new MsgId().mock().toSSB()
 
-      server.private2.group.register(groupId, { key: groupKey }, (_, success) => {
+      server.private2.group.register(groupId, { key: groupKey, root }, (_, success) => {
         const friendId = new FeedId().mock()
 
         const content2 = {

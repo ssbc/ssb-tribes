@@ -22,7 +22,7 @@ test('private2.group.invite', t => {
           type: 'group/add-member',
           version: 'v1',
           groupKey: groupKey.toString('base64'),
-          initialMsg: groupInitMsg.key,
+          root: groupInitMsg.key,
 
           text: 'welcome friends',
           recps: [groupId, ...authorIds],

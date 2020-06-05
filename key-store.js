@@ -49,7 +49,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       try { info.key = toKeyBuffer(info.key) }
       catch (e) { return cb(e) }
 
-      if (!isMsg(info.initialMsg)) return cb(new Error(`key-store expects initialMsg got ${info.initialMsg}`))
+      if (!isMsg(info.root)) return cb(new Error(`key-store expects root got ${info.root}`))
 
       if (!info.scheme) info.scheme = SCHEMES.private_group
 

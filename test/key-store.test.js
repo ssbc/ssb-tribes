@@ -25,7 +25,7 @@ test('key-store', t => {
 
       const keyStore = KeyStore(TmpPath(), myKeys)
 
-      keyStore.group.add('junk', { key: GroupKey(), initialMsg: MessageId() }, (err) => {
+      keyStore.group.add('junk', { key: GroupKey(), root: MessageId() }, (err) => {
         t.match(err && err.message, /expected a groupId/, DESCRIPTION)
         keyStore.close()
       })
@@ -36,19 +36,19 @@ test('key-store', t => {
 
       const keyStore = KeyStore(TmpPath(), myKeys)
 
-      keyStore.group.add(GroupId(), { key: 'junk', initialMsg: MessageId() }, (err) => {
+      keyStore.group.add(GroupId(), { key: 'junk', root: MessageId() }, (err) => {
         t.match(err && err.message, /invalid groupKey/, DESCRIPTION)
         keyStore.close()
       })
     },
 
     () => {
-      const DESCRIPTION = 'group.add (error if bad initialMsg)'
+      const DESCRIPTION = 'group.add (error if bad root)'
 
       const keyStore = KeyStore(TmpPath(), myKeys)
 
-      keyStore.group.add(GroupId(), { key: GroupKey(), initialMsg: 'dog' }, (err) => {
-        t.match(err && err.message, /expects initialMsg/, DESCRIPTION)
+      keyStore.group.add(GroupId(), { key: GroupKey(), root: 'dog' }, (err) => {
+        t.match(err && err.message, /expects root/, DESCRIPTION)
         keyStore.close()
       })
     },
@@ -59,10 +59,10 @@ test('key-store', t => {
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId = GroupId()
       const key = GroupKey()
-      const initialMsg = MessageId()
+      const root = MessageId()
 
-      keyStore.group.add(groupId, { key, initialMsg }, (_, data) => {
-        keyStore.group.add(groupId, { key, initialMsg }, (err) => {
+      keyStore.group.add(groupId, { key, root }, (_, data) => {
+        keyStore.group.add(groupId, { key, root }, (err) => {
           t.match(err && err.message, /key-store already contains group/, DESCRIPTION)
           keyStore.close()
         })
@@ -75,11 +75,11 @@ test('key-store', t => {
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId = GroupId()
       const key = GroupKey()
-      const initialMsg = MessageId()
+      const root = MessageId()
 
-      keyStore.group.add(groupId, { key, initialMsg }, (_, data) => {
+      keyStore.group.add(groupId, { key, root }, (_, data) => {
         const info = keyStore.group.get(groupId)
-        t.deepEqual(info, { key, initialMsg, scheme: SCHEMES.private_group }, DESCRIPTION)
+        t.deepEqual(info, { key, root, scheme: SCHEMES.private_group }, DESCRIPTION)
 
         keyStore.close()
       })
@@ -91,16 +91,16 @@ test('key-store', t => {
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId = GroupId()
       const key = GroupKey()
-      const initialMsg = MessageId()
+      const root = MessageId()
 
-      keyStore.group.add(groupId, { key, initialMsg }, (err, data) => {
+      keyStore.group.add(groupId, { key, root }, (err, data) => {
         if (err) throw err
 
         keyStore.group.list((err, data) => {
           if (err) throw err
           t.deepEqual(
             data,
-            { [groupId]: { key, initialMsg, scheme: SCHEMES.private_group } },
+            { [groupId]: { key, root, scheme: SCHEMES.private_group } },
             DESCRIPTION
           )
 
@@ -117,11 +117,11 @@ test('key-store', t => {
       const groupId_B = GroupId()
       const keyA = GroupKey()
       const keyB = GroupKey()
-      const initialMsg_A = MessageId()
-      const initialMsg_B = MessageId()
+      const root_A = MessageId()
+      const root_B = MessageId()
 
-      keyStore.group.add(groupId_A, { key: keyA, initialMsg: initialMsg_A }, (_, __) => {
-        keyStore.group.add(groupId_B, { key: keyB, initialMsg: initialMsg_B }, (_, __) => {
+      keyStore.group.add(groupId_A, { key: keyA, root: root_A }, (_, __) => {
+        keyStore.group.add(groupId_B, { key: keyB, root: root_B }, (_, __) => {
           keyStore.group.addAuthor(groupId_A, '@mix', (err) => {
             // console.log('ERRROR', err)
             t.true(err, DESCRIPTION)
@@ -139,13 +139,13 @@ test('key-store', t => {
       const groupId_B = GroupId()
       const keyA = GroupKey()
       const keyB = GroupKey()
-      const initialMsg_A = MessageId()
-      const initialMsg_B = MessageId()
+      const root_A = MessageId()
+      const root_B = MessageId()
 
       const authorId = generate().id
 
-      keyStore.group.add(groupId_A, { key: keyA, initialMsg: initialMsg_A }, (_, __) => {
-        keyStore.group.add(groupId_B, { key: keyB, initialMsg: initialMsg_B }, (_, __) => {
+      keyStore.group.add(groupId_A, { key: keyA, root: root_A }, (_, __) => {
+        keyStore.group.add(groupId_B, { key: keyB, root: root_B }, (_, __) => {
           keyStore.group.addAuthor(groupId_A, authorId, (_, __) => {
             keyStore.group.addAuthor(groupId_B, authorId, (_, __) => {
               const groups = keyStore.author.groups(authorId)
@@ -166,21 +166,21 @@ test('key-store', t => {
       const groupId_B = GroupId()
       const keyA = GroupKey()
       const keyB = GroupKey()
-      const initialMsg_A = MessageId()
-      const initialMsg_B = MessageId()
+      const root_A = MessageId()
+      const root_B = MessageId()
 
       const authorId = generate().id
 
-      keyStore.group.add(groupId_A, { key: keyA, initialMsg: initialMsg_A }, (err, __) => {
+      keyStore.group.add(groupId_A, { key: keyA, root: root_A }, (err, __) => {
         if (err) throw err
-        keyStore.group.add(groupId_B, { key: keyB, initialMsg: initialMsg_B }, (err, __) => {
+        keyStore.group.add(groupId_B, { key: keyB, root: root_B }, (err, __) => {
           if (err) throw err
           keyStore.group.addAuthor(groupId_A, authorId, (_, __) => {
             keyStore.group.addAuthor(groupId_B, authorId, (_, __) => {
               const keys = keyStore.author.groupKeys(authorId)
               const expected = [
-                { key: keyA, initialMsg: initialMsg_A, scheme: SCHEMES.private_group },
-                { key: keyB, initialMsg: initialMsg_B, scheme: SCHEMES.private_group }
+                { key: keyA, root: root_A, scheme: SCHEMES.private_group },
+                { key: keyB, root: root_B, scheme: SCHEMES.private_group }
               ]
               t.deepEqual(keys, expected, DESCRIPTION)
 
@@ -199,15 +199,15 @@ test('key-store', t => {
       const groupId_B = GroupId()
       const keyA = GroupKey()
       const keyB = GroupKey()
-      const initialMsg_A = MessageId()
-      const initialMsg_B = MessageId()
+      const root_A = MessageId()
+      const root_B = MessageId()
 
       const authorId = generate().id
       const otherAuthorId = generate().id
 
-      keyStore.group.add(groupId_A, { key: keyA, initialMsg: initialMsg_A }, (err, __) => {
+      keyStore.group.add(groupId_A, { key: keyA, root: root_A }, (err, __) => {
         if (err) throw err
-        keyStore.group.add(groupId_B, { key: keyB, initialMsg: initialMsg_B }, (err, __) => {
+        keyStore.group.add(groupId_B, { key: keyB, root: root_B }, (err, __) => {
           if (err) throw err
           keyStore.group.addAuthor(groupId_A, authorId, (_, __) => {
             keyStore.group.addAuthor(groupId_B, authorId, (_, __) => {
@@ -231,14 +231,14 @@ test('key-store', t => {
       const groupId_B = GroupId()
       const keyA = GroupKey()
       const keyB = GroupKey()
-      const initialMsg_A = MessageId()
-      const initialMsg_B = MessageId()
+      const root_A = MessageId()
+      const root_B = MessageId()
 
       const authorId = generate().id
 
-      keyStore.group.add(groupId_A, { key: keyA, initialMsg: initialMsg_A }, (err, __) => {
+      keyStore.group.add(groupId_A, { key: keyA, root: root_A }, (err, __) => {
         if (err) throw err
-        keyStore.group.add(groupId_B, { key: keyB, initialMsg: initialMsg_B }, (err, __) => {
+        keyStore.group.add(groupId_B, { key: keyB, root: root_B }, (err, __) => {
           if (err) throw err
           keyStore.group.addAuthor(groupId_A, authorId, (_, __) => {
             keyStore.group.addAuthor(groupId_B, authorId, (_, __) => {
@@ -250,8 +250,8 @@ test('key-store', t => {
                   const compare = (a, b) => a.key < b.key ? -1 : 1
                   const keys = newKeyStore.author.groupKeys(authorId)
                   const expected = [
-                    { key: keyA, initialMsg: initialMsg_A, scheme: SCHEMES.private_group },
-                    { key: keyB, initialMsg: initialMsg_B, scheme: SCHEMES.private_group }
+                    { key: keyA, root: root_A, scheme: SCHEMES.private_group },
+                    { key: keyB, root: root_B, scheme: SCHEMES.private_group }
                   ]
                   t.deepEqual(keys.sort(compare), expected.sort(compare), DESCRIPTION)
 

@@ -64,7 +64,7 @@ _This method calls `group.add` and `group.addAuthors` for you (adding you)_
 
 Adds an author to a group you belong to.
 This publishes a message that both this new author AND the group can see, and contains the info
-needed to get the new person started (the `groupKey` and `initialMsg`).
+needed to get the new person started (the `groupKey` and `root`).
 
 where:
 - `groupId` *String* - is a cloaked id for a group you're a part of

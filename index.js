@@ -110,7 +110,7 @@ module.exports = {
           scuttle.group.init((err, data) => {
             if (err) return cb(err)
 
-            api.group.register(data.groupId, { key: data.groupKey, initialMsg: data.groupInitMsg.key }, (err) => {
+            api.group.register(data.groupId, { key: data.groupKey, root: data.groupInitMsg.key }, (err) => {
               if (err) return cb(err)
 
               api.group.registerAuthors(data.groupId, [ssb.id], (err) => {

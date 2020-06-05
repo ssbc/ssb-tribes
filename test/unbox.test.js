@@ -28,9 +28,9 @@ test('unbox', t => {
       pull.values(trial_keys),
       pull.asyncMap(({ key }, done) => {
         const groupId = GroupId() // doesn't matter
-        const initialMsg = new MsgId().mock().toSSB()
+        const root = new MsgId().mock().toSSB()
 
-        server.private2.group.register(groupId, { key, initialMsg }, (err, data) => {
+        server.private2.group.register(groupId, { key, root }, (err, data) => {
           if (err) throw err
           server.private2.group.registerAuthors(groupId, authorIds, done)
         })

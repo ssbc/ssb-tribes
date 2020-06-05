@@ -10,7 +10,7 @@ const { print } = require('../helpers')
 //   type: 'group/add-member',
 //   version: 'v1',
 //   groupKey: '3YUat1ylIUVGaCjotAvof09DhyFxE8iGbF6QxLlCWWc=',
-//   initialMsg: '%THxjTGPuXvvxnbnAV7xVuVXdhDcmoNtDDN0j3UTxcd8=.sha256',
+//   root: '%THxjTGPuXvvxnbnAV7xVuVXdhDcmoNtDDN0j3UTxcd8=.sha256',
 //   text: 'welcome keks!',                                      // optional
 //   recps: [
 //     '%vof09Dhy3YUat1ylIUVGaCjotAFxE8iGbF6QxLlCWWc=.cloaked',  // group_id
@@ -37,13 +37,13 @@ const { print } = require('../helpers')
 const schema = {
   $schema: 'http://json-schema.org/schema#',
   type: 'object',
-  required: ['type', 'version', 'groupKey', 'initialMsg', 'tangles'],
+  required: ['type', 'version', 'groupKey', 'root', 'tangles'],
   properties: {
     type:       { type: 'string', pattern: '^group/add-member$' },
     version:    { type: 'string', pattern: '^v1$' },
 
     groupKey:   { type: 'string', pattern: secretKeyRegex },
-    initialMsg: { $ref: '#/definitions/messageId' },
+    root: { $ref: '#/definitions/messageId' },
 
     text:       { type: 'string' },
 
