@@ -1,5 +1,5 @@
 const { mkdirSync } = require('fs')
-const level = require('level')
+const Level = require('level')
 const charwise = require('charwise')
 const pull = require('pull-stream')
 const { read } = require('pull-level')
@@ -33,7 +33,10 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     authors: {}      // maps authorId > { key, scheme: SharedDMKey } for that author
   }
 
-  const db = level(path, { keyEncoding: charwise })
+  const level = Level(path, {
+    keyEncoding: charwise,
+    valueEncoding: InfoEncoding()
+  })
 
   // TODO make these raw methods, wrap them in "wait" when exporting API
   const group = {
@@ -43,7 +46,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
       if (!isCloaked(groupId)) return cb(new Error(`key-store expected a groupId, got ${groupId}`))
 
-      // checks key is right shape (can be converted to a 32 Byte buffer)
+      // convert to 32 Byte buffer
       try { info.key = toKeyBuffer(info.key) }
       catch (e) { return cb(e) }
 
@@ -53,7 +56,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
 
       cache.groups[groupId] = info
-      db.put([GROUP, groupId, Date.now()], serialize(info), cb)
+      level.put([GROUP, groupId, Date.now()], info, cb)
     },
     get (groupId) {
       return cache.groups[groupId]
@@ -61,13 +64,13 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
     readPersisted (cb) {
       pull(
-        read(db, {
+        read(level, {
           lt: [GROUP + '~', undefined, undefined], // "group~" is just above "group" in charwise sort
           gt: [GROUP, null, null]
         }),
         pull.map(({ key, value: info }) => {
           const [_, groupId, createdAt] = key
-          return { [groupId]: deserialize(info) }
+          return { [groupId]: info }
         }),
         pull.collect((err, pairs) => {
           if (err) return cb(err)
@@ -83,7 +86,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       if (!cache.memberships[authorId]) cache.memberships[authorId] = new Set()
 
       cache.memberships[authorId].add(groupId)
-      db.put([MEMBER, authorId, groupId], groupId, cb)
+      level.put([MEMBER, authorId, groupId], groupId, cb)
     },
     getAuthorGroups (authorId) {
       return Array.from(cache.memberships[authorId] || [])
@@ -91,7 +94,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
     readPersisted (cb) {
       pull(
-        read(db, {
+        read(level, {
           lt: [MEMBER + '~', undefined, undefined], // "member~" is just above "member" in charwise sort
           gt: [MEMBER, null, null]
         }),
@@ -166,7 +169,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       groupKeys: getAuthorGroupKeys,      // sync (ssb-db boxer/unboxer requires sync)
       sharedDMKey: getSharedDMKey         // sync
     },
-    close: db.close.bind(db)
+    close: level.close.bind(level)
   }
 
   function patient (fn) {
@@ -179,6 +182,27 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   }
 }
 
+function InfoEncoding () {
+  return {
+    encode (obj) {
+      if (!obj.key) return JSON.stringify(obj)
+
+      return JSON.stringify({
+        ...obj,
+        key: obj.key.toString('base64')
+      })
+    },
+    decode (str) {
+      var info = JSON.parse(str)
+      if (info.key) info.key = toKeyBuffer(info.key)
+
+      return info
+    },
+    buffer: false,
+    type: 'keystore-info-encoding'
+  }
+}
+
 function toKeyBuffer (thing) {
   const buf = Buffer.isBuffer(thing)
     ? thing
@@ -186,22 +210,6 @@ function toKeyBuffer (thing) {
 
   if (buf.length !== KEY_LENGTH) throw new Error(`invalid groupKey, expected ${KEY_LENGTH} Bytes, got ${buf.length}`)
   return buf
-}
-
-function serialize (obj) {
-  return JSON.stringify({
-    ...obj,
-    key: obj.key.toString('base64')
-  })
-}
-
-function deserialize (info) {
-  var i = JSON.parse(info)
-
-  return {
-    ...i,
-    key: toKeyBuffer(i.key)
-  }
 }
 
 function noop () {}
