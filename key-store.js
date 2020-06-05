@@ -5,9 +5,10 @@ const pull = require('pull-stream')
 const { read } = require('pull-level')
 const KEY_LENGTH = require('sodium-native').crypto_secretbox_KEYBYTES
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
-const { isFeed } = require('ssb-ref')
+const { isFeed, isMsg } = require('ssb-ref')
 
 const directMessageKey = require('./lib/direct-message-key')
+const isCloaked = require('./lib/is-cloaked-msg-id')
 
 const GROUP = 'group'
 const MEMBER = 'member'
@@ -32,29 +33,36 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     authors: {}      // maps authorId > { key, scheme: SharedDMKey } for that author
   }
 
-  const db = level(path, { valueEncoding: charwise })
+  const db = level(path, { keyEncoding: charwise })
 
+  // TODO make these raw methods, wrap them in "wait" when exporting API
   const group = {
     add (groupId, info, cb) {
+      if (!isReady) return setTimeout(() => group.add(groupId, info, cb), 500)
+
+      if (cache.groups[groupId]) return cb(new Error(`key-store already contains group ${groupId}, cannot add twice`))
+      // TODO more nuance - don't bother with error if the info is the same?
+
+      if (!isCloaked(groupId)) return cb(new Error(`key-store expected a groupId, got ${groupId}`))
+
       // checks key is right shape (can be converted to a 32 Byte buffer)
       try { info.key = toKeyBuffer(info.key) }
       catch (e) { return cb(e) }
 
+      if (!isMsg(info.initialMsg)) return cb(new Error(`key-store expects initialMsg got ${info.initialMsg}`))
+
       if (!info.scheme) info.scheme = SCHEMES.private_group
-
-      if (!isReady) return setTimeout(() => group.add(groupId, info, cb), 500)
-
-      if (cache.groups[groupId]) return cb(new Error(`key-store already constains group ${groupId}, cannot add twice`))
-      // TODO more nuance - don't bother with error if the info is the same?
 
 
       cache.groups[groupId] = info
       db.put(
         [GROUP, groupId, Date.now()],
-        JSON.stringify(Object.assign({}, info, { key: toKeyString(info.key) })),
+        serialize(info),
         cb
       )
     },
+    // TODO hide this method in loadState startup
+    // and change this to just be a list from the cache
     list (cb) {
       pull(
         read(db, {
@@ -62,12 +70,11 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
           gt: [GROUP, null, null]
         }),
         pull.map(({ key, value: info }) => {
-          var groupId = key.split(',')[1]
-          return { [groupId]: hydrate(info) }
+          const [_, groupId, createdAt] = key
+          return { [groupId]: deserialize(info) }
         }),
         pull.collect((err, pairs) => {
           if (err) return cb(err)
-
           cb(null, Object.assign({}, ...pairs))
         })
       )
@@ -87,6 +94,8 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       if (!cache.memberships[authorId]) cache.memberships[authorId] = new Set()
 
       cache.memberships[authorId].add(groupId)
+      // db.put([MEMBER, authorId, groupId], groupId, cb)
+
       db.put([MEMBER, authorId, groupId], groupId, cb)
     },
     list (cb) {
@@ -96,7 +105,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
           gt: [MEMBER, null, null]
         }),
         pull.map(({ key, value: groupId }) => {
-          var authorId = key.split(',')[1]
+          const [_, authorId] = key
           return { authorId, groupId }
         }),
         pull.collect((err, pairs) => {
@@ -170,7 +179,6 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   }
 }
 
-// TODO refactor lib/secret-key and use that instead here
 function toKeyBuffer (thing) {
   const buf = Buffer.isBuffer(thing)
     ? thing
@@ -180,14 +188,20 @@ function toKeyBuffer (thing) {
   return buf
 }
 
-function toKeyString (buf) {
-  return buf.toString('base64')
+function serialize (obj) {
+  return JSON.stringify({
+    ...obj,
+    key: obj.key.toString('base64')
+  })
 }
 
-function hydrate (info) {
+function deserialize (info) {
   var i = JSON.parse(info)
 
-  return { ...i, key: toKeyBuffer(i.key) }
+  return {
+    ...i,
+    key: toKeyBuffer(i.key)
+  }
 }
 
 function noop () {}

@@ -1,6 +1,7 @@
 const test = require('tape')
 const pull = require('pull-stream')
 const { decodeLeaves, GroupId, Server } = require('./helpers')
+const { MsgId } = require('../lib/cipherlinks')
 
 const vectors = [
   require('private-group-spec/vectors/unbox1.json'),
@@ -27,12 +28,15 @@ test('unbox', t => {
       pull.values(trial_keys),
       pull.asyncMap(({ key }, done) => {
         const groupId = GroupId() // doesn't matter
+        const initialMsg = new MsgId().mock().toSSB()
 
-        server.private2.group.register(groupId, { key }, (_, data) => {
+        server.private2.group.register(groupId, { key, initialMsg }, (err, data) => {
+          if (err) throw err
           server.private2.group.registerAuthors(groupId, authorIds, done)
         })
       }),
       pull.collect((err) => {
+        console.log('HERE')
         if (err) throw err
 
         pull(
