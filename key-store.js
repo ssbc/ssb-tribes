@@ -38,8 +38,6 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   // TODO make these raw methods, wrap them in "wait" when exporting API
   const group = {
     add (groupId, info, cb) {
-      if (!isReady) return setTimeout(() => group.add(groupId, info, cb), 500)
-
       if (cache.groups[groupId]) return cb(new Error(`key-store already contains group ${groupId}, cannot add twice`))
       // TODO more nuance - don't bother with error if the info is the same?
 
@@ -55,15 +53,13 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
 
       cache.groups[groupId] = info
-      db.put(
-        [GROUP, groupId, Date.now()],
-        serialize(info),
-        cb
-      )
+      db.put([GROUP, groupId, Date.now()], serialize(info), cb)
     },
-    // TODO hide this method in loadState startup
-    // and change this to just be a list from the cache
-    list (cb) {
+    get (groupId) {
+      return cache.groups[groupId]
+    },
+
+    readPersisted (cb) {
       pull(
         read(db, {
           lt: [GROUP + '~', undefined, undefined], // "group~" is just above "group" in charwise sort
@@ -78,27 +74,22 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
           cb(null, Object.assign({}, ...pairs))
         })
       )
-    },
-    get (groupId) {
-      if (!isReady) throw new Error('key-store still loading')
-      return cache.groups[groupId]
     }
   }
 
   const membership = {
     add (groupId, authorId, cb) {
       if (!isFeed(authorId)) return cb(new Error(`key-store to add authors by feedId, got ${authorId}`))
-
-      if (!isReady) return setTimeout(() => membership.add(groupId, authorId, cb), 500)
-
       if (!cache.memberships[authorId]) cache.memberships[authorId] = new Set()
 
       cache.memberships[authorId].add(groupId)
-      // db.put([MEMBER, authorId, groupId], groupId, cb)
-
       db.put([MEMBER, authorId, groupId], groupId, cb)
     },
-    list (cb) {
+    getAuthorGroups (authorId) {
+      return Array.from(cache.memberships[authorId] || [])
+    },
+
+    readPersisted (cb) {
       pull(
         read(db, {
           lt: [MEMBER + '~', undefined, undefined], // "member~" is just above "member" in charwise sort
@@ -121,9 +112,6 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
           cb(null, list)
         })
       )
-    },
-    getAuthorGroups (authorId) {
-      return Array.from(cache.memberships[authorId] || [])
     }
   }
 
@@ -150,11 +138,11 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
   /* load persisted state into cache */
   if (loadState) {
-    group.list((err, groups) => {
+    group.readPersisted((err, groups) => {
       if (err) throw err
       cache.groups = groups
 
-      membership.list((err, memberships) => {
+      membership.readPersisted((err, memberships) => {
         if (err) throw err
         cache.memberships = memberships
 
@@ -167,15 +155,27 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   /* API */
   return {
     group: {
-      ...group,
-      addAuthor: membership.add
+      add: patient(group.add),
+      get: group.get,                    // sync
+      // list
+      addAuthor: patient(membership.add),
+      readPersisted: group.readPersisted
     },
     author: {
-      groups: membership.getAuthorGroups,
-      groupKeys: getAuthorGroupKeys,
-      sharedDMKey: getSharedDMKey
+      groups: membership.getAuthorGroups, // sync
+      groupKeys: getAuthorGroupKeys,      // sync (ssb-db boxer/unboxer requires sync)
+      sharedDMKey: getSharedDMKey         // sync
     },
     close: db.close.bind(db)
+  }
+
+  function patient (fn) {
+    // this can be improved later
+    return function (...args) {
+      if (!isReady) return setTimeout(() => fn.apply(null, args), 500)
+
+      fn.apply(null, args)
+    }
   }
 }
 

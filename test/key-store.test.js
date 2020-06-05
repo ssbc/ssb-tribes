@@ -86,7 +86,7 @@ test('key-store', t => {
     },
 
     () => {
-      const DESCRIPTION = 'group.add + group.list'
+      const DESCRIPTION = 'group.add + group.readPersisted'
 
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId = GroupId()
@@ -96,7 +96,7 @@ test('key-store', t => {
       keyStore.group.add(groupId, { key, root }, (err, data) => {
         if (err) throw err
 
-        keyStore.group.list((err, data) => {
+        keyStore.group.readPersisted((err, data) => {
           if (err) throw err
           t.deepEqual(
             data,
@@ -291,6 +291,5 @@ test('key-store', t => {
   t.plan(toRun)
   tests
     .slice(0, toRun)
-    // .slice(5, 6)
     .forEach(i => i())
 })
