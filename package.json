@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "scuttle-testbot": "^1.2.0",
+    "ssb-backlinks": "^1.1.0",
     "ssb-db": "^20.0.0",
     "ssb-schema-definitions": "^3.0.0",
     "standard": "^14.3.4",

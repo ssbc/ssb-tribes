@@ -34,6 +34,9 @@ module.exports = {
       },
       get isReady () {
         return !this.loading.keystore && !this.loading.previous
+        // we need both these things completed for:
+        // - boxing of new private messages
+        // - unboxing of new incoming messages
       }
     }
 

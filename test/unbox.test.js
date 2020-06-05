@@ -19,7 +19,7 @@ test('unbox', t => {
     const { msgs, trial_keys } = vector.input
 
     const server = Server()
-    const authorIds = [ msgs[0].value.author ]
+    const authorIds = [msgs[0].value.author]
 
     pull(
       /* add keys to keystore for msg author */
@@ -58,6 +58,47 @@ test('unbox', t => {
         )
       })
     )
+  })
+})
 
+test('unbox (indexes can access)', t => {
+  const server = Server()
+
+  server.private2.group.create(null, (err, data) => {
+    if (err) throw err
+
+    const { groupId, groupInitMsg } = data
+
+    const content = {
+      type: 'group/settings',
+      name: { set: 'waynes world' },
+      tangles: {
+        group: {
+          root: groupInitMsg.key,
+          previous: [groupInitMsg.key]
+        }
+      },
+      recps: [groupId]
+    }
+
+    server.publish(content, (err, msg) => {
+      if (err) throw err
+
+      t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
+
+      const query = [{
+        $filter: { dest: groupInitMsg.key }
+      }]
+      pull(
+        server.backlinks.read({ query }),
+        pull.collect((err, msgs) => {
+          t.error(err)
+          t.deepEqual(msgs[0].value.content, content, 'private message accessible in index!')
+
+          server.close()
+          t.end()
+        })
+      )
+    })
   })
 })

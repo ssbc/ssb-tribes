@@ -25,10 +25,10 @@ module.exports = {
     // }
 
     const server = Server // eslint-disable-line
-      .use(require('../..')) // ssb-private2
+      .use(require('../..'))         // ssb-private2
+      .use(require('ssb-backlinks')) // not needed, but nice to test an index
       .call(opts)
 
     return server
   }
 }
-

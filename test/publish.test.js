@@ -5,7 +5,7 @@ const { FeedId } = require('../lib/cipherlinks')
 test('publish (to groupId)', t => {
   const server = Server()
 
-  server.private2.group.create('waynes world', (err, data) => {
+  server.private2.group.create(null, (err, data) => {
     if (err) throw err
 
     const { groupId } = data
@@ -55,7 +55,7 @@ test('publish (to groupId we dont have key for)', t => {
 test('publish (DM to feedId)', t => {
   const server = Server()
 
-  server.private2.group.create('waynes world', (err, data) => {
+  server.private2.group.create(null, (err, data) => {
     if (err) throw err
 
     const { groupId } = data

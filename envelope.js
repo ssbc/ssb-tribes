@@ -26,10 +26,9 @@ module.exports = function Envelope (ssb, keystore, state) {
 
     const recipentKeys = content.recps.map(r => {
       if (isCloaked(r)) {
-        // NOTE if someone immediately published after startup
-        // there's a chance keystore isn't ready yet
         const keyInfo = keystore.group.get(r)
         if (!keyInfo) throw new Error(`unknown groupId ${r}, cannot encrypt message`)
+
         return keyInfo
       }
 
