@@ -1,6 +1,6 @@
 const isValid = require('../../lib/is-group-add-member')
 
-module.exports = function GroupInvite (ssb, keystore) {
+module.exports = function GroupInvite (ssb, keystore, state) {
   return function groupInvite (groupId, authorIds, opts = {}, cb) {
     const { key, root } = keystore.group.get(groupId)
     // TODO cap authorIds to 15 (relevant to maxAttempts for unboxing)
