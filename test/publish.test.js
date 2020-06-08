@@ -6,7 +6,7 @@ test('publish (to groupId)', t => {
   const server = Server()
 
   server.private2.group.create(null, (err, data) => {
-    if (err) throw err
+    t.error(err)
 
     const { groupId } = data
 
@@ -17,18 +17,14 @@ test('publish (to groupId)', t => {
     }
 
     server.publish(content, (err, msg) => {
-      if (err) throw err
-
+      t.error(err)
       t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
 
       server.get({ id: msg.key, private: true, meta: true }, (err, msg) => {
-        if (err) throw err
-
+        t.error(err)
         t.deepEqual(msg.value.content, content, 'can open envelope!')
 
-        server.close(() => {
-          console.log('closed')
-        })
+        server.close()
         t.end()
       })
     })
@@ -46,7 +42,7 @@ test('publish (to groupId we dont have key for)', t => {
   }
 
   server.publish(content, (err) => {
-    t.true(err.message.match(/unknown groupId/), 'returns arror')
+    t.match(err.message, /unknown groupId/, 'returns error')
     server.close()
     t.end()
   })
@@ -56,7 +52,7 @@ test('publish (DM to feedId)', t => {
   const server = Server()
 
   server.private2.group.create(null, (err, data) => {
-    if (err) throw err
+    t.error(err)
 
     const { groupId } = data
     const feedId = new FeedId().mock().toSSB()
@@ -73,8 +69,7 @@ test('publish (DM to feedId)', t => {
       t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
 
       server.get({ id: msg.key, private: true, meta: true }, (err, msg) => {
-        if (err) throw err
-
+        t.error(err)
         t.deepEqual(msg.value.content, content, 'can open envelope!')
 
         server.close(() => {

@@ -1,10 +1,12 @@
 const { join } = require('path')
 const pull = require('pull-stream')
+const set = require('lodash.set')
 
 const KeyStore = require('./key-store')
 const Envelope = require('./envelope')
 const { FeedId, MsgId } = require('./lib/cipherlinks')
-const isCloaked = require('./lib/is-cloaked-msg-id')
+const isGroupId = require('./lib/is-cloaked-msg-id')
+const GetGroupTangle = require('./lib/get-group-tangle')
 
 const Method = require('./method')
 
@@ -41,12 +43,31 @@ module.exports = {
     }
 
     /* load the keystore for tracking group keys */
-    var keystore = KeyStore(join(config.path, 'private2/keystore'), ssb.keys, () => {
+    const keystore = KeyStore(join(config.path, 'private2/keystore'), ssb.keys, () => {
       state.loading.keystore = false
     })
     ssb.close.hook(function (fn, args) {
       keystore.close()
       return fn.apply(this, args)
+    })
+
+    /* automatically add group tangle info to all private-group messages */
+    const getGroupTangle = GetGroupTangle(ssb, keystore)
+    ssb.publish.hook(function (fn, args) {
+      const [content, cb] = args
+      if (!content.recps) return fn.apply(this, args)
+      if (!isGroupId(content.recps[0])) return fn.apply(this, args)
+
+      getGroupTangle(content.recps[0], (err, tangle) => {
+        if (err) {
+          console.warn(err)
+          // NOTE there are two ways an err can occur in getGroupTangle, and we don't
+          // want to cb(err) with either in this hook. Rather we pass it on to boxers to throw
+          return fn.apply(this, args)
+        }
+
+        fn.apply(this, [set(content, 'tangles.group', tangle), cb])
+      })
     })
 
     /* track our most recent msg key - "previous"` - for boxer */
@@ -88,7 +109,7 @@ module.exports = {
     const api = {
       group: {
         register (groupId, info, cb) {
-          if (!isCloaked(groupId)) return cb(new Error(`private2.group.register expected a cloaked message id, got ${groupId}`))
+          if (!isGroupId(groupId)) return cb(new Error(`private2.group.register expected a cloaked message id, got ${groupId}`))
           if (!state.isReady) return setTimeout(() => api.group.register(groupId, info, cb), 500)
 
           keystore.group.add(groupId, info, cb)

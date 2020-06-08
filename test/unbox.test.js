@@ -36,7 +36,6 @@ test('unbox', t => {
         })
       }),
       pull.collect((err) => {
-        console.log('HERE')
         if (err) throw err
 
         pull(
