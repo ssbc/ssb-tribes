@@ -58,12 +58,12 @@ module.exports = {
       if (state.loading.previous) state.loading.previous = false
     })
     listen.addMember(ssb)(m => {
-      ssb.get({ id: m.value.content.root, private: true, meta: true }, (err, groupInitMsg) => {
-        if (err) throw err
+      // ssb.get({ id: m.value.content.root, private: true, meta: true }, (err, groupInitMsg) => {
+      //   if (err) throw err
 
-        const groupId = GroupId({ groupInitMsg })
-        console.log('TODO: check if know', groupId)
-      })
+      //   const groupId = GroupId({ groupInitMsg })
+      //   console.log('TODO: check if know', groupId)
+      // })
 
       // if (keystore.group.get)
       // ssb.rebuild()
