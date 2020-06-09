@@ -11,15 +11,14 @@ module.exports = function GroupInvite (ssb, keystore, state) {
       groupKey: key.toString('base64'),
       root,
       tangles: {
-        group: {
-          root: root,
-          previous: [root] // TODO calculate previous for whole group
-        },
-
         members: {
           root: root,
           previous: [root] // TODO calculate previous for members tangle
-        }
+        },
+
+        group: { root, previous: [root] }
+        // this is a dummy entry which is over-written in publish hook
+        // it's needed to pass isValid
       },
       recps: [groupId, ...authorIds]
     }

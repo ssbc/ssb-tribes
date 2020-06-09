@@ -35,8 +35,10 @@ test('private2.group.invite', t => {
 
         t.deepEqual(value.content, expected, 'publishes an invite!')
 
-        t.end()
-        server.close()
+        setTimeout(() => {
+          t.end()
+          server.close()
+        }, 1e3)
       })
     })
   })

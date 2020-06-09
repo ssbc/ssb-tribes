@@ -6,6 +6,7 @@ const KeyStore = require('./key-store')
 const Envelope = require('./envelope')
 const listen = require('./listen')
 const { FeedId } = require('./lib/cipherlinks')
+const GroupId = require('./lib/group-id')
 const isGroupId = require('./lib/is-cloaked-msg-id')
 const GetGroupTangle = require('./lib/get-group-tangle')
 
@@ -20,7 +21,7 @@ module.exports = {
       registerAuthors: 'async',
       // removeAuthors: 'async'
       create: 'async',
-      invite: 'async' // TODO
+      invite: 'async'
     }
     // author: {
     //   groupKeys: 'sync' // should this even be public?
@@ -56,10 +57,27 @@ module.exports = {
       state.previous = prev
       if (state.loading.previous) state.loading.previous = false
     })
-    // TODO listen for new key-entrust messages
-    //   - use a dummy flume-view to tap into unseen messages
-    //   - discovering new keys triggers re-indexes of other views
+    listen.addMember(ssb)(m => {
+      ssb.get({ id: m.value.content.root, private: true, meta: true }, (err, groupInitMsg) => {
+        if (err) throw err
 
+        const groupId = GroupId({ groupInitMsg })
+        console.log('TODO: check if know', groupId)
+      })
+
+      // if (keystore.group.get)
+      // ssb.rebuild()
+
+      /* We care about group/add-member messages others have posted which:
+       * 1. add us to a new group
+       * 2. add other people to a group we're already in
+       *
+       * In (2) we may be able to skip re-indexing if they haven't published
+       * any brand new private messages since they were added.
+       * This would require knowing their feed seq at time they were entrusted with key
+       * (because they can't post messages to the group before then)
+       */
+    })
 
     /* register the boxer / unboxer */
     const { boxer, unboxer } = Envelope(ssb, keystore, state)

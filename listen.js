@@ -1,25 +1,25 @@
 const pull = require('pull-stream')
 const { MsgId } = require('./lib/cipherlinks')
+const isAddMember = require('./lib/is-group-add-member')
 
 module.exports = {
-  previous
+  previous,
+  addMember
 }
 
 function previous (ssb) {
-  var state = {
-    listeners: [],
-    previous: undefined
-  }
+  var listeners = []
+  var prev = undefined // eslint-disable-line
 
   function subscribe (listener) {
-    state.listeners.push(listener)
-    if (state.previous !== undefined) listener(state.previous)
+    listeners.push(listener)
+    if (prev !== undefined) listener(prev)
     // immediately emits current value (if it exists) for new subscribers
   }
 
   function set (msgIdOrNull) {
-    state.previous = new MsgId(msgIdOrNull).toTFK()
-    state.listeners.forEach(fn => fn(state.previous))
+    prev = new MsgId(msgIdOrNull).toTFK()
+    listeners.forEach(fn => fn(prev))
   }
 
   /* initial previous lookup */
@@ -35,6 +35,26 @@ function previous (ssb) {
 
   /* ongoing previous listening */
   ssb.post(m => set(m.key))
+
+  return subscribe
+}
+
+function addMember (ssb) {
+  var listeners = []
+
+  function subscribe (listener) {
+    listeners.push(listener)
+  }
+
+  pull(
+    ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
+    pull.filter(m => m.sync !== true), // live queries emit { sync: true } when up to speed!
+    pull.filter(m => m.value.author !== ssb.id), // ignore messages I write
+    pull.filter(isAddMember),
+    pull.drain(m => {
+      listeners.forEach(fn => fn(m))
+    })
+  )
 
   return subscribe
 }

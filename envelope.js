@@ -51,10 +51,10 @@ module.exports = function Envelope (ssb, keystore, state) {
     const prev_msg_id = new MsgId(previous).toTFK()
 
     const trial_group_keys = keystore.author.groupKeys(author)
-    const key = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
+    const read_key = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
     // NOTE the group recp is only allowed in the first slot,
     // so we only test group keys in that slot (maxAttempts: 1)
-    if (key) return key
+    if (read_key) return read_key
 
     const trial_dm_key = keystore.author.sharedDMKey(author)
     return unboxKey(envelope, feed_id, prev_msg_id, [trial_dm_key], { maxAttempts: 16 })
