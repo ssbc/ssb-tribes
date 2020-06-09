@@ -32,7 +32,7 @@ module.exports = function GroupCreate (ssb, _, state) {
       if (err) return cb(err)
 
       const data = {
-        groupId: groupId(groupInitMsg, msgKey),
+        groupId: groupId({ groupInitMsg, msgKey }),
         groupKey: groupKey.toBuffer(),
         groupInitMsg
       }
