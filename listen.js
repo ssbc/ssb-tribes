@@ -34,7 +34,13 @@ function previous (ssb) {
   )
 
   /* ongoing previous listening */
-  ssb.post(m => set(m.key))
+  ssb.post(m => {
+    if (m.value.author !== ssb.id) {
+      return
+    }
+
+    set(m.key)
+  })
 
   return subscribe
 }

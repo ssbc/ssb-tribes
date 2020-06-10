@@ -9,9 +9,9 @@ Introduces evelope encryption to scuttlebutt.
 ```js
 const SecretStack = require('secret-stack')
 const config = require('ssb-config')
-const shs = // from ssb-caps for main network, or your alt-net key
+const caps = require('ssb-caps')
 
-const SSB = SecretStack({ caps: { shs } })
+const SSB = SecretStack({ caps })
   .use(require('ssb-db'))         // << required
   .use(require('ssb-private2'))
 
@@ -23,10 +23,10 @@ const ssb = SSB(config)
 const content = {
   type: 'profile/person',
   //....
-  recps: {
+  recps: [
     <GroupId>,
     <FeedId>
-  }
+  ]
 }
 ssb.publish(content, (err, data) => {
 })
@@ -69,7 +69,7 @@ needed to get the new person started (the `groupKey` and `root`).
 where:
 - `groupId` *String* - is a cloaked id for a group you're a part of
 - `[authorId]` *Array* - is a collection of the feed ids of authors you're going to invite
-    - **NOTE**: you are limited to inviting at most 7 authors per call of this method
+    - **NOTE**: you are limited to inviting at most 15 authors per call of this method
 - `opts` *Object* - is of form `{ text }` which allows you to (optionally) post some welcoming or intruducing message along with the invte.
 - `cb` *Function* - is a callback with signature `cb(err, invite)`
 

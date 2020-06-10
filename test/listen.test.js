@@ -16,19 +16,23 @@ test('listen.addMember', t => {
   listen.addMember(A)(m => {
     t.equal(m.value.content.root, root, 'listened + heard the group/add-member')
 
-    A.close()
-    t.end()
+    // A.close()
+    // t.end()
 
-    // console.log('getting group/init', root)
-    // A.get({ id: root, private: false, meta: true }, (err, groupInitMsg) => {
-    //   // we shouldn't be able to auto-decrypt the group/init yet
-    //   if (err) throw err
-    //   // !!! this flumeview-level error !
-    //   t.equal(GroupId({ groupInitMsg }), groupId, 'can calculate correct groupId (integration test)')
+    console.log('starting rebuild')
+    A.rebuild((err) => {
+      t.error(err, 'rebuild finished without err')
+      A.get({ id: root, private: true, meta: true, junk: Date.now() }, (err, groupInitMsg) => {
+        t.error(err, 'get is fine')
+        console.log({ groupInitMsg })
+        // we shouldn't be able to auto-decrypt the group/init yet
+        // !!! this flumeview-level error !
+        //t.equal(GroupId({ groupInitMsg }), groupId, 'can calculate correct groupId (integration test)')
 
-    //   A.close()
-    //   t.end()
-    // })
+        A.close()
+        t.end()
+      })
+    })
   })
 
   B.publish({ type: 'filler' }, (_, msg) => {
@@ -53,7 +57,7 @@ test('listen.addMember', t => {
               ? A.add(msg.value, cb)
               : A.add(msg, cb)
           }),
-          pull.through(m => console.log('replciating', m.key)),
+          pull.through(m => console.log('replicating', m.key)),
           pull.collect((err, msgs) => {
             if (err) throw err
 

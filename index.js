@@ -96,6 +96,7 @@ module.exports = {
       if (!isGroupId(content.recps[0])) return fn.apply(this, args)
 
       getGroupTangle(content.recps[0], (err, tangle) => {
+        console.log('I should be called once!')
         if (err) {
           console.warn(err)
           // NOTE there are two ways an err can occur in getGroupTangle, and we don't
