@@ -71,11 +71,23 @@ module.exports = {
         if (err) throw(err)
 
         // WIP : should be coming in here fine...
-
         const groupId = GroupId({ groupInitMsg, groupKey })
-        console.log(groupId)
 
-        // check if need to rebuild
+        console.log(groupId)
+        // NOTES FOR CHRISTIAN:
+
+        // first pass:
+        // - register the group in keystore
+        // - register the recps as being in that group
+        // - trigger rebuild
+        // - after ... indexes are up to date, do a get on an encypted message to show it's decrypted now
+
+        // second pass:
+        // - check if group is in keystore already
+        // - check if people who are being added are already known to be in group?
+        //
+        // this is where we start writing tests around scenarios we need to rebuild in
+
         ssb.rebuild(() => console.log('done rebuilding'))
       })
 

@@ -16,14 +16,20 @@ module.exports = function GroupCreate (ssb, _, state) {
     }
     if (!isValid(content)) return cb(new Error(isValid.errorsString))
 
-    /* enveloping manually - required for just this group initialisation */
+    /* enveloping */
+    // we have to do it manually this one time, because the auto-boxing checks for a known groupId
+    // but the groupId is derived from the messageId of this message (which does not exist yet
     const plain = Buffer.from(JSON.stringify(content), 'utf8')
 
     const msgKey = new Secret().toBuffer()
-    const recipientKeys = [{
-      key: groupKey.toBuffer(),
-      scheme: SCHEMES.private_group
-    }]
+    const recipientKeys = [
+      { key: groupKey.toBuffer(), scheme: SCHEMES.private_group }
+    ]
+    // TODO
+    // consider making sure creator can always open the group (even if lose keystore)
+    // would require adding them as a recipeint
+    //   - need to check if it's safe to make a sharedDM with oneself
+    // would also require adding groupKey to this message
 
     const envelope = box(plain, state.feedId, state.previous, msgKey, recipientKeys)
     const ciphertext = envelope.toString('base64') + '.box2'
