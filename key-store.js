@@ -88,6 +88,17 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       cache.memberships[authorId].add(groupId)
       level.put([MEMBER, authorId, groupId], groupId, cb)
     },
+    addMany (groupId, authorIdArray, cb) {
+      pull(
+        pull.values(authorIdArray),
+        pull.asyncMap((authorId, cb) => {
+          membership.add(groupId, authorId, cb)
+        }),
+        pull.collect((err, arr) => {
+          cb(err)
+        })
+      )
+    },
     getAuthorGroups (authorId) {
       return Array.from(cache.memberships[authorId] || [])
     },
@@ -157,6 +168,36 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
   /* API */
   return {
+    processAddMember: ({ groupId, groupKey, root, authors }, cb) => {
+      const info = { key: groupKey, root }
+
+      const thisGroup = group.get(groupId)
+
+      if (thisGroup == null) {
+        // TODO: patient
+        group.add(groupId, info, (err) => {
+          if (err) return cb(err)
+
+          membership.addMany(groupId, authors, (err) => {
+            if (err) return cb(err)
+            // Happy path (1)
+            cb(null, authors)
+          })
+        })
+      } else {
+        const authorsNotInGroup = authors
+          .filter((author) => {
+            return !membership
+              .getAuthorGroups(author)
+              .includes(groupId)
+          })
+        membership.addMany(groupId, authorsNotInGroup, (err) => {
+          if (err) return cb(err)
+          // Happy path (1)
+          cb(null, authorsNotInGroup)
+        })
+      }
+    },
     group: {
       add: patient(group.add),
       get: group.get,                    // sync

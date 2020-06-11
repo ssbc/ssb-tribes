@@ -5,10 +5,14 @@ const { generate } = require('ssb-keys')
 const KeyStore = require('../key-store')
 const { GroupKey, GroupId } = require('./helpers')
 const directMessageKey = require('../lib/direct-message-key')
-const { MsgId } = require('../lib/cipherlinks')
+const { MsgId, FeedId: _FeedId } = require('../lib/cipherlinks')
 
 function MessageId () {
   return new MsgId().mock().toSSB()
+}
+
+function FeedId () {
+  return new _FeedId().mock().toSSB()
 }
 
 var i = 0
@@ -283,6 +287,99 @@ test('key-store', t => {
         },
         DESCRIPTION
       )
+    },
+
+    // add all authors
+    // - author of invite message
+    //   - all listed recipients of invite message
+    //
+    // if there are no new author registrations, return []
+    // if there *are* author registrations, return array of new authors
+    //
+    // - check if group ID is already registered
+    //   - check if the details (group key, root) are the same
+    //
+    //
+    // RETURNS
+    //
+    // The list of authors that you need to rebuild, because they're
+    // added to a group that you have the key for (and this is the first time
+    // you're hearing about it).
+    //
+    // TEST CASES
+    //
+    // - happy path: brand new group ID, not in keystore
+    // - other happy path: group ID exists with same details
+    // - another happy path: we already know about group ID and authors
+    // - unhappy path: group ID exists and (somehow) has the wrong **group key**
+    () => {
+      const DESCRIPTION = 'processAddMember (brand new group and members)'
+      const storePath = TmpPath()
+      const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
+
+      const authors = [FeedId()]
+
+      keyStore.processAddMember({
+        groupId: GroupId(),
+        groupKey: GroupKey(),
+        root: MessageId(),
+        authors
+      }, (err, result) => {
+        if (err) throw err
+        t.deepEqual(result, authors, DESCRIPTION)
+      })
+    },
+
+    () => {
+      const DESCRIPTION = 'processAddMember (add our second member to group'
+      const storePath = TmpPath()
+      const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
+
+      const authors = [FeedId()]
+
+      const args = {
+        groupId: GroupId(),
+        groupKey: GroupKey(),
+        root: MessageId(),
+        authors
+      }
+
+      keyStore.processAddMember(args, (err) => {
+        if (err) throw err
+        const newAuthor = FeedId()
+        args.authors.push(newAuthor)
+        keyStore.processAddMember(args, (err, result) => {
+          if (err) throw err
+          t.deepEqual(result, [newAuthor], DESCRIPTION)
+        })
+      })
+    },
+    () => {
+      const DESCRIPTION = 'processAddMember (did not add new member to group)'
+      const storePath = TmpPath()
+      const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
+
+      const authors = [FeedId()]
+
+      const args = {
+        groupId: GroupId(),
+        groupKey: GroupKey(),
+        root: MessageId(),
+        authors
+      }
+
+      keyStore.processAddMember(args, (err) => {
+        if (err) throw err
+        const newAuthor = FeedId()
+        args.authors.push(newAuthor)
+        keyStore.processAddMember(args, (err) => {
+          if (err) throw err
+          keyStore.processAddMember(args, (err, result) => {
+            if (err) throw err
+            t.deepEqual(result, [], DESCRIPTION)
+          })
+        })
+      })
     }
   ]
 

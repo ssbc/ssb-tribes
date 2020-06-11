@@ -73,7 +73,6 @@ module.exports = {
         // WIP : should be coming in here fine...
         const groupId = GroupId({ groupInitMsg, groupKey })
 
-        console.log(groupId)
         // NOTES FOR CHRISTIAN:
 
         // first pass:
@@ -88,82 +87,104 @@ module.exports = {
         //
         // this is where we start writing tests around scenarios we need to rebuild in
 
-        ssb.rebuild(() => console.log('done rebuilding'))
-      })
+        // Who do we need to add to this group?
+        //
+        // Currently we're just adding the person who created the group, but I
+        // think we probably need to add others too.
 
-      // calculate msgKey (groupKey)
-      // calculate readKey (msgKey)
-      // calculate groupId (feed, previous, readKey)
-      //
-      // add group to keystore (groupId, groupKey)
-      // add authors
-      //
-      // maybe make a new keystore method
-      //
-      // rebuild
+        // PROBLEM: If we add the group, it complains about a duplicate.
+        //          If we don't add the group, we get:
+        //            Error: unknown group %FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF=.cloaked
+        //
+        // SOLUTION (pending): Create a `processAddMember` that creates the
+        // group if necessary and returns an array of authors that we need to
+        // rebuild.
+        if (keystore.group.get(groupId) == null) {
+          keystore.group.add(groupId, { key: groupKey, root: groupInitMsg.key }, (err) => {
 
-
-      /* We care about group/add-member messages others have posted which:
-       * 1. add us to a new group
-       * 2. add other people to a group we're already in
-       *
-       * In (2) we may be able to skip re-indexing if they haven't published
-       * any brand new private messages since they were added.
-       * This would require knowing their feed seq at time they were entrusted with key
-       * (because they can't post messages to the group before then)
-       */
-    })
-
-    /* auto-add group tangle info to all private-group messages */
-    const getGroupTangle = GetGroupTangle(ssb, keystore)
-    ssb.publish.hook(function (fn, args) {
-      const [content, cb] = args
-      if (!content.recps) return fn.apply(this, args)
-      if (!isGroupId(content.recps[0])) return fn.apply(this, args)
-
-      getGroupTangle(content.recps[0], (err, tangle) => {
-        if (err) {
-          console.warn(err)
-          // NOTE there are two ways an err can occur in getGroupTangle, and we don't
-          // want to cb(err) with either in this hook. Rather we pass it on to boxers to throw
-          return fn.apply(this, args)
-        }
-
-        fn.apply(this, [set(content, 'tangles.group', tangle), cb])
-      })
-    })
-
-    /* API */
-    const scuttle = Method(ssb, keystore, state) // ssb db methods
-    return {
-      group: {
-        register: keystore.group.add,
-        registerAuthors (groupId, authorIds, cb) {
-          pull(
-            pull.values(authorIds),
-            pull.asyncMap((authorId, cb) => keystore.group.addAuthor(groupId, authorId, cb)),
-            pull.collect((err) => {
-              if (err) cb(err)
-              else cb(null, true)
-            })
-          )
-        },
-        create (opts, cb) {
-          scuttle.group.init((err, data) => {
-            if (err) return cb(err)
-
-            keystore.group.add(data.groupId, { key: data.groupKey, root: data.groupInitMsg.key }, (err) => {
-              if (err) return cb(err)
-
-              keystore.group.addAuthor(data.groupId, ssb.id, (err) => {
-                if (err) return cb(err)
-                cb(null, data)
-              })
+            if (err) throw err
+            keystore.group.addAuthor(groupId, groupInitMsg.value.author, (err) => {
+              if (err) throw err
+              ssb.rebuild(() => console.log('done rebuilding'))
             })
           })
-        },
-        invite: scuttle.group.addMember
+        }
+
+
+        // calculate msgKey (groupKey)
+        // calculate readKey (msgKey)
+        // calculate groupId (feed, previous, readKey)
+        //
+        // add group to keystore (groupId, groupKey)
+        // add authors
+        //
+        // maybe make a new keystore method
+        //
+        // rebuild
+
+
+        /* We care about group/add-member messages others have posted which:
+         * 1. add us to a new group
+         * 2. add other people to a group we're already in
+         *
+         * In (2) we may be able to skip re-indexing if they haven't published
+         * any brand new private messages since they were added.
+         * This would require knowing their feed seq at time they were entrusted with key
+         * (because they can't post messages to the group before then)
+         */
+      })
+
+      /* auto-add group tangle info to all private-group messages */
+      const getGroupTangle = GetGroupTangle(ssb, keystore)
+      ssb.publish.hook(function (fn, args) {
+        const [content, cb] = args
+        if (!content.recps) return fn.apply(this, args)
+        if (!isGroupId(content.recps[0])) return fn.apply(this, args)
+
+        getGroupTangle(content.recps[0], (err, tangle) => {
+          if (err) {
+            console.warn(err)
+            // NOTE there are two ways an err can occur in getGroupTangle, and we don't
+            // want to cb(err) with either in this hook. Rather we pass it on to boxers to throw
+            return fn.apply(this, args)
+          }
+
+          fn.apply(this, [set(content, 'tangles.group', tangle), cb])
+        })
+      })
+
+      /* API */
+      const scuttle = Method(ssb, keystore, state) // ssb db methods
+      return {
+        group: {
+          register: keystore.group.add,
+          registerAuthors (groupId, authorIds, cb) {
+            pull(
+              pull.values(authorIds),
+              pull.asyncMap((authorId, cb) => keystore.group.addAuthor(groupId, authorId, cb)),
+              pull.collect((err) => {
+                if (err) cb(err)
+                else cb(null, true)
+              })
+            )
+          },
+          create (opts, cb) {
+            scuttle.group.init((err, data) => {
+              if (err) return cb(err)
+
+              keystore.group.add(data.groupId, { key: data.groupKey, root: data.groupInitMsg.key }, (err) => {
+                if (err) return cb(err)
+
+                keystore.group.addAuthor(data.groupId, ssb.id, (err) => {
+                  if (err) return cb(err)
+                  cb(null, data)
+                })
+              })
+            })
+          },
+          invite: scuttle.group.addMember
+        }
       }
-    }
+    })
   }
 }

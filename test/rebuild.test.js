@@ -7,6 +7,7 @@ test('rebuild', t => {
   const A = Server() // me
   const B = Server() // some friend
 
+  console.log({ A: A.id, B: B.id })
   var messages = []
   var groupId
 
@@ -17,6 +18,13 @@ test('rebuild', t => {
       console.log('TODO test can GET unboxed here!')
 
       // WIP
+      //
+      messages.forEach(({ key }) => {
+        A.get({ id: key, private: true }, (err, val) => {
+          t.error(err)
+          console.log({ val })
+        })
+      })
 
       A.close()
       t.end()
