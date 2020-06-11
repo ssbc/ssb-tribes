@@ -3,13 +3,13 @@ const vectors = [
   require('private-group-spec/vectors/group-id1.json')
 ]
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
-const { unboxKey, DeriveSecret, CloakedMsgId } = require('envelope-js')
+const { unboxKey, DeriveSecret } = require('envelope-js')
 const LABELS = require('envelope-spec/derive_secret/constants.json')
 
 const { FeedId, MsgId } = require('../../lib/cipherlinks')
 const Secret = require('../../lib/secret-key')
-const { decodeLeaves } = require('../helpers')
-const groupId = require('../../lib/group-id')
+const { decodeLeaves, Server } = require('../helpers')
+const GroupId = require('../../lib/group-id')
 
 test('GroupId', t => {
   /* testing the API of our function */
@@ -25,18 +25,32 @@ test('GroupId', t => {
       previous: prev_msg_id.toSSB()
     }
   }
-  const A = groupId({ groupInitMsg, msgKey: msg_key.toBuffer() })
+  const A = GroupId({ groupInitMsg, msgKey: msg_key.toBuffer() })
 
   const derive = DeriveSecret(feed_id.toTFK(), prev_msg_id.toTFK())
   const read_key = derive(msg_key.toBuffer(), [LABELS.read_key])
-  const B = groupId({ groupInitMsg, readKey: read_key })
-  t.equal(A, B, 'can calculate groupId with msg_key OR read_key')
+  const B = GroupId({ groupInitMsg, readKey: read_key })
+  t.equal(A, B, 'can calculate GroupId with msg_key OR read_key')
 
   groupInitMsg.value.meta = {
     unbox: read_key.toString('base64')
   }
-  const C = groupId({ groupInitMsg })
-  t.equal(B, C, 'can calculate groupId from an unboxed message')
+  const C = GroupId({ groupInitMsg })
+  t.equal(B, C, 'can calculate GroupId from an unboxed message')
+
+  // -----------------------------------------------------------
+  
+  const server = Server()
+
+  server.private2.group.create({}, (err, data) => {
+    if (err) throw err
+
+    const { groupId, groupKey, groupInitMsg } = data
+
+    t.equal(GroupId({ groupInitMsg, groupKey }), groupId, 'can calculate GroupId with groupKey')
+
+    server.close()
+  })
 
   // -----------------------------------------------------------
 
@@ -57,7 +71,7 @@ test('GroupId', t => {
 
     const read_key = unboxKey(envelope, feed_id, prev_msg_id, trial_keys)
 
-    const group_id = groupId({ groupInitMsg: group_init_msg, readKey: read_key })
+    const group_id = GroupId({ groupInitMsg: group_init_msg, readKey: read_key })
 
     t.equal(group_id, vector.output.group_id, 'correctly construct group_id')
   })
