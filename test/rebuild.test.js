@@ -1,30 +1,33 @@
 const test = require('tape')
 const pull = require('pull-stream')
 
-const listen = require('../listen')
 const { Server } = require('./helpers')
 
-test('listen.addMember', t => {
+test('rebuild', t => {
   const A = Server() // me
   const B = Server() // some friend
 
   var messages = []
-  var root
   var groupId
 
-  // TODO test addMember continues after a rebuild
-  listen.addMember(A)(m => {
-    t.equal(m.value.content.root, root, 'listened + heard the group/add-member')
+  A.rebuild.hook(function (fn, [cb]) {
+    t.pass('rebuild called!')
 
-    A.close()
-    t.end()
+    fn.apply(this, [() => {
+      console.log('TODO test can GET unboxed here!')
+
+      // WIP
+
+      A.close()
+      t.end()
+      cb()
+    }])
   })
 
   B.private2.group.create({}, (err, data) => {
     if (err) throw err
 
     messages.push(data.groupInitMsg)
-    root = data.groupInitMsg.key
     groupId = data.groupId
     console.log(`created group: ${groupId}`)
 
@@ -40,20 +43,9 @@ test('listen.addMember', t => {
             ? A.add(msg.value, cb)
             : A.add(msg, cb)
         }),
-        pull.through(m => console.log('replicating', m.key)),
-        pull.collect((err, msgs) => {
+        // pull.through(m => console.log('replicating', m.key)),
+        pull.collect(err => {
           if (err) throw err
-
-          const pruneTimestamp = m => {
-            delete m.timestamp
-            return m
-          }
-
-          t.deepEqual(
-            messages.map(pruneTimestamp),
-            msgs.map(pruneTimestamp),
-            'same messages in two logs'
-          )
         })
       )
     })

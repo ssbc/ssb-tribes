@@ -9,7 +9,7 @@ function isEnvelope (ciphertext) {
   return ciphertext.endsWith('.box2')
 }
 
-module.exports = function Envelope (ssb, keystore, state) {
+module.exports = function Envelope (keystore, state) {
   function boxer (content) {
     if (!content.recps.every(r => isCloaked(r) || isFeed(r))) return null
     if (content.recps.length > 16) {

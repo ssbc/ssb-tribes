@@ -21,7 +21,7 @@
     "is-my-ssb-valid": "^1.1.0",
     "level": "^6.0.1",
     "lodash.set": "^4.3.2",
-    "private-group-spec": "github:ssbc/private-group-spec#dm_spec",
+    "private-group-spec": "github:ssbc/private-group-spec",
     "pull-level": "^2.0.4",
     "pull-stream": "^3.6.14",
     "sodium-native": "^2.4.9",
@@ -31,7 +31,7 @@
   "devDependencies": {
     "scuttle-testbot": "^1.2.0",
     "ssb-backlinks": "^2.0.0",
-    "ssb-db": "github:ssbc/ssb-db#rebuild",
+    "ssb-db": "^20.1.0",
     "ssb-schema-definitions": "^3.0.0",
     "standard": "^14.3.4",
     "tap-spec": "^5.0.0",

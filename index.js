@@ -19,7 +19,6 @@ module.exports = {
     group: {
       register: 'async',
       registerAuthors: 'async',
-      // removeAuthors: 'async'
       create: 'async',
       invite: 'async'
     }
@@ -52,21 +51,45 @@ module.exports = {
       keystore.close(() => fn.apply(this, args))
     })
 
+    /* register the boxer / unboxer */
+    const { boxer, unboxer } = Envelope(keystore, state)
+    ssb.addBoxer(boxer)
+    ssb.addUnboxer({ init: checkReady, ...unboxer })
+    function checkReady (done) {
+      if (state.isReady) return done()
+      setTimeout(() => checkReady(done), 500)
+    }
+
     /* start listeners */
     listen.previous(ssb)(prev => {
       state.previous = prev
       if (state.loading.previous) state.loading.previous = false
     })
     listen.addMember(ssb)(m => {
-      // ssb.get({ id: m.value.content.root, private: true, meta: true }, (err, groupInitMsg) => {
-      //   if (err) throw err
+      const { root, groupKey } = m.value.content
+      ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
+        if (err) throw(err)
 
-      //   const groupId = GroupId({ groupInitMsg })
-      //   console.log('TODO: check if know', groupId)
-      // })
+        // WIP : should be coming in here fine...
 
-      // if (keystore.group.get)
-      // ssb.rebuild()
+        const groupId = GroupId({ groupInitMsg, groupKey })
+        console.log(groupId)
+
+        // check if need to rebuild
+        ssb.rebuild(() => console.log('done rebuilding'))
+      })
+
+      // calculate msgKey (groupKey)
+      // calculate readKey (msgKey)
+      // calculate groupId (feed, previous, readKey)
+      //
+      // add group to keystore (groupId, groupKey)
+      // add authors
+      //
+      // maybe make a new keystore method
+      //
+      // rebuild
+
 
       /* We care about group/add-member messages others have posted which:
        * 1. add us to a new group
@@ -79,15 +102,6 @@ module.exports = {
        */
     })
 
-    /* register the boxer / unboxer */
-    const { boxer, unboxer } = Envelope(ssb, keystore, state)
-    ssb.addBoxer(boxer)
-    ssb.addUnboxer({ init: checkReady, ...unboxer })
-    function checkReady (done) {
-      if (state.isReady) return done()
-      setTimeout(() => checkReady(done), 500)
-    }
-
     /* auto-add group tangle info to all private-group messages */
     const getGroupTangle = GetGroupTangle(ssb, keystore)
     ssb.publish.hook(function (fn, args) {
@@ -96,7 +110,6 @@ module.exports = {
       if (!isGroupId(content.recps[0])) return fn.apply(this, args)
 
       getGroupTangle(content.recps[0], (err, tangle) => {
-        console.log('I should be called once!')
         if (err) {
           console.warn(err)
           // NOTE there are two ways an err can occur in getGroupTangle, and we don't
