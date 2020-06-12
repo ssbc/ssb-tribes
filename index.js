@@ -1,6 +1,7 @@
 const { join } = require('path')
 const pull = require('pull-stream')
 const set = require('lodash.set')
+const { isFeed } = require('ssb-ref')
 
 const KeyStore = require('./key-store')
 const Envelope = require('./envelope')
@@ -73,9 +74,30 @@ function init (ssb, config) {
     ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
       if (err) throw err
 
-      // WIP : should be coming in here fine...
       const groupId = GroupId({ groupInitMsg, groupKey })
+      console.log({ groupId, groupKey })
+
       console.log('heard something about group:', groupId)
+      const authors = [
+        m.value.author,
+        ...m.value.content.recps.filter(isFeed)
+      ]
+
+      // WIP : Christian, just installed this
+      keystore.processAddMember({ groupId, groupKey, root, authors }, (err, newAuthors) => {
+        if (err) {
+          console.log('oh dear')
+          // running test/rebuild.test.js to see an error of style:
+          // Error: key-store: groupId %6Zk9PuzfmPPdmsZ1kdqpckK/0ildZSF8kD/hvegXsmQ=.cloaked already registered with a different groupKey
+          throw err
+        }
+        if (newAuthors.length) {
+          console.log('NEW AUTHORS!', newAuthors)
+          console.log('rebuild!!!   (ﾉ´ヮ´)ﾉ*:･ﾟ✧')
+          ssb.rebuild(() => console.log('rebuild finished'))
+        }
+        else console.log('nothing new ):')
+      })
     })
   })
 

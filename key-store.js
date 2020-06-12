@@ -167,6 +167,12 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     }
 
     if (thisGroup.key !== groupKey) {
+      // WIP
+      console.log('CLOSER LOOK HERE')
+      console.log(thisGroup.key)
+      console.log(groupKey)
+      // we see this is comparing a string + Buffer!
+      // because during persistence we map key > Buffer
       return cb(new Error(`key-store: groupId ${groupId} already registered with a different groupKey`))
     }
     if (thisGroup.root !== root) {
