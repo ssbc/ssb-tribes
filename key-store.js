@@ -166,7 +166,9 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       })
     }
 
-    if (thisGroup.key !== groupKey) {
+    if (!isSameKey(thisGroup.key, groupKey)) {
+      // we see this is comparing a string + Buffer!
+      // because during persistence we map key > Buffer
       return cb(new Error(`key-store: groupId ${groupId} already registered with a different groupKey`))
     }
     if (thisGroup.root !== root) {
@@ -257,6 +259,10 @@ function toKeyBuffer (thing) {
 
   if (buf.length !== KEY_LENGTH) throw new Error(`invalid groupKey, expected ${KEY_LENGTH} Bytes, got ${buf.length}`)
   return buf
+}
+
+function isSameKey (A, B) {
+  return toKeyBuffer(A).compare(toKeyBuffer(B)) === 0
 }
 
 function noop () {}

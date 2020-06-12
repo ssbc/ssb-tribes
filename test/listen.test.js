@@ -14,6 +14,7 @@ test('listen.addMember', t => {
 
   // TODO test addMember continues after a rebuild
   listen.addMember(A)(m => {
+    // WIP error in here somewhere
     t.equal(m.value.content.root, root, 'listened + heard the group/add-member')
 
     A.close()
