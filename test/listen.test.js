@@ -12,13 +12,17 @@ test('listen.addMember', t => {
   var root
   var groupId
 
-  // TODO test addMember continues after a rebuild
+  var heardCount = 0
+  // NOTE with auto-rebuild active, this listener gets hit twice:
+  // 1. first time we see group/add-member (unboxed with DM key)
+  // 2. after rebuild
   listen.addMember(A)(m => {
-    // WIP error in here somewhere
-    t.equal(m.value.content.root, root, 'listened + heard the group/add-member')
+    t.equal(m.value.content.root, root, `listened + heard the group/add-member: ${++heardCount}`)
 
-    A.close()
-    t.end()
+    if (heardCount === 2) {
+      A.close()
+      t.end()
+    }
   })
 
   B.private2.group.create({}, (err, data) => {

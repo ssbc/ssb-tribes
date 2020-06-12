@@ -52,6 +52,10 @@ function addMember (ssb) {
     listeners.push(listener)
   }
 
+  // TODO problem is this doesn't track what group/add-member have been processed
+  // and watching "live" doesn't really guarentee ...
+  // I think we need a flumeview here because that tracks what's been past it / processed.
+
   pull(
     ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
     pull.filter(m => m.sync !== true), // live queries emit { sync: true } when up to speed!
