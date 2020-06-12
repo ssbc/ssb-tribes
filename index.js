@@ -75,7 +75,6 @@ function init (ssb, config) {
       if (err) throw err
 
       const groupId = GroupId({ groupInitMsg, groupKey })
-
       const authors = [
         m.value.author,
         ...m.value.content.recps.filter(isFeed)
