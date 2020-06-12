@@ -38,7 +38,6 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     valueEncoding: InfoEncoding()
   })
 
-  // TODO make these raw methods, wrap them in "wait" when exporting API
   const group = {
     add (groupId, info, cb) {
       if (cache.groups[groupId]) return cb(new Error(`key-store already contains group ${groupId}, cannot add twice`))
@@ -49,6 +48,8 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       // convert to 32 Byte buffer
       try { info.key = toKeyBuffer(info.key) }
       catch (e) { return cb(e) }
+      // TODO perhaps use groupKey when inputing everywhere
+      // and map to trial_keys style { key, scheme } on exit
 
       if (!isMsg(info.root)) return cb(new Error(`key-store expects root got ${info.root}`))
 
@@ -150,6 +151,40 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     }
   }
 
+  function processAddMember ({ groupId, groupKey, root, authors }, cb) {
+    const thisGroup = group.get(groupId)
+
+    if (thisGroup == null) {
+      const info = { key: groupKey, root }
+      return group.add(groupId, info, (err) => {
+        if (err) return cb(err)
+
+        membership.addMany(groupId, authors, (err) => {
+          if (err) return cb(err)
+          cb(null, authors)
+        })
+      })
+    }
+
+    if (thisGroup.key !== groupKey) {
+      return cb(new Error(`key-store: groupId ${groupId} already registered with a different groupKey`))
+    }
+    if (thisGroup.root !== root) {
+      return cb(new Error(`key-store: groupId ${groupId} already registered with a different root`))
+    }
+
+    const authorsNotInGroup = authors
+      .filter((author) => {
+        return !membership
+          .getAuthorGroups(author)
+          .includes(groupId)
+      })
+    membership.addMany(groupId, authorsNotInGroup, (err) => {
+      if (err) return cb(err)
+      cb(null, authorsNotInGroup)
+    })
+  }
+
   /* load persisted state into cache */
   if (loadState) {
     group.readPersisted((err, groups) => {
@@ -168,48 +203,19 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
   /* API */
   return {
-    processAddMember: ({ groupId, groupKey, root, authors }, cb) => {
-      const info = { key: groupKey, root }
-
-      const thisGroup = group.get(groupId)
-
-      if (thisGroup == null) {
-        // TODO: patient
-        group.add(groupId, info, (err) => {
-          if (err) return cb(err)
-
-          membership.addMany(groupId, authors, (err) => {
-            if (err) return cb(err)
-            // Happy path (1)
-            cb(null, authors)
-          })
-        })
-      } else {
-        const authorsNotInGroup = authors
-          .filter((author) => {
-            return !membership
-              .getAuthorGroups(author)
-              .includes(groupId)
-          })
-        membership.addMany(groupId, authorsNotInGroup, (err) => {
-          if (err) return cb(err)
-          // Happy path (1)
-          cb(null, authorsNotInGroup)
-        })
-      }
-    },
     group: {
       add: patient(group.add),
-      get: group.get,                    // sync
+      get: group.get,                               // sync
       // list
       addAuthor: patient(membership.add),
       readPersisted: group.readPersisted
     },
     author: {
-      groups: membership.getAuthorGroups, // sync
-      groupKeys: getAuthorGroupKeys,      // sync (ssb-db boxer/unboxer requires sync)
-      sharedDMKey: getSharedDMKey         // sync
+      groups: membership.getAuthorGroups,           // sync
+      groupKeys: getAuthorGroupKeys,                // sync (ssb-db boxer/unboxer requires sync)
+      sharedDMKey: getSharedDMKey                   // sync
     },
+    processAddMember: patient(processAddMember),
     close: level.close.bind(level)
   }
 

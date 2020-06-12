@@ -287,11 +287,16 @@ test('key-store', t => {
         },
         DESCRIPTION
       )
+      keyStore.close()
     },
 
-    // add all authors
-    // - author of invite message
-    //   - all listed recipients of invite message
+    // ## processAddMember
+    //
+    // this method handles incoming group/add-member messages
+    // it takes care of :
+    // - making sure group details are registered
+    // - making sure authors are associated with groups
+    // - telling us which authors are new (so that we can elsewhere trigger index rebuilds)
     //
     // if there are no new author registrations, return []
     // if there *are* author registrations, return array of new authors
@@ -299,44 +304,18 @@ test('key-store', t => {
     // - check if group ID is already registered
     //   - check if the details (group key, root) are the same
     //
-    //
-    // RETURNS
+    // CALLBACK
     //
     // The list of authors that you need to rebuild, because they're
     // added to a group that you have the key for (and this is the first time
     // you're hearing about it).
-    //
-    // TEST CASES
-    //
-    // - happy path: brand new group ID, not in keystore
-    // - other happy path: group ID exists with same details
-    // - another happy path: we already know about group ID and authors
-    // - unhappy path: group ID exists and (somehow) has the wrong **group key**
+
     () => {
       const DESCRIPTION = 'processAddMember (brand new group and members)'
       const storePath = TmpPath()
       const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
 
       const authors = [FeedId()]
-
-      keyStore.processAddMember({
-        groupId: GroupId(),
-        groupKey: GroupKey(),
-        root: MessageId(),
-        authors
-      }, (err, result) => {
-        if (err) throw err
-        t.deepEqual(result, authors, DESCRIPTION)
-      })
-    },
-
-    () => {
-      const DESCRIPTION = 'processAddMember (add our second member to group'
-      const storePath = TmpPath()
-      const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
-
-      const authors = [FeedId()]
-
       const args = {
         groupId: GroupId(),
         groupKey: GroupKey(),
@@ -344,40 +323,118 @@ test('key-store', t => {
         authors
       }
 
+      keyStore.processAddMember(args, (err, result) => {
+        if (err) throw err
+        t.deepEqual(result, authors, DESCRIPTION)
+        keyStore.close()
+      })
+    },
+
+    () => {
+      const DESCRIPTION = 'processAddMember (adding authors to existing group)'
+      const storePath = TmpPath()
+      const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
+
+      const args = {
+        groupId: GroupId(),
+        groupKey: GroupKey(),
+        root: MessageId(),
+        authors: [FeedId()]
+      }
+      const newAuthor = FeedId()
+
       keyStore.processAddMember(args, (err) => {
         if (err) throw err
-        const newAuthor = FeedId()
+        // simulate duplicate, slightly different group/add-member
         args.authors.push(newAuthor)
         keyStore.processAddMember(args, (err, result) => {
           if (err) throw err
           t.deepEqual(result, [newAuthor], DESCRIPTION)
+          keyStore.close()
         })
       })
     },
+
     () => {
-      const DESCRIPTION = 'processAddMember (did not add new member to group)'
+      const DESCRIPTION = 'processAddMember (adding authors to existing group - no new info)'
       const storePath = TmpPath()
       const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
-
-      const authors = [FeedId()]
 
       const args = {
         groupId: GroupId(),
         groupKey: GroupKey(),
         root: MessageId(),
-        authors
+        authors: [FeedId()]
       }
 
       keyStore.processAddMember(args, (err) => {
         if (err) throw err
-        const newAuthor = FeedId()
-        args.authors.push(newAuthor)
+        // simulate duplicate, slightly different group/add-member
+        args.authors.push(FeedId())
         keyStore.processAddMember(args, (err) => {
           if (err) throw err
+
+          // run the same add again (so no new group/ authors)
+          // running 3 processAddMember tests how persistence is behaving (maybe?)
           keyStore.processAddMember(args, (err, result) => {
             if (err) throw err
             t.deepEqual(result, [], DESCRIPTION)
+            keyStore.close()
           })
+        })
+      })
+    },
+
+    () => {
+      const DESCRIPTION = 'processAddMember (same groupId with different groupKey Errors)'
+      const storePath = TmpPath()
+      const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
+
+      const args = {
+        groupId: GroupId(),
+        groupKey: GroupKey(),
+        root: MessageId(),
+        authors: [FeedId()]
+      }
+
+      keyStore.processAddMember(args, (err) => {
+        if (err) throw err
+        // simulate malicious add
+        args.groupKey = GroupKey()
+        keyStore.processAddMember(args, (err) => {
+          t.match(
+            err.message,
+            /groupId [^\s]+ already registered with a different groupKey/,
+            DESCRIPTION
+          )
+          keyStore.close()
+        })
+      })
+    },
+
+    () => {
+      const DESCRIPTION = 'processAddMember (same groupId with different root Errors)'
+      const storePath = TmpPath()
+      const keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
+
+      const args = {
+        groupId: GroupId(),
+        groupKey: GroupKey(),
+        root: MessageId(),
+        authors: [FeedId()]
+      }
+
+      keyStore.processAddMember(args, (err) => {
+        if (err) throw err
+        // simulate malicious add
+        args.root = MessageId()
+        keyStore.processAddMember(args, (err) => {
+          t.match(
+            err.message,
+            /groupId [^\s]+ already registered with a different root/,
+            DESCRIPTION
+          )
+          keyStore.close()
         })
       })
     }
