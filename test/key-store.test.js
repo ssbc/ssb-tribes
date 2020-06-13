@@ -25,48 +25,48 @@ test('key-store', t => {
 
   const tests = [
     () => {
-      const DESCRIPTION = 'group.add (error if bad groupId)'
+      const DESCRIPTION = 'group.register (error if bad groupId)'
 
       const keyStore = KeyStore(TmpPath(), myKeys)
 
-      keyStore.group.add('junk', { key: GroupKey(), root: MessageId() }, (err) => {
+      keyStore.group.register('junk', { key: GroupKey(), root: MessageId() }, (err) => {
         t.match(err && err.message, /expected a groupId/, DESCRIPTION)
         keyStore.close()
       })
     },
 
     () => {
-      const DESCRIPTION = 'group.add (error if bad key)'
+      const DESCRIPTION = 'group.register (error if bad key)'
 
       const keyStore = KeyStore(TmpPath(), myKeys)
 
-      keyStore.group.add(GroupId(), { key: 'junk', root: MessageId() }, (err) => {
+      keyStore.group.register(GroupId(), { key: 'junk', root: MessageId() }, (err) => {
         t.match(err && err.message, /invalid groupKey/, DESCRIPTION)
         keyStore.close()
       })
     },
 
     () => {
-      const DESCRIPTION = 'group.add (error if bad root)'
+      const DESCRIPTION = 'group.register (error if bad root)'
 
       const keyStore = KeyStore(TmpPath(), myKeys)
 
-      keyStore.group.add(GroupId(), { key: GroupKey(), root: 'dog' }, (err) => {
+      keyStore.group.register(GroupId(), { key: GroupKey(), root: 'dog' }, (err) => {
         t.match(err && err.message, /expects root/, DESCRIPTION)
         keyStore.close()
       })
     },
 
     () => {
-      const DESCRIPTION = 'group.add (error if try to double-add)'
+      const DESCRIPTION = 'group.register (error if try to double-add)'
 
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId = GroupId()
       const key = GroupKey()
       const root = MessageId()
 
-      keyStore.group.add(groupId, { key, root }, (_, data) => {
-        keyStore.group.add(groupId, { key, root }, (err) => {
+      keyStore.group.register(groupId, { key, root }, (_, data) => {
+        keyStore.group.register(groupId, { key, root }, (err) => {
           t.match(err && err.message, /key-store already contains group/, DESCRIPTION)
           keyStore.close()
         })
@@ -74,14 +74,14 @@ test('key-store', t => {
     },
 
     () => {
-      const DESCRIPTION = 'group.add + group.get'
+      const DESCRIPTION = 'group.register + group.get'
 
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId = GroupId()
       const key = GroupKey()
       const root = MessageId()
 
-      keyStore.group.add(groupId, { key, root }, (_, data) => {
+      keyStore.group.register(groupId, { key, root }, (_, data) => {
         const info = keyStore.group.get(groupId)
         t.deepEqual(info, { key, root, scheme: SCHEMES.private_group }, DESCRIPTION)
 
@@ -90,14 +90,14 @@ test('key-store', t => {
     },
 
     () => {
-      const DESCRIPTION = 'group.add + group.readPersisted'
+      const DESCRIPTION = 'group.register + group.readPersisted'
 
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId = GroupId()
       const key = GroupKey()
       const root = MessageId()
 
-      keyStore.group.add(groupId, { key, root }, (err, data) => {
+      keyStore.group.register(groupId, { key, root }, (err, data) => {
         if (err) throw err
 
         keyStore.group.readPersisted((err, data) => {
@@ -114,7 +114,7 @@ test('key-store', t => {
     },
 
     () => {
-      const DESCRIPTION = 'group.addAuthor (not a feedId errors)'
+      const DESCRIPTION = 'group.registerAuthor (not a feedId errors)'
 
       const keyStore = KeyStore(TmpPath(), myKeys)
       const groupId_A = GroupId()
@@ -124,9 +124,9 @@ test('key-store', t => {
       const root_A = MessageId()
       const root_B = MessageId()
 
-      keyStore.group.add(groupId_A, { key: keyA, root: root_A }, (_, __) => {
-        keyStore.group.add(groupId_B, { key: keyB, root: root_B }, (_, __) => {
-          keyStore.group.addAuthor(groupId_A, '@mix', (err) => {
+      keyStore.group.registerAuthor(groupId_A, { key: keyA, root: root_A }, (_, __) => {
+        keyStore.group.registerAuthor(groupId_B, { key: keyB, root: root_B }, (_, __) => {
+          keyStore.group.registerAuthor(groupId_A, '@mix', (err) => {
             // console.log('ERRROR', err)
             t.true(err, DESCRIPTION)
             keyStore.close()
@@ -136,7 +136,7 @@ test('key-store', t => {
     },
 
     () => {
-      const DESCRIPTION = 'group.addAuthor + author.groups'
+      const DESCRIPTION = 'group.registerAuthor + author.groups'
 
       const keyStore = KeyStore(TmpPath(), myKeys)
       const groupId_A = GroupId()
@@ -148,10 +148,10 @@ test('key-store', t => {
 
       const authorId = generate().id
 
-      keyStore.group.add(groupId_A, { key: keyA, root: root_A }, (_, __) => {
-        keyStore.group.add(groupId_B, { key: keyB, root: root_B }, (_, __) => {
-          keyStore.group.addAuthor(groupId_A, authorId, (_, __) => {
-            keyStore.group.addAuthor(groupId_B, authorId, (_, __) => {
+      keyStore.group.register(groupId_A, { key: keyA, root: root_A }, (_, __) => {
+        keyStore.group.register(groupId_B, { key: keyB, root: root_B }, (_, __) => {
+          keyStore.group.registerAuthor(groupId_A, authorId, (_, __) => {
+            keyStore.group.registerAuthor(groupId_B, authorId, (_, __) => {
               const groups = keyStore.author.groups(authorId)
               t.deepEqual(groups, [groupId_A, groupId_B], DESCRIPTION)
 
@@ -163,7 +163,7 @@ test('key-store', t => {
     },
 
     () => {
-      const DESCRIPTION = 'group.addAuthor + author.groupKeys'
+      const DESCRIPTION = 'group.registerAuthor + author.groupKeys'
 
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId_A = GroupId()
@@ -175,12 +175,12 @@ test('key-store', t => {
 
       const authorId = generate().id
 
-      keyStore.group.add(groupId_A, { key: keyA, root: root_A }, (err, __) => {
+      keyStore.group.register(groupId_A, { key: keyA, root: root_A }, (err, __) => {
         if (err) throw err
-        keyStore.group.add(groupId_B, { key: keyB, root: root_B }, (err, __) => {
+        keyStore.group.register(groupId_B, { key: keyB, root: root_B }, (err, __) => {
           if (err) throw err
-          keyStore.group.addAuthor(groupId_A, authorId, (_, __) => {
-            keyStore.group.addAuthor(groupId_B, authorId, (_, __) => {
+          keyStore.group.registerAuthor(groupId_A, authorId, (_, __) => {
+            keyStore.group.registerAuthor(groupId_B, authorId, (_, __) => {
               const keys = keyStore.author.groupKeys(authorId)
               const expected = [
                 { key: keyA, root: root_A, scheme: SCHEMES.private_group },
@@ -209,12 +209,12 @@ test('key-store', t => {
       const authorId = generate().id
       const otherAuthorId = generate().id
 
-      keyStore.group.add(groupId_A, { key: keyA, root: root_A }, (err, __) => {
+      keyStore.group.register(groupId_A, { key: keyA, root: root_A }, (err, __) => {
         if (err) throw err
-        keyStore.group.add(groupId_B, { key: keyB, root: root_B }, (err, __) => {
+        keyStore.group.register(groupId_B, { key: keyB, root: root_B }, (err, __) => {
           if (err) throw err
-          keyStore.group.addAuthor(groupId_A, authorId, (_, __) => {
-            keyStore.group.addAuthor(groupId_B, authorId, (_, __) => {
+          keyStore.group.registerAuthor(groupId_A, authorId, (_, __) => {
+            keyStore.group.registerAuthor(groupId_B, authorId, (_, __) => {
               const keys = keyStore.author.groupKeys(otherAuthorId)
               const expected = []
               t.deepEqual(keys, expected, DESCRIPTION)
@@ -240,12 +240,12 @@ test('key-store', t => {
 
       const authorId = generate().id
 
-      keyStore.group.add(groupId_A, { key: keyA, root: root_A }, (err, __) => {
+      keyStore.group.register(groupId_A, { key: keyA, root: root_A }, (err, __) => {
         if (err) throw err
-        keyStore.group.add(groupId_B, { key: keyB, root: root_B }, (err, __) => {
+        keyStore.group.register(groupId_B, { key: keyB, root: root_B }, (err, __) => {
           if (err) throw err
-          keyStore.group.addAuthor(groupId_A, authorId, (_, __) => {
-            keyStore.group.addAuthor(groupId_B, authorId, (_, __) => {
+          keyStore.group.registerAuthor(groupId_A, authorId, (_, __) => {
+            keyStore.group.registerAuthor(groupId_B, authorId, (_, __) => {
               keyStore.close(() => {
                 // start new keyStore with same path, and this time wait for onReady
                 const newKeyStore = KeyStore(storePath, myKeys, () => {

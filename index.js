@@ -123,11 +123,11 @@ function init (ssb, config) {
   const scuttle = Method(ssb, keystore, state) // ssb db methods
   return {
     group: {
-      register: keystore.group.add,
+      register: keystore.group.register,
       registerAuthors (groupId, authorIds, cb) {
         pull(
           pull.values(authorIds),
-          pull.asyncMap((authorId, cb) => keystore.group.addAuthor(groupId, authorId, cb)),
+          pull.asyncMap((authorId, cb) => keystore.group.registerAuthor(groupId, authorId, cb)),
           pull.collect((err) => {
             if (err) cb(err)
             else cb(null, true)
@@ -138,10 +138,10 @@ function init (ssb, config) {
         scuttle.group.init((err, data) => {
           if (err) return cb(err)
 
-          keystore.group.add(data.groupId, { key: data.groupKey, root: data.groupInitMsg.key }, (err) => {
+          keystore.group.register(data.groupId, { key: data.groupKey, root: data.groupInitMsg.key }, (err) => {
             if (err) return cb(err)
 
-            keystore.group.addAuthor(data.groupId, ssb.id, (err) => {
+            keystore.group.registerAuthor(data.groupId, ssb.id, (err) => {
               if (err) return cb(err)
               cb(null, data)
             })

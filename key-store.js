@@ -39,8 +39,8 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   })
 
   const group = {
-    add (groupId, info, cb) {
-      if (cache.groups[groupId]) return cb(new Error(`key-store already contains group ${groupId}, cannot add twice`))
+    register (groupId, info, cb) {
+      if (cache.groups[groupId]) return cb(new Error(`key-store already contains group ${groupId}, cannot register twice`))
       // TODO more nuance - don't bother with error if the info is the same?
 
       if (!isCloaked(groupId)) return cb(new Error(`key-store expected a groupId, got ${groupId}`))
@@ -82,18 +82,18 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   }
 
   const membership = {
-    add (groupId, authorId, cb) {
+    register (groupId, authorId, cb) {
       if (!isFeed(authorId)) return cb(new Error(`key-store to add authors by feedId, got ${authorId}`))
       if (!cache.memberships[authorId]) cache.memberships[authorId] = new Set()
 
       cache.memberships[authorId].add(groupId)
       level.put([MEMBER, authorId, groupId], groupId, cb)
     },
-    addMany (groupId, authorIdArray, cb) {
+    registerMany (groupId, authorIdArray, cb) {
       pull(
         pull.values(authorIdArray),
         pull.asyncMap((authorId, cb) => {
-          membership.add(groupId, authorId, cb)
+          membership.register(groupId, authorId, cb)
         }),
         pull.collect((err, arr) => {
           cb(err)
@@ -156,10 +156,10 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
     if (thisGroup == null) {
       const info = { key: groupKey, root }
-      return group.add(groupId, info, (err) => {
+      return group.register(groupId, info, (err) => {
         if (err) return cb(err)
 
-        membership.addMany(groupId, authors, (err) => {
+        membership.registerMany(groupId, authors, (err) => {
           if (err) return cb(err)
           cb(null, authors)
         })
@@ -181,7 +181,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
           .getAuthorGroups(author)
           .includes(groupId)
       })
-    membership.addMany(groupId, authorsNotInGroup, (err) => {
+    membership.registerMany(groupId, authorsNotInGroup, (err) => {
       if (err) return cb(err)
       cb(null, authorsNotInGroup)
     })
@@ -206,10 +206,11 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   /* API */
   return {
     group: {
-      add: patient(group.add),
+      register: patient(group.register),
       get: group.get,                               // sync
       // list
-      addAuthor: patient(membership.add),
+      registerAuthor: patient(membership.register),
+      // registerAuthors: patient(membership.registerMany),
       readPersisted: group.readPersisted
     },
     author: {
