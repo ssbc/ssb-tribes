@@ -4,7 +4,8 @@
   "description": "a scuttlebutt (secret-stack) plugin which adds envelope encryption capabilities",
   "main": "index.js",
   "scripts": {
-    "test": "tape 'test/**/*.test.js' | tap-spec",
+    "test": "tape 'test/**/*.test.js'",
+    "test:pretty": "npm test | tap-spec",
     "generate": "node test/generate/index.js"
   },
   "homepage": "https://github.com/ssbc/ssb-private2#readme",
