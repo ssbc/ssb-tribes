@@ -1,7 +1,5 @@
 const test = require('tape')
 const { isMsg, isFeedId } = require('ssb-ref')
-const isCloakedId = require('../../lib/is-cloaked-msg-id')
-
 const { FeedId, MsgId } = require('../../lib/cipherlinks')
 
 test('Cipherlink/FeedId', t => {

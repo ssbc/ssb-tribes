@@ -1,14 +1,13 @@
 const { join } = require('path')
 const pull = require('pull-stream')
 const set = require('lodash.set')
-const { isFeed } = require('ssb-ref')
+const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 
 const KeyStore = require('./key-store')
 const Envelope = require('./envelope')
 const listen = require('./listen')
 const { FeedId } = require('./lib/cipherlinks')
 const GroupId = require('./lib/group-id')
-const isGroupId = require('./lib/is-cloaked-msg-id')
 const GetGroupTangle = require('./lib/get-group-tangle')
 
 const Method = require('./method')
@@ -105,7 +104,7 @@ function init (ssb, config) {
   ssb.publish.hook(function (fn, args) {
     const [content, cb] = args
     if (!content.recps) return fn.apply(this, args)
-    if (!isGroupId(content.recps[0])) return fn.apply(this, args)
+    if (!isGroup(content.recps[0])) return fn.apply(this, args)
 
     getGroupTangle(content.recps[0], (err, tangle) => {
       if (err) {

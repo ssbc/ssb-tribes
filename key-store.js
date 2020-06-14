@@ -5,10 +5,9 @@ const pull = require('pull-stream')
 const { read } = require('pull-level')
 const KEY_LENGTH = require('sodium-native').crypto_secretbox_KEYBYTES
 const SCHEMES = require('private-group-spec/key-schemes.json').scheme
-const { isFeed, isMsg } = require('ssb-ref')
+const { isFeed, isMsg, isCloakedMsg: isGroup } = require('ssb-ref')
 
 const directMessageKey = require('./lib/direct-message-key')
-const isCloaked = require('./lib/is-cloaked-msg-id')
 
 const GROUP = 'group'
 const MEMBER = 'member'
@@ -43,7 +42,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       if (cache.groups[groupId]) return cb(new Error(`key-store already contains group ${groupId}, cannot register twice`))
       // TODO more nuance - don't bother with error if the info is the same?
 
-      if (!isCloaked(groupId)) return cb(new Error(`key-store expected a groupId, got ${groupId}`))
+      if (!isGroup(groupId)) return cb(new Error(`key-store expected a groupId, got ${groupId}`))
 
       // convert to 32 Byte buffer
       try { info.key = toKeyBuffer(info.key) }

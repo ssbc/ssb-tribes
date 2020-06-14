@@ -45,19 +45,20 @@ function times (n, fn) {
 }
 
 test('is-group-add-member', t => {
-  t.true(isValid(Mock()), 'fully featured')
+  const full = Mock()
+  t.true(isValid(full), 'fully featured')
+  if (isValid.errors) throw isValid.errorsString
 
   const min = Mock()
   delete min.text
   t.true(isValid(min), 'minimal')
+  if (isValid.errors) throw isValid.errorsString
 
   /* recps */
   const dms = Mock({ recps: [FeedId(), FeedId()] })
   t.false(isValid(dms), 'must have a group')
 
   const junkRecps = Mock({ recps: [GroupId(), 'cat'] })
-  console.log('TODO - known failure, not sure why')
-  console.log('recps:', junkRecps.recps)
   t.false(isValid(junkRecps), 'fails invalid recps')
 
   const tooManyGroups = Mock({ recps: [GroupId(), GroupId(), FeedId()] })
@@ -77,13 +78,13 @@ test('is-group-add-member', t => {
   // TODO // test more edge cases
 
   /* not sure how to code this in v4 draft compatible JSON schema */
-  // const noGroupRecps = Mock({
-  //   recps: [
-  //     '@zXUllRkNYXkE3TikkY4GFMX3lTbj5E+604AkaO1xbz8=.ed25519',
-  //     '@YXkE3TikkY4GFMX3lzXUllRkNTbj5E+604AkaO1xbz8=.ed25519'
-  //   ]
-  // })
-  // t.false(isValid(noGroupRecps), 'fails if there is no group recp')
+  const noGroupRecps = Mock({
+    recps: [
+      '@zXUllRkNYXkE3TikkY4GFMX3lTbj5E+604AkaO1xbz8=.ed25519',
+      '@YXkE3TikkY4GFMX3lzXUllRkNTbj5E+604AkaO1xbz8=.ed25519'
+    ]
+  })
+  t.false(isValid(noGroupRecps), 'fails if there is no group recp')
 
   t.end()
 })

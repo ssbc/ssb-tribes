@@ -1,9 +1,8 @@
-const { isFeed } = require('ssb-ref')
+const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const { box, unboxKey, unboxBody } = require('envelope-js')
 
 const SecretKey = require('./lib/secret-key')
 const { FeedId, MsgId } = require('./lib/cipherlinks')
-const isCloaked = require('./lib/is-cloaked-msg-id')
 
 function isEnvelope (ciphertext) {
   return ciphertext.endsWith('.box2')
@@ -11,21 +10,21 @@ function isEnvelope (ciphertext) {
 
 module.exports = function Envelope (keystore, state) {
   function boxer (content) {
-    if (!content.recps.every(r => isCloaked(r) || isFeed(r))) return null
+    if (!content.recps.every(r => isGroup(r) || isFeed(r))) return null
     if (content.recps.length > 16) {
       throw new Error(`private-group spec allows maximum 16 slots, but you've tried to use ${content.recps.length}`)
     }
-    const groupIdCount = content.recps.filter(isCloaked).length
+    const groupIdCount = content.recps.filter(isGroup).length
     if (groupIdCount > 1) {
       throw new Error(`private-group spec only allows one groupId in recps, you sent ${groupIdCount}`)
     }
-    if (groupIdCount === 1 && !isCloaked(content.recps[0])) {
+    if (groupIdCount === 1 && !isGroup(content.recps[0])) {
       throw new Error('private-group spec expects the groupId to be the first recipient')
       // we could sort the groupId to be at recps[0], but lets see if this hurts first
     }
 
     const recipentKeys = content.recps.map(r => {
-      if (isCloaked(r)) {
+      if (isGroup(r)) {
         const keyInfo = keystore.group.get(r)
         if (!keyInfo) throw new Error(`unknown groupId ${r}, cannot encrypt message`)
 

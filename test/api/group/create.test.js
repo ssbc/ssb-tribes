@@ -1,6 +1,6 @@
 const test = require('tape')
 const { Server } = require('../../helpers')
-const isCloaked = require('../../../lib/is-cloaked-msg-id')
+const { isCloakedMsg: isGroup } = require('ssb-ref')
 
 test('private2.group.create', t => {
   const server = Server()
@@ -10,7 +10,7 @@ test('private2.group.create', t => {
     if (err) throw err
 
     const { groupId, groupKey } = data
-    t.true(isCloaked(groupId), 'returns group identifier - groupId')
+    t.true(isGroup(groupId), 'returns group identifier - groupId')
     t.true(Buffer.isBuffer(groupKey) && groupKey.length === 32, 'returns group symmetric key - groupKey')
 
     server.close()

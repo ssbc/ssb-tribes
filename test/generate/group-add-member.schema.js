@@ -1,7 +1,5 @@
-const { messageId, feedId, tangle } = require('ssb-schema-definitions')()
+const { messageId, cloakedMessageId, feedId, tangle } = require('ssb-schema-definitions')()
 const isCanonicalBase64 = require('is-canonical-base64')
-
-const cloakedMsgRegex = require('../../lib/is-cloaked-msg-id').regex
 const secretKeyRegex = isCanonicalBase64('', '', 32) // no prefix, no suffix, 32 bytes
 
 const { print } = require('../helpers')
@@ -49,20 +47,12 @@ const schema = {
 
     recps: {
       type: 'array',
+      items: [
+        { $ref: '#/definitions/cloakedMessageId' }
+      ],
+      additionalItems: { $ref: '#/definitions/feedId' },
       minItems: 2,
-      maxItems: 16,
-      items: {
-        anyOf: [
-          { $ref: '#/definitions/feedId' },
-          { type: 'string', pattern: cloakedMsgRegex }
-        ]
-      },
-      additionalProperties: false
-      // if we has JSON schema draft 7 support
-      // items: [
-      //   { type: 'string', pattern: cloakedMsgRegex }
-      // ],
-      // additionalItems: { $ref: '#/definitions/feedId' }
+      maxItems: 16
     },
 
     tangles: {
@@ -72,15 +62,17 @@ const schema = {
         group:   { $ref: '#/definitions/tangle/update' },
         members: { $ref: '#/definitions/tangle/any' }
       }
-    },
-
-    definitions: {
-      messageId,
-      feedId,
-      tangle
     }
   },
-  additionalProperties: false
+  additionalProperties: false,
+  definitions: {
+    messageId,
+    cloakedMessageId,
+    feedId,
+    tangle
+  }
 }
 
 print('schema/group-add-member.schema.json', schema)
+
+module.exports = JSON.stringify(schema, null, 2)
