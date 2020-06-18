@@ -37,12 +37,6 @@ function init (ssb, config) {
     loading: {
       previous: true,
       keystore: true
-    },
-    get isReady () {
-      return !this.loading.keystore && !this.loading.previous
-      // we need both these things completed for:
-      // - boxing of new private messages
-      // - unboxing of new incoming messages
     }
   }
 
@@ -56,11 +50,17 @@ function init (ssb, config) {
 
   /* register the boxer / unboxer */
   const { boxer, unboxer } = Envelope(keystore, state)
-  ssb.addBoxer(boxer)
-  ssb.addUnboxer({ init: checkReady, ...unboxer })
-  function checkReady (done) {
-    if (state.isReady) return done()
-    setTimeout(() => checkReady(done), 500)
+  ssb.addBoxer({ init: isBoxerReady, value: boxer })
+  ssb.addUnboxer({ init: isUnboxerReady, ...unboxer })
+
+  function isBoxerReady (done) {
+    if (state.loading.previous === false) return done()
+    setTimeout(() => isBoxerReady(done), 500)
+  }
+
+  function isUnboxerReady (done) {
+    if (state.loading.keystore === false) return done()
+    setTimeout(() => isUnboxerReady(done), 500)
   }
 
   /* start listeners */
