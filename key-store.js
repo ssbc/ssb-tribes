@@ -4,7 +4,7 @@ const charwise = require('charwise')
 const pull = require('pull-stream')
 const { read } = require('pull-level')
 const KEY_LENGTH = require('sodium-native').crypto_secretbox_KEYBYTES
-const SCHEMES = require('private-group-spec/key-schemes.json').scheme
+const { keySchemes } = require('private-group-spec')
 const { isFeed, isMsg, isCloakedMsg: isGroup } = require('ssb-ref')
 
 const directMessageKey = require('./lib/direct-message-key')
@@ -52,7 +52,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
       if (!isMsg(info.root)) return cb(new Error(`key-store expects root got ${info.root}`))
 
-      if (!info.scheme) info.scheme = SCHEMES.private_group
+      if (!info.scheme) info.scheme = keySchemes.private_group
 
 
       cache.groups[groupId] = info
@@ -146,7 +146,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
     return {
       key: cache.authors[authorId],
-      scheme: SCHEMES.feed_id_dm
+      scheme: keySchemes.feed_id_dm
     }
   }
 

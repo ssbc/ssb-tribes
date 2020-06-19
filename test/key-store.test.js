@@ -1,5 +1,5 @@
 const test = require('tape')
-const SCHEMES = require('private-group-spec/key-schemes.json').scheme
+const { keySchemes } = require('private-group-spec')
 const { generate } = require('ssb-keys')
 
 const KeyStore = require('../key-store')
@@ -83,7 +83,7 @@ test('key-store', t => {
 
       keyStore.group.register(groupId, { key, root }, (_, data) => {
         const info = keyStore.group.get(groupId)
-        t.deepEqual(info, { key, root, scheme: SCHEMES.private_group }, DESCRIPTION)
+        t.deepEqual(info, { key, root, scheme: keySchemes.private_group }, DESCRIPTION)
 
         keyStore.close()
       })
@@ -104,7 +104,7 @@ test('key-store', t => {
           if (err) throw err
           t.deepEqual(
             data,
-            { [groupId]: { key, root, scheme: SCHEMES.private_group } },
+            { [groupId]: { key, root, scheme: keySchemes.private_group } },
             DESCRIPTION
           )
 
@@ -183,8 +183,8 @@ test('key-store', t => {
             keyStore.group.registerAuthor(groupId_B, authorId, (_, __) => {
               const keys = keyStore.author.groupKeys(authorId)
               const expected = [
-                { key: keyA, root: root_A, scheme: SCHEMES.private_group },
-                { key: keyB, root: root_B, scheme: SCHEMES.private_group }
+                { key: keyA, root: root_A, scheme: keySchemes.private_group },
+                { key: keyB, root: root_B, scheme: keySchemes.private_group }
               ]
               t.deepEqual(keys, expected, DESCRIPTION)
 
@@ -254,8 +254,8 @@ test('key-store', t => {
                   const compare = (a, b) => a.key < b.key ? -1 : 1
                   const keys = newKeyStore.author.groupKeys(authorId)
                   const expected = [
-                    { key: keyA, root: root_A, scheme: SCHEMES.private_group },
-                    { key: keyB, root: root_B, scheme: SCHEMES.private_group }
+                    { key: keyA, root: root_A, scheme: keySchemes.private_group },
+                    { key: keyB, root: root_B, scheme: keySchemes.private_group }
                   ]
                   t.deepEqual(keys.sort(compare), expected.sort(compare), DESCRIPTION)
 
@@ -283,7 +283,7 @@ test('key-store', t => {
         keyStore.author.sharedDMKey(otherKeys.id),
         {
           key: expectedDMKey,
-          scheme: SCHEMES.feed_id_dm
+          scheme: keySchemes.feed_id_dm
         },
         DESCRIPTION
       )

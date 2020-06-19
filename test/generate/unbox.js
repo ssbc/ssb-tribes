@@ -1,4 +1,4 @@
-const SCHEMES = require('private-group-spec/key-schemes.json').scheme
+const { keySchemes } = require('private-group-spec')
 
 const { GroupId, GroupKey, Server, print } = require('../helpers')
 const { MsgId } = require('../../lib/cipherlinks')
@@ -32,8 +32,8 @@ const generators = [
           input: {
             msgs: [msg],
             trial_keys: [
-              { key: GroupKey().toString('base64'), scheme: SCHEMES.private_group },
-              { key: groupKey,                      scheme: SCHEMES.private_group }
+              { key: GroupKey().toString('base64'), scheme: keySchemes.private_group },
+              { key: groupKey,                      scheme: keySchemes.private_group }
             ]
           },
           output: {
@@ -74,12 +74,12 @@ const generators = [
             input: {
               msgs: [msg],
               trial_keys: [
-                { key: GroupKey().toString('base64'), scheme: SCHEMES.private_group },
-                { key: groupKey,                      scheme: SCHEMES.private_group }
+                { key: GroupKey().toString('base64'), scheme: keySchemes.private_group },
+                { key: groupKey,                      scheme: keySchemes.private_group }
               ]
             },
             output: {
-              msgsContent: [content1, content2]
+              msgsContent: [content2]
             }
           }
           print(`vectors/unbox${i + 1}.json`, vector)
@@ -127,7 +127,7 @@ const generators = [
             input: {
               msgs: [firstMsg, msg],
               trial_keys: [
-                { key, scheme: SCHEMES.feed_id_dm }
+                { key, scheme: keySchemes.feed_id_dm }
               ]
             },
             output: {

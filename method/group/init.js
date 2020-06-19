@@ -1,5 +1,5 @@
 const { box } = require('envelope-js')
-const SCHEMES = require('private-group-spec/key-schemes.json').scheme
+const { keySchemes } = require('private-group-spec')
 
 const Secret = require('../../lib/secret-key')
 const groupId = require('../../lib/group-id')
@@ -23,7 +23,7 @@ module.exports = function GroupCreate (ssb, _, state) {
 
     const msgKey = new Secret().toBuffer()
     const recipientKeys = [
-      { key: groupKey.toBuffer(), scheme: SCHEMES.private_group }
+      { key: groupKey.toBuffer(), scheme: keySchemes.private_group }
     ]
     // TODO
     // consider making sure creator can always open the group (even if lose keystore)

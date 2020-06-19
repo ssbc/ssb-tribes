@@ -11,7 +11,7 @@ test('get-group-tangle', t => {
         const ssb = Server()
 
         ssb.private2.group.create(null, (err, data) => {
-          t.error(err)
+          t.error(err, 'create group')
 
           const groupRoot = data.groupInitMsg.key
           const groupId = data.groupId
@@ -22,15 +22,15 @@ test('get-group-tangle', t => {
           }
 
           ssb.publish(content, (err, msg) => {
-            t.error(err)
+            t.error(err, 'publish a message')
 
             ssb.get({ id: msg.key, private: true }, (err, A) => {
-              t.error(err)
+              t.error(err, 'get that message back')
 
               t.deepEqual(
                 A.content.tangles.group,
                 { root: groupRoot, previous: [groupRoot] },
-                DESCRIPTION
+                DESCRIPTION + ' (auto added tangles.group)'
               )
 
               ssb.close()

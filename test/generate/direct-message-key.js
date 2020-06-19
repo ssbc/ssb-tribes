@@ -6,18 +6,18 @@ const generators = [
     const my = DHFeedKeys()
     const your = DHFeedKeys()
 
-    const sharedKey = directMessageKey(my.dh.secret, my.dh.public, my.feed.tfk, your.dh.public, your.feed.tfk)
+    const sharedKey = directMessageKey(my.dh.secret, my.dh.public, my.feedId, your.dh.public, your.feedId)
 
     const vector = {
       type: 'direct_message_shared_key',
-      description: 'calculate a shared DM key for another feedID',
+      description: 'calculate a shared DM key for another feedID. Note all inputs here are TFK encoded!',
       input: {
         my_dh_secret: my.dh.secret,
         my_dh_public: my.dh.public,
-        my_feed_tfk: my.feed.tfk,
+        my_feed_id: my.feedId,
 
         your_dh_public: your.dh.public,
-        your_feed_tfk: your.feed.tfk
+        your_feed_id: your.feedId
       },
       output: {
         shared_key: sharedKey

@@ -43,7 +43,6 @@ module.exports = function Envelope (keystore, state) {
   /* unboxer components */
   function key (ciphertext, { author, previous }) {
     if (!isEnvelope(ciphertext)) return null
-    // TODO go upstream and stop this being run 7x times per message!
 
     const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
     const feed_id = new FeedId(author).toTFK()

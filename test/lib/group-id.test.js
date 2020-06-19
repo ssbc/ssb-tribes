@@ -2,7 +2,7 @@ const test = require('tape')
 const vectors = [
   require('private-group-spec/vectors/group-id1.json')
 ]
-const SCHEMES = require('private-group-spec/key-schemes.json').scheme
+const { keySchemes } = require('private-group-spec')
 const { unboxKey, DeriveSecret } = require('envelope-js')
 const LABELS = require('envelope-spec/derive_secret/constants.json')
 
@@ -61,7 +61,7 @@ test('GroupId', t => {
 
     const trial_keys = [{
       key: group_key,
-      scheme: SCHEMES.private_group
+      scheme: keySchemes.private_group
     }]
 
     const { content, author, previous } = group_init_msg.value
