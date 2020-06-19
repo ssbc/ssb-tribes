@@ -72,7 +72,7 @@ const generators = [
             type: 'unbox',
             description,
             input: {
-              msgs: [firstMsg, msg],
+              msgs: [msg],
               trial_keys: [
                 { key: GroupKey().toString('base64'), scheme: SCHEMES.private_group },
                 { key: groupKey,                      scheme: SCHEMES.private_group }

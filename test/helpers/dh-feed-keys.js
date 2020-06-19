@@ -10,10 +10,8 @@ module.exports = function DHFeedKeys (keys) {
   const feedKeys = new FeedKeys(ssbKeys).toBuffer()
 
   return {
-    dh: new DHKeys(feedKeys).toBuffer(),
-    feed: {
-      id: ssbKeys.id,
-      tfk: new FeedId(ssbKeys.id).toTFK()
-    }
+    dh: new DHKeys(feedKeys).toTFK(),
+    feedId: new FeedId(ssbKeys.id).toTFK(),
+    sigilFeedId: ssbKeys.id
   }
 }
