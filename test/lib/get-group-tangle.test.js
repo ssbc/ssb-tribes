@@ -10,7 +10,7 @@ test('get-group-tangle', t => {
         // this is an integration test, as we've hooked get-group-tangle into ssb.publish
         const ssb = Server()
 
-        ssb.private2.group.create(null, (err, data) => {
+        ssb.tribes.create(null, (err, data) => {
           t.error(err, 'create group')
 
           const groupRoot = data.groupInitMsg.key

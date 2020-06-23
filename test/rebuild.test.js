@@ -29,14 +29,14 @@ test('rebuild', t => {
     fn.apply(this, [replacementCb])
   })
 
-  B.private2.group.create({}, (err, data) => {
+  B.tribes.create({}, (err, data) => {
     if (err) throw err
 
     messages.push(data.groupInitMsg)
     groupId = data.groupId
     console.log(`created group: ${groupId}`)
 
-    B.private2.group.invite(groupId, [A.id], { text: 'ahoy' }, (err, invite) => {
+    B.tribes.invite(groupId, [A.id], { text: 'ahoy' }, (err, invite) => {
       if (err) throw err
       messages.push(invite)
       B.close()
@@ -66,13 +66,13 @@ test('rebuild (not called from own add-member)', t => {
     fn.apply(this, [cb])
   })
 
-  server.private2.group.create(null, (err, data) => {
+  server.tribes.create(null, (err, data) => {
     t.error(err, 'no error')
 
     const { groupId } = data
     const feedId = new FeedId().mock().toSSB()
 
-    server.private2.group.invite(groupId, [feedId], {}, (err) => {
+    server.tribes.invite(groupId, [feedId], {}, (err) => {
       t.error(err, 'no error')
 
       setTimeout(() => {

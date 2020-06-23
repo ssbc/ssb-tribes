@@ -33,7 +33,7 @@ test('unbox', t => {
 test('unbox (indexes can access)', t => {
   const server = Server()
 
-  server.private2.group.create(null, (err, data) => {
+  server.tribes.create(null, (err, data) => {
     if (err) throw err
 
     const { groupId, groupInitMsg } = data

@@ -25,7 +25,7 @@ test('listen.addMember', t => {
     }
   })
 
-  B.private2.group.create({}, (err, data) => {
+  B.tribes.create({}, (err, data) => {
     if (err) throw err
 
     messages.push(data.groupInitMsg)
@@ -33,7 +33,7 @@ test('listen.addMember', t => {
     groupId = data.groupId
     console.log(`created group: ${groupId}`)
 
-    B.private2.group.invite(groupId, [A.id], { text: 'ahoy' }, (err, invite) => {
+    B.tribes.invite(groupId, [A.id], { text: 'ahoy' }, (err, invite) => {
       if (err) throw err
       messages.push(invite)
       B.close()

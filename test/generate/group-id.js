@@ -5,8 +5,7 @@ const generators = [
     const server = Server()
 
     server.publish({ type: 'first' }, (err, msg) => {
-
-      server.private2.group.create('3 musketeers', (err, data) => {
+      server.tribes.create('3 musketeers', (err, data) => {
         server.close()
 
         const vector = {

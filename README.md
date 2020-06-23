@@ -1,6 +1,9 @@
-# ssb-private2
+# ssb-tribes
 
-Introduces evelope encryption to scuttlebutt.
+A scuttlebutt plugin for managing encrypted groups.
+Implements the [private group spec](https://github.com/ssbc/private-group-spec) which uses the [envelope spec](https://github.com/ssbc/envelope-spec/).
+
+This is the successor to [`ssb-private1`](https://github.com/ssbc/ssb-private1).
 
 **STATUS: WIP**
 
@@ -11,24 +14,26 @@ const SecretStack = require('secret-stack')
 const config = require('ssb-config')
 const caps = require('ssb-caps')
 
-const SSB = SecretStack({ caps })
-  .use(require('ssb-db'))         // << required
-  .use(require('ssb-private2'))
+const stack = SecretStack({ caps })
+  .use(require('ssb-db'))        // << required
+  .use(require('ssb-tribes'))
+  .use(require('ssb-private1'))  // if you want to support old encryption
+                                 // *order matters*, load tribes first
+  .use(...)
 
-const ssb = SSB(config)
+const ssb = stack(config)
 ```
 
 
 ```js
 const content = {
-  type: 'profile/person',
-  //....
-  recps: [
-    <GroupId>,
-    <FeedId>
-  ]
+  type: 'post',
+  test: 'kia ora whanau',
+  recps: [ <GroupId>, <FeedId> ]
 }
+
 ssb.publish(content, (err, data) => {
+  // tada, encrypted
 })
 ```
 
@@ -37,16 +42,17 @@ Later, any of the following will result in a happiliy readable message (for you 
 - you run any db query which might have matched that message
 
 **NOTE**:
-- `<GroupId>` is a unique identifier which can be mapped to the `<GroupKey>` for that Group. The importance of these being distinct is that a `<GroupId>` is designed to leak no information about who is in the group, and is therefore safe to reference in public contexts.
-- `<FeedId>` is synonymous with the public key of a particular device (`@...sha256`). Said another way, the id of a feed is currently synonymous with it's (public) key.
+- Work on this project was resourced by Āhau. The name "tribes" was suggested by that project, and the API mostly reflects that. Some internal variables also use "group", as this is following the  _private group spec_. You can read tribe/ group interchangeably.
+- Each tribe has a `<GroupId>` (a unique identifier) which can be mapped to that tribe's `<GroupKey>` (a shared encryption key). The `<GroupId>` is related to the initialisation message for the tribe, but is safe to share (leaks no info about who started the group). The reason we can't use the "public" part of the `<GroupKey>` as an id (like `<FeedId>`) is that there isn't a public part - it's a symmetric key!
+- `<FeedId>` is synonymous with the public key of a particular device (`@...sha256`). The private group spec details how we map this to a shared key between you (the author) and that recipient.
 
 ## Requirements
 
-A Secret-Stack server running the plugins `ssb-db` and `ssb-private2`
+A Secret-Stack server running the plugins `ssb-db` and `ssb-tribes`
 
 ## API
 
-### `ssb.private2.group.create(opts, cb)`
+### `ssb.tribes.create(opts, cb)`
 
 Mint a new private group.
 
@@ -60,7 +66,7 @@ where:
 _This method calls `group.add` and `group.addAuthors` for you (adding you)_
 
 
-### `ssb.private2.group.invite(groupId, [authorId], opts, cb)`
+### `ssb.tribes.invite(groupId, [authorId], opts, cb)`
 
 Adds an author to a group you belong to.
 This publishes a message that both this new author AND the group can see, and contains the info
@@ -76,7 +82,7 @@ where:
 _This method calls `group.addAuthors` for you (adding that person to the group register for you)_
 
 
-### `ssb.private2.group.register(groupId, info, cb)`
+### `ssb.tribes.register(groupId, info, cb)`
 
 Registers a new group that you have learnt about.
 
@@ -91,7 +97,7 @@ where:
 
 
 
-### `ssb.private2.group.registerAuthors(groupId, [authorId], cb)`
+### `ssb.tribes.registerAuthors(groupId, [authorId], cb)`
 
 Makes an off-log note that some author(s) are part of a group.
 This is used to know which group keys to consider when you receive a private message from a particular author.

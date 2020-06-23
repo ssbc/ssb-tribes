@@ -13,18 +13,13 @@ const GetGroupTangle = require('./lib/get-group-tangle')
 const Method = require('./method')
 
 module.exports = {
-  name: 'private2',
+  name: 'tribes',
   version: require('./package.json').version,
   manifest: {
-    group: {
-      register: 'async',
-      registerAuthors: 'async',
-      create: 'async',
-      invite: 'async'
-    }
-    // author: {
-    //   groupKeys: 'sync' // should this even be public?
-    // }
+    register: 'async',
+    registerAuthors: 'async',
+    create: 'async',
+    invite: 'async'
   },
   init
 }
@@ -41,7 +36,7 @@ function init (ssb, config) {
   }
 
   /* secret keys store / helper */
-  const keystore = KeyStore(join(config.path, 'private2/keystore'), ssb.keys, () => {
+  const keystore = KeyStore(join(config.path, 'tribes/keystore'), ssb.keys, () => {
     state.loading.keystore = false
   })
   ssb.close.hook(function (fn, args) {
@@ -121,33 +116,31 @@ function init (ssb, config) {
   /* API */
   const scuttle = Method(ssb, keystore, state) // ssb db methods
   return {
-    group: {
-      register: keystore.group.register,
-      registerAuthors (groupId, authorIds, cb) {
-        pull(
-          pull.values(authorIds),
-          pull.asyncMap((authorId, cb) => keystore.group.registerAuthor(groupId, authorId, cb)),
-          pull.collect((err) => {
-            if (err) cb(err)
-            else cb(null, true)
-          })
-        )
-      },
-      create (opts, cb) {
-        scuttle.group.init((err, data) => {
+    register: keystore.group.register,
+    registerAuthors (groupId, authorIds, cb) {
+      pull(
+        pull.values(authorIds),
+        pull.asyncMap((authorId, cb) => keystore.group.registerAuthor(groupId, authorId, cb)),
+        pull.collect((err) => {
+          if (err) cb(err)
+          else cb(null, true)
+        })
+      )
+    },
+    create (opts, cb) {
+      scuttle.group.init((err, data) => {
+        if (err) return cb(err)
+
+        keystore.group.register(data.groupId, { key: data.groupKey, root: data.groupInitMsg.key }, (err) => {
           if (err) return cb(err)
 
-          keystore.group.register(data.groupId, { key: data.groupKey, root: data.groupInitMsg.key }, (err) => {
+          keystore.group.registerAuthor(data.groupId, ssb.id, (err) => {
             if (err) return cb(err)
-
-            keystore.group.registerAuthor(data.groupId, ssb.id, (err) => {
-              if (err) return cb(err)
-              cb(null, data)
-            })
+            cb(null, data)
           })
         })
-      },
-      invite: scuttle.group.addMember
-    }
+      })
+    },
+    invite: scuttle.group.addMember
   }
 }

@@ -2,10 +2,10 @@ const test = require('tape')
 const { Server } = require('../../helpers')
 const { FeedId } = require('../../../lib/cipherlinks')
 
-test('private2.group.invite', t => {
+test('tribes.invite', t => {
   const server = Server()
 
-  server.private2.group.create('the pantheon', (err, data) => {
+  server.tribes.create('the pantheon', (err, data) => {
     t.error(err)
 
     const { groupId, groupKey, groupInitMsg } = data
@@ -14,7 +14,7 @@ test('private2.group.invite', t => {
       new FeedId().mock().toSSB()
     ]
 
-    server.private2.group.invite(groupId, authorIds, { text: 'welcome friends' }, (err, invite) => {
+    server.tribes.invite(groupId, authorIds, { text: 'welcome friends' }, (err, invite) => {
       t.error(err)
 
       server.get({ id: invite.key, private: true }, (_, value) => {

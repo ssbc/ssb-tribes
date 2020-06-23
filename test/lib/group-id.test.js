@@ -39,10 +39,10 @@ test('GroupId', t => {
   t.equal(B, C, 'can calculate GroupId from an unboxed message')
 
   // -----------------------------------------------------------
-  
+
   const server = Server()
 
-  server.private2.group.create({}, (err, data) => {
+  server.tribes.create({}, (err, data) => {
     if (err) throw err
 
     const { groupId, groupKey, groupInitMsg } = data

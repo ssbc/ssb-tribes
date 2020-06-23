@@ -14,7 +14,7 @@ const generators = [
     const groupKey = GroupKey()
     const root = new MsgId().mock().toSSB()
 
-    server.private2.group.register(groupId, { key: groupKey, root }, (_, success) => {
+    server.tribes.register(groupId, { key: groupKey, root }, (_, success) => {
       const content = {
         type: 'alert',
         text: 'get ready to scuttle!',
@@ -56,7 +56,7 @@ const generators = [
       const groupKey = GroupKey()
       const root = new MsgId().mock().toSSB()
 
-      server.private2.group.register(groupId, { key: groupKey, root }, (_, success) => {
+      server.tribes.register(groupId, { key: groupKey, root }, (_, success) => {
         const content2 = {
           type: 'alert',
           text: 'get ready to scuttle!',
@@ -105,7 +105,7 @@ const generators = [
       const groupKey = GroupKey()
       const root = new MsgId().mock().toSSB()
 
-      server.private2.group.register(groupId, { key: groupKey, root }, (_, success) => {
+      server.tribes.register(groupId, { key: groupKey, root }, (_, success) => {
         const friendId = new FeedId().mock()
 
         const content2 = {

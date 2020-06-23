@@ -2,11 +2,11 @@ const test = require('tape')
 const { Server } = require('../../helpers')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
 
-test('private2.group.create', t => {
+test('tribes.create', t => {
   const server = Server()
 
   // this is more of an integration test over the api
-  server.private2.group.create(null, (err, data) => {
+  server.tribes.create(null, (err, data) => {
     if (err) throw err
 
     const { groupId, groupKey } = data
