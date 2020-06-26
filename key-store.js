@@ -1,4 +1,4 @@
-const { mkdirSync } = require('fs')
+const mkdirp = require('mkdirp')
 const Level = require('level')
 const charwise = require('charwise')
 const pull = require('pull-stream')
@@ -22,7 +22,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
 
   const buildDMKey = directMessageKey.easy(ssbKeys)
 
-  mkdirSync(path, { recursive: true })
+  mkdirp.sync(path)
 
   /* state */
   var isReady = !loadState

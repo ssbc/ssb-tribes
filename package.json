@@ -22,6 +22,7 @@
     "is-my-ssb-valid": "^1.1.0",
     "level": "^6.0.1",
     "lodash.set": "^4.3.2",
+    "mkdirp": "^1.0.4",
     "private-group-spec": "github:ssbc/private-group-spec",
     "pull-level": "^2.0.4",
     "pull-stream": "^3.6.14",
