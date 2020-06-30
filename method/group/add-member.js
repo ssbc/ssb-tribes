@@ -1,4 +1,4 @@
-const isValid = require('../../lib/is-group-add-member')
+const { isValid } = require('../../spec/group/add-member')
 
 module.exports = function GroupInvite (ssb, keystore, state) {
   return function groupInvite (groupId, authorIds, opts = {}, cb) {

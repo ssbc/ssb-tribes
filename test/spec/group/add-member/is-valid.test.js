@@ -1,7 +1,7 @@
 const test = require('tape')
-const isValid = require('../../lib/is-group-add-member')
-const { GroupId } = require('../helpers')
-const { FeedId: FI } = require('../../lib/cipherlinks')
+const { isValid } = require('../../../../spec/group/add-member')
+const { GroupId } = require('../../../helpers')
+const { FeedId: FI } = require('../../../../lib/cipherlinks')
 
 const FeedId = () => new FI().mock().toSSB()
 

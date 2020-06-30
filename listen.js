@@ -1,6 +1,6 @@
 const pull = require('pull-stream')
 const { MsgId } = require('./lib/cipherlinks')
-const isAddMember = require('./lib/is-group-add-member')
+const { isValid } = require('./spec/group/add-member')
 
 module.exports = {
   previous,
@@ -60,7 +60,7 @@ function addMember (ssb) {
     ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
     pull.filter(m => m.sync !== true), // live queries emit { sync: true } when up to speed!
     pull.filter(m => m.value.author !== ssb.id), // ignore messages I write
-    pull.filter(isAddMember),
+    pull.filter(isValid),
     pull.drain(m => {
       listeners.forEach(fn => fn(m))
     })

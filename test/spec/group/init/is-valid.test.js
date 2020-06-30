@@ -1,5 +1,5 @@
 const test = require('tape')
-const isValid = require('../../lib/is-group-init')
+const { isValid } = require('../../../../spec/group/init')
 
 const Mock = (overwrite = {}) => {
   const base = {

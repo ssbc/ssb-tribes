@@ -11,6 +11,7 @@ const { print } = require('../helpers')
 // }
 
 const schema = {
+  $schema: 'http://json-schema.org/schema#',
   type: 'object',
   required: ['type', 'tangles'],
   properties: {

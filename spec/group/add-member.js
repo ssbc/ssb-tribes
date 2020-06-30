@@ -1,7 +1,9 @@
 const Validator = require('is-my-ssb-valid')
 const schema = require('private-group-spec').schema.group.addMember
 
-module.exports = Validator(schema)
+module.exports = {
+  isValid: Validator(schema)
+}
 
 // NOTE
 // here's how you can do additional validation.

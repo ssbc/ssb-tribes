@@ -3,7 +3,7 @@ const { keySchemes } = require('private-group-spec')
 
 const Secret = require('../../lib/secret-key')
 const groupId = require('../../lib/group-id')
-const isValid = require('../../lib/is-group-init')
+const { isValid } = require('../../spec/group/init')
 
 module.exports = function GroupCreate (ssb, _, state) {
   return function groupCreate (cb) {
