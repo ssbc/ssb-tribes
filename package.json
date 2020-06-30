@@ -33,6 +33,7 @@
   "devDependencies": {
     "scuttle-testbot": "^1.2.2",
     "ssb-backlinks": "^2.0.1",
+    "ssb-query": "^2.4.5",
     "ssb-schema-definitions": "^3.1.0",
     "standard": "^14.3.4",
     "tap-spec": "^5.0.0",

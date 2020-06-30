@@ -19,7 +19,11 @@ module.exports = {
     register: 'async',
     registerAuthors: 'async',
     create: 'async',
-    invite: 'async'
+    invite: 'async',
+    link: {
+      create: 'async'
+    },
+    findByFeedId: 'async'
   },
   init
 }
@@ -141,6 +145,10 @@ function init (ssb, config) {
         })
       })
     },
-    invite: scuttle.group.addMember
+    invite: scuttle.group.addMember,
+    link: {
+      create: scuttle.link.create
+    },
+    findByFeedId: scuttle.link.findGroupByFeedId
   }
 }
