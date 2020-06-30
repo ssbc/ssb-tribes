@@ -16,6 +16,8 @@ const caps = require('ssb-caps')
 
 const stack = SecretStack({ caps })
   .use(require('ssb-db'))        // << required
+  .use(require('ssb-backlinks')) // << required index
+  .use(require('ssb-query'))     // << required index
   .use(require('ssb-tribes'))
   .use(require('ssb-private1'))  // if you want to support old encryption
                                  // *order matters*, load tribes first
@@ -145,12 +147,8 @@ where:
 NOTE: the strange format of the data is to leave easy support for multiple editors in the future
 
 
-## Questions
 
-- how does this "key store" interact with flume views?
-  - if we discover a new key entrust part way through indexing ... we have to trigger re-indexing of other views
-    - might need to reset this view too, as opening existing groups will reveal other entrusts sent to members ....
-      - oh god this could get recurrsive. As in ok I know Ben has given me a key so I re-index with and try this key on Ben's encrypted messages, but then I reveal from here that Ben has entrusted the key to Cherese .. ok add Cherese as a member, start again because Cherese may have said something before....
-      - I think this means when we entrust we need to know the root message + author.
-  - should the key-store sit outside flume views?
-    - if it does then we can manually add things from outside system...
+## TODO
+
+- [ ] add the latest known "sequence" at time of add-member, so we know if we need to reindex!
+
