@@ -117,12 +117,12 @@ where:
 Creates a message of type `link/feed-group` which links your feedId to a valid group. (i.e. you can only create links between your feedId and profiles at the moment)
 
 Arguments:
-- `group` *GroupId* - the id for a group you're wanting to create link to
+- `group` *GroupId* - the id of the private group you're creating a link with (linking your scuttlebutt feed with that group)
 - `name` *String* (optional) - this adds your nickname for the group
 - `cb` *Function* - callback with signature `(err, link)` where `link` is the link message
 
 Note:
-- this link will be encrypted to the group you're linking to (i.e. link will have `recps: [groupId`])
+- this link will be encrypted to the group you're linking to (i.e. link will have `recps: [groupId]`)
 
 ### `ssb.tribes.findByfeedId(feedId, cb)`
 
