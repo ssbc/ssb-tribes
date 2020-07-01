@@ -30,7 +30,7 @@ const ssb = stack(config)
 ```js
 const content = {
   type: 'post',
-  test: 'kia ora whanau',
+  test: 'kia ora, e te whānau',
   recps: [ <GroupId>, <FeedId> ]
 }
 
