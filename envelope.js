@@ -10,17 +10,25 @@ function isEnvelope (ciphertext) {
 
 module.exports = function Envelope (keystore, state) {
   function boxer (content) {
-    if (!content.recps.every(r => isGroup(r) || isFeed(r))) return null
     if (content.recps.length > 16) {
       throw new Error(`private-group spec allows maximum 16 slots, but you've tried to use ${content.recps.length}`)
     }
-    const groupIdCount = content.recps.filter(isGroup).length
-    if (groupIdCount > 1) {
-      throw new Error(`private-group spec only allows one groupId in recps, you sent ${groupIdCount}`)
+    // groupId can only be in first "slot"
+    if (!isGroup(content.recps[0]) && !isFeed(content.recps[0])) return null
+
+    // any subsequent slots are only for feedId
+    if (content.recps.length > 1 && !content.recps.slice(1).every(isFeed)) {
+      if (content.recps.slice(1).find(isGroup)) {
+        throw new Error('private-group spec only allows groupId in the first slot')
+      }
+      return null
     }
-    if (groupIdCount === 1 && !isGroup(content.recps[0])) {
-      throw new Error('private-group spec expects the groupId to be the first recipient')
-      // we could sort the groupId to be at recps[0], but lets see if this hurts first
+
+    // the spec currently disallows encrypting to your own feedId
+    console.log(state.keys.id)
+    if (content.recps.find(recp => recp === state.keys.id)) {
+      console.warn('private-group spec disallows encrypting to your own feedId. Use a private group only you are in')
+      return null // this will allow ssb-private1 to step in
     }
 
     const recipentKeys = content.recps.map(r => {

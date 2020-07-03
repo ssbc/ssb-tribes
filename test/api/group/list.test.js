@@ -1,6 +1,6 @@
 const test = require('tape')
 
-test('tribes.invite', { todo: true }, t => {
+test('group.list', { todo: true }, t => {
 
   t.end()
 })

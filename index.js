@@ -30,6 +30,8 @@ module.exports = {
 
 function init (ssb, config) {
   var state = {
+    keys: ssb.keys,
+
     feedId: new FeedId(ssb.id).toTFK(),
     previous: undefined,
 
