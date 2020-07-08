@@ -61,7 +61,9 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     get (groupId) {
       return cache.groups[groupId]
     },
-
+    list () {
+      return Object.keys(cache.groups)
+    },
     readPersisted (cb) {
       pull(
         read(level, {
@@ -207,7 +209,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     group: {
       register: patient(group.register),
       get: group.get,                               // sync
-      // list
+      list: group.list,
       registerAuthor: patient(membership.register),
       // registerAuthors: patient(membership.registerMany),
       readPersisted: group.readPersisted

@@ -151,6 +151,8 @@ function init (ssb, config) {
     link: {
       create: scuttle.link.create
     },
-    findByFeedId: scuttle.link.findGroupByFeedId
+    findByFeedId: scuttle.link.findGroupByFeedId,
+    get: keystore.group.get,
+    list: keystore.group.list
   }
 }
