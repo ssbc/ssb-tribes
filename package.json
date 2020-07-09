@@ -32,7 +32,7 @@
     "ssb-tangle": "^2.1.0"
   },
   "devDependencies": {
-    "scuttle-testbot": "github:ssbc/scuttle-testbot#fix-start-unclean",
+    "scuttle-testbot": "^1.2.3 ",
     "ssb-backlinks": "^2.0.1",
     "ssb-query": "^2.4.5",
     "ssb-schema-definitions": "^3.1.0",

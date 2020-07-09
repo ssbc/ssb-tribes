@@ -146,11 +146,11 @@ where:
 
 NOTE: the strange format of the data is to leave easy support for multiple editors in the future
 
-### `ssb.tribes.list()`
+### `ssb.tribes.list(cb)`
 
 Returns a list of all known group IDs.
 
-### `ssb.tribes.get(groupID)`
+### `ssb.tribes.get(groupID, cb)`
 
 Returns group metadata for a given group:
 
