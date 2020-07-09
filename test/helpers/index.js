@@ -27,8 +27,7 @@ module.exports = {
     const server = Server // eslint-disable-line
       .use(require('../..')) // ssb-tribes
       .use(require('ssb-backlinks'))
-      .use(require('ssb-query'))
-      .call(opts)
+      .use(require('ssb-query'))(opts)
 
     return server
   }

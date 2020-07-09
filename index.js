@@ -23,12 +23,15 @@ module.exports = {
     link: {
       create: 'async'
     },
-    findByFeedId: 'async'
+    findByFeedId: 'async',
+    get: 'async',
+    list: 'async'
   },
   init
 }
 
 function init (ssb, config) {
+
   var state = {
     keys: ssb.keys,
 
@@ -38,7 +41,9 @@ function init (ssb, config) {
     loading: {
       previous: true,
       keystore: true
-    }
+    },
+
+    closed: false
   }
 
   /* secret keys store / helper */
@@ -46,6 +51,7 @@ function init (ssb, config) {
     state.loading.keystore = false
   })
   ssb.close.hook(function (fn, args) {
+    state.closed = true
     keystore.close(() => fn.apply(this, args))
   })
 
@@ -56,12 +62,16 @@ function init (ssb, config) {
 
   function isBoxerReady (done) {
     if (state.loading.previous === false) return done()
-    setTimeout(() => isBoxerReady(done), 500)
+    if (state.closed === false) {
+      setTimeout(() => isBoxerReady(done), 500)
+    }
   }
 
   function isUnboxerReady (done) {
     if (state.loading.keystore === false) return done()
-    setTimeout(() => isUnboxerReady(done), 500)
+    if (state.closed === false) {
+      setTimeout(() => isUnboxerReady(done), 500)
+    }
   }
 
   /* start listeners */
@@ -152,7 +162,7 @@ function init (ssb, config) {
       create: scuttle.link.create
     },
     findByFeedId: scuttle.link.findGroupByFeedId,
-    get: keystore.group.get,
-    list: keystore.group.list
+    get: (id, cb) => isUnboxerReady(() => cb(null, keystore.group.get(id))),
+    list: (cb) => isUnboxerReady(() => cb(null, keystore.group.list()))
   }
 }
