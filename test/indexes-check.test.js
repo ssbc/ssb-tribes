@@ -9,7 +9,7 @@ const { Server } = require('./helpers')
 const PROFILE = 'profile/person'
 const LINK = 'link/feed-profile'
 
-function setup (server, t, cb) {
+function createRecords (server, t, cb) {
   // this function creates a group and published a handful of messages to that group
   // it calls back with the groupId and the list of published messages
 
@@ -52,22 +52,6 @@ function setup (server, t, cb) {
   })
 }
 
-function pullBacklinks (server) {
-  const query = [{
-    $filter: {
-      dest: server.id,
-      value: {
-        content: {
-          type: LINK,
-          parent: server.id
-        }
-      }
-    }
-  }]
-
-  return server.backlinks.read({ query })
-}
-
 function testSuite (indexName, pullValues) {
   function checkIndex (server, t, published, cb) {
     pull(
@@ -93,7 +77,7 @@ function testSuite (indexName, pullValues) {
     var server = Server({ name })
     const keys = server.keys
 
-    setup(server, t, (_, { groupId, published }) => {
+    createRecords(server, t, (_, { groupId, published }) => {
       t.comment(`> check ${indexName} results`)
       checkIndex(server, t, published, () => {
         t.comment('> check again (after server restart)')
@@ -128,4 +112,36 @@ function testSuite (indexName, pullValues) {
   })
 }
 
+function pullBacklinks (server) {
+  const query = [{
+    $filter: {
+      dest: server.id,
+      value: {
+        content: {
+          type: LINK,
+          parent: server.id
+        }
+      }
+    }
+  }]
+
+  return server.backlinks.read({ query })
+}
 testSuite('backlinks', pullBacklinks)
+
+function pullQuery (server) {
+  const query = [{
+    $filter: {
+      value: {
+        author: server.id,
+        content: {
+          type: LINK,
+          parent: server.id
+        }
+      }
+    }
+  }]
+
+  return server.query.read({ query })
+}
+testSuite('query', pullQuery)
