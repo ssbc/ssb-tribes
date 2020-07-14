@@ -52,10 +52,10 @@ function createRecords (server, t, cb) {
   })
 }
 
-function testSuite (indexName, pullValues) {
+function testSuite (indexName, createSource) {
   function checkIndex (server, t, published, cb) {
     pull(
-      pullValues(server),
+      createSource(server),
       pull.collect((err, results) => {
         t.error(err, `${indexName}.read`)
 
@@ -112,7 +112,7 @@ function testSuite (indexName, pullValues) {
   })
 }
 
-function pullBacklinks (server) {
+testSuite('backlinks', (server) => {
   const query = [{
     $filter: {
       dest: server.id,
@@ -126,10 +126,9 @@ function pullBacklinks (server) {
   }]
 
   return server.backlinks.read({ query })
-}
-testSuite('backlinks', pullBacklinks)
+})
 
-function pullQuery (server) {
+testSuite('query', (server) => {
   const query = [{
     $filter: {
       value: {
@@ -143,5 +142,4 @@ function pullQuery (server) {
   }]
 
   return server.query.read({ query })
-}
-testSuite('query', pullQuery)
+})
