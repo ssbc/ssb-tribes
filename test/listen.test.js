@@ -19,9 +19,34 @@ test('listen.addMember', t => {
   listen.addMember(A)(m => {
     t.equal(m.value.content.root, root, `listened + heard the group/add-member: ${++heardCount}`)
 
+    if (heardCount <= 2) {
+      t.pass(`addMember called ${heardCount} times`)
+    } else {
+      t.fail(`addMember called ${heardCount} times`)
+    }
+
     if (heardCount === 2) {
-      A.close()
-      t.end()
+      // HACK: This avoids a race condition where we close the database when
+      // the rebuild is still in progress. The double-get() is meant to be
+      // slow. The sequence of events should look like this:
+      //
+      // - main: get(root)
+      // - test: get(key)
+      // - main: rebuild()
+      // - test: get(key)
+      //   - this doesn't call back until indexes are up-to-date
+      // - main: rebuild finishes
+      // - test: get finishes
+      // - test: close server
+      // - test: end
+      //
+      A.get(m.key, (err) => {
+        t.error(err)
+        A.get(m.key, (err) => {
+          t.error(err)
+          A.close(t.end)
+        })
+      })
     }
   })
 
