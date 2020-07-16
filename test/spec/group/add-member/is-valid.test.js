@@ -11,7 +11,7 @@ const Mock = (overwrite = {}) => {
     version: 'v1',
     groupKey: '3YUat1ylIUVGaCjotAvof09DhyFxE8iGbF6QxLlCWWc=',
     root: '%THxjTGPuXvvxnbnAV7xVuVXdhDcmoNtDDN0j3UTxcd8=.sha256',
-    text: 'welcome keks!',                                      // optional
+    text: 'welcome keks!', // optional
     recps: [
       GroupId()
       // add 15 feedId

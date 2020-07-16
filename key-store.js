@@ -27,9 +27,9 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   /* state */
   var isReady = !loadState
   var cache = {
-    groups: {},      // maps groupId > group.info
-    memberships: {}, // maps authorId > [groupId]
-    authors: {}      // maps authorId > { key, scheme: SharedDMKey } for that author
+    groups: {}, // ------ maps groupId > group.info
+    memberships: {}, // - maps authorId > [groupId]
+    authors: {} // ------ maps authorId > { key, scheme: SharedDMKey } for that author
   }
 
   const level = Level(path, {
@@ -45,15 +45,13 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       if (!isGroup(groupId)) return cb(new Error(`key-store expected a groupId, got ${groupId}`))
 
       // convert to 32 Byte buffer
-      try { info.key = toKeyBuffer(info.key) }
-      catch (e) { return cb(e) }
+      try { info.key = toKeyBuffer(info.key) } catch (e) { return cb(e) }
       // TODO perhaps use groupKey when inputing everywhere
       // and map to trial_keys style { key, scheme } on exit
 
       if (!isMsg(info.root)) return cb(new Error(`key-store expects root got ${info.root}`))
 
       if (!info.scheme) info.scheme = keySchemes.private_group
-
 
       cache.groups[groupId] = info
       level.put([GROUP, groupId, Date.now()], info, cb)
@@ -71,7 +69,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
           gt: [GROUP, null, null]
         }),
         pull.map(({ key, value: info }) => {
-          const [_, groupId, createdAt] = key
+          const [_, groupId, createdAt] = key // eslint-disable-line
           return { [groupId]: info }
         }),
         pull.collect((err, pairs) => {
@@ -112,7 +110,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
           gt: [MEMBER, null, null]
         }),
         pull.map(({ key, value: groupId }) => {
-          const [_, authorId] = key
+          const [_, authorId] = key // eslint-disable-line
           return { authorId, groupId }
         }),
         pull.collect((err, pairs) => {
@@ -208,16 +206,16 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   return {
     group: {
       register: patient(group.register),
-      get: group.get,                               // sync
-      list: group.list,
+      get: group.get, // ------------------------------------ sync
+      list: group.list, // ---------------------------------- sync
       registerAuthor: patient(membership.register),
       // registerAuthors: patient(membership.registerMany),
       readPersisted: group.readPersisted
     },
     author: {
-      groups: membership.getAuthorGroups,           // sync
-      groupKeys: getAuthorGroupKeys,                // sync (ssb-db boxer/unboxer requires sync)
-      sharedDMKey: getSharedDMKey                   // sync
+      groups: membership.getAuthorGroups, // ---------------- sync
+      groupKeys: getAuthorGroupKeys, // --------------------- sync (ssb-db boxer/unboxer requires sync)
+      sharedDMKey: getSharedDMKey // ------------------------ sync
     },
     processAddMember: patient(processAddMember),
     close: level.close.bind(level)

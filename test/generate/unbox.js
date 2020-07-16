@@ -33,7 +33,7 @@ const generators = [
             msgs: [msg],
             trial_keys: [
               { key: GroupKey().toString('base64'), scheme: keySchemes.private_group },
-              { key: groupKey,                      scheme: keySchemes.private_group }
+              { key: groupKey, scheme: keySchemes.private_group }
             ]
           },
           output: {
@@ -75,7 +75,7 @@ const generators = [
               msgs: [msg],
               trial_keys: [
                 { key: GroupKey().toString('base64'), scheme: keySchemes.private_group },
-                { key: groupKey,                      scheme: keySchemes.private_group }
+                { key: groupKey, scheme: keySchemes.private_group }
               ]
             },
             output: {
