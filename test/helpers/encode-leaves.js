@@ -8,18 +8,14 @@ module.exports = function encodeLeaves (vector) {
 
       if (isBuffer(value)) {
         vector[key] = value.toString('base64')
-      }
-      else if (isRegex(value)) {
+      } else if (isRegex(value)) {
         vector[key] = value.toString()
           .replace(/^\//, '')
           .replace(/\/$/, '')
-      }
-      else if (typeof value === 'object') {
+      } else if (typeof value === 'object') {
         vector[key] = encodeLeaves(value)
       }
     })
 
   return vector
 }
-
-

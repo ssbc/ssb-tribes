@@ -8,7 +8,6 @@ const vectors = [
   require('private-group-spec/vectors/unbox2.json')
 ].map(decodeLeaves)
 
-
 test('unbox', t => {
   t.plan(vectors.length)
 

@@ -6,6 +6,7 @@
   "scripts": {
     "test": "tape 'test/**/*.test.js'",
     "test:pretty": "npm test | tap-spec",
+    "lint": "standard --fix | grep -v camel",
     "generate": "rm test/generate/*/* && node test/generate/index.js"
   },
   "homepage": "https://github.com/ssbc/ssb-tribes#readme",
@@ -32,9 +33,9 @@
     "ssb-tangle": "^2.1.0"
   },
   "devDependencies": {
+    "is-canonical-base64": "^1.1.1",
     "scuttle-testbot": "^1.2.3 ",
     "ssb-backlinks": "^2.0.1",
-    "is-canonical-base64": "^1.1.1",
     "ssb-query": "^2.4.5",
     "standard": "^14.3.4",
     "tap-spec": "^5.0.0",

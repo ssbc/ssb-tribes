@@ -5,7 +5,10 @@ const generators = [
     const server = Server()
 
     server.publish({ type: 'first' }, (err, msg) => {
+      if (err) throw err
+
       server.tribes.create('3 musketeers', (err, data) => {
+        if (err) throw err
         server.close()
 
         const vector = {

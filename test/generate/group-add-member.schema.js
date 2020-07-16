@@ -37,13 +37,13 @@ const schema = {
   type: 'object',
   required: ['type', 'version', 'groupKey', 'root', 'tangles'],
   properties: {
-    type:       { type: 'string', pattern: '^group/add-member$' },
-    version:    { type: 'string', pattern: '^v1$' },
+    type: { type: 'string', pattern: '^group/add-member$' },
+    version: { type: 'string', pattern: '^v1$' },
 
-    groupKey:   { type: 'string', pattern: secretKeyRegex },
+    groupKey: { type: 'string', pattern: secretKeyRegex },
     root: { $ref: '#/definitions/messageId' },
 
-    text:       { type: 'string' },
+    text: { type: 'string' },
 
     recps: {
       type: 'array',
@@ -59,7 +59,7 @@ const schema = {
       type: 'object',
       required: ['group', 'members'],
       properties: {
-        group:   { $ref: '#/definitions/tangle/update' },
+        group: { $ref: '#/definitions/tangle/update' },
         members: { $ref: '#/definitions/tangle/any' }
       }
     }
