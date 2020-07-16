@@ -1,6 +1,6 @@
 {
   "name": "ssb-tribes",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "a scuttlebutt (secret-stack) plugin which adds envelope encryption capabilities",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,6 @@
     "envelope-js": "^0.1.2",
     "envelope-spec": "github:ssbc/envelope-spec",
     "futoin-hkdf": "^1.3.2",
-    "is-canonical-base64": "^1.1.1",
     "is-my-ssb-valid": "^1.1.0",
     "level": "^6.0.1",
     "lodash.set": "^4.3.2",
@@ -29,13 +28,14 @@
     "sodium-native": "^2.4.9",
     "ssb-keys": "^7.2.2",
     "ssb-ref": "^2.14.0",
+    "ssb-schema-definitions": "^3.1.0",
     "ssb-tangle": "^2.1.0"
   },
   "devDependencies": {
     "scuttle-testbot": "^1.2.3 ",
     "ssb-backlinks": "^2.0.1",
+    "is-canonical-base64": "^1.1.1",
     "ssb-query": "^2.4.5",
-    "ssb-schema-definitions": "^3.1.0",
     "standard": "^14.3.4",
     "tap-spec": "^5.0.0",
     "tape": "^4.13.3"
