@@ -31,7 +31,6 @@ module.exports = {
 }
 
 function init (ssb, config) {
-
   var state = {
     keys: ssb.keys,
 
