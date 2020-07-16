@@ -67,6 +67,18 @@ where:
 
 _This method calls `group.add` and `group.addAuthors` for you (adding you)_
 
+### `ssb.tribes.application.create(groupdId, text, opts, cb)`
+
+Creates a tribe application message directed to the administrators of a private-group.
+
+### `ssb.tribes.application.get(applicationId, opts, cb)`
+
+Returns the current state of a tribe application.
+
+### `ssb.tribes.application.accept(groupdId, applicantId, text, opts, cb)`
+
+This runs `ssb.tribes.invite` to invite the person to the group, then publishes an update to the application linking to that message.
+
 
 ### `ssb.tribes.invite(groupId, [authorId], opts, cb)`
 
