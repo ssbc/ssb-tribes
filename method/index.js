@@ -2,9 +2,9 @@ const Init = require('./group/init')
 const AddMember = require('./group/add-member')
 const CreateLink = require('./link/create')
 const FindByGroupByFeedId = require('./link/find-group-by-feedid')
-const CreateApplication = require('./application/create')
-const GetApplication = require('./application/get')
-const AcceptApplication = require('./application/accept')
+const CreateGroupApplication = require('./application/create')
+const GetGroupApplication = require('./application/get')
+const AcceptGroupApplication = require('./application/accept')
 
 module.exports = function Method (ssb, keystore, state) {
   return {
@@ -17,9 +17,9 @@ module.exports = function Method (ssb, keystore, state) {
       findGroupByFeedId: FindByGroupByFeedId(ssb)
     },
     application: {
-      create: patient(CreateApplication(ssb, keystore))
-      // get: patient(GetApplication(ssb)),
-      // accept: patient(AcceptApplication(ssb))
+      create: patient(CreateGroupApplication(ssb, keystore)),
+      get: patient(GetGroupApplication(ssb)),
+      accept: patient(AcceptGroupApplication(ssb))
     }
   }
 
