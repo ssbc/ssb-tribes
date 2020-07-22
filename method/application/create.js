@@ -2,16 +2,18 @@ const { isCloakedMsgId: isGroupId } = require('ssb-ref')
 const applicationSpec = require('../../spec/application/application')
 const applyToJoinSpec = require('../../spec/application/applyToJoin')
 
-module.exports = function CreateGroupApplication (server) {
-  return function createGroupApplication (groupId, text, cb) {
+module.exports = function CreateGroupApplication (server, keystore) {
+  return function createGroupApplication (groupId, authorIds, text, cb) {
+    const { key, root } = keystore.group.get(groupId)
+    console.log('root', root, key)
     if (!isGroupId(groupId)) return cb(new Error('expects a valid groupId'))
-    const authorIds = []
     const applyToJoinMessage = {
       type: 'group/apply-to-join',
       version: 'v1',
       groupId,
+      root,
       text,
-      recps: authorIds,
+      recps: [groupId, ...authorIds],
       tangles: {
         application: { root: null, previous: null }
       }
@@ -20,14 +22,13 @@ module.exports = function CreateGroupApplication (server) {
       return cb(applyToJoinSpec.isValid.errors)
 
     server.publish(applyToJoinMessage, (err, data) => {
-      console.log('DATA', data)
       const applicationMessage = {
         type: 'group/application',
-        version: '1',
-        addMember: { add: MessageId },
-        recps: authorIds,
+        version: 'v1',
+        root,
+        recps: [groupId, ...authorIds],
         tangles: {
-          application: { root: data.id, previous: [data.id] }
+          application: { root: data.key, previous: [data.key] }
         }
       }
       if (!applicationSpec.isValid(applicationMessage))

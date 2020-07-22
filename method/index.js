@@ -17,7 +17,7 @@ module.exports = function Method (ssb, keystore, state) {
       findGroupByFeedId: FindByGroupByFeedId(ssb)
     },
     application: {
-      create: patient(CreateApplication(ssb)),
+      create: patient(CreateApplication(ssb, keystore))
       // get: patient(GetApplication(ssb)),
       // accept: patient(AcceptApplication(ssb))
     }
