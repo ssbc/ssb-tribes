@@ -1,9 +1,21 @@
 const test = require('tape')
 const { Server } = require('../../helpers')
+const pull = require('pull-stream')
 
 test('tribes.application.create', t => {
   const kaitiaki = Server({ name: 'createGroup' })
   const server = Server({ name: 'createApplication' })
+
+  pull(
+    server.createUserStream({ id: server.id, live: true }),
+    pull.filter(m => !m.sync),
+    pull.drain(m => {
+      kaitiaki.add(m.value, err => {
+        if (err) throw err
+      })
+    })
+  )
+
   /* Kaitiaki creates a group */
   kaitiaki.tribes.create('the pantheon', (groupErr, groupData) => {
     t.error(groupErr)
@@ -14,8 +26,8 @@ test('tribes.application.create', t => {
       recps,
       'Hello, can I join?',
       (applicationErr, applicationData) => {
-        console.log('applicationData', applicationData)
         t.error(applicationErr)
+
         t.equal(typeof applicationData, 'object')
         t.equal(typeof applicationData.key, 'string')
         t.equal(typeof applicationData.content, 'object')
