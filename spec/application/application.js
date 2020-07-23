@@ -2,7 +2,7 @@ const Validator = require('is-my-ssb-valid')
 const schema = {
   $schema: 'http://json-schema.org/schema#',
   type: 'object',
-  required: ['type', 'version', 'root', 'tangles'],
+  required: ['type', 'version', 'tangles'],
   properties: {
     type: {
       type: 'string',
@@ -11,6 +11,9 @@ const schema = {
     version: {
       type: 'string',
       pattern: '^v1$'
+    },
+    groupId: {
+      $ref: '#/definitions/cloakedMessageId'
     },
     addMember: {
       type: 'object',
@@ -22,31 +25,36 @@ const schema = {
       },
       additionalProperties: false
     },
-    root: {
-      $ref: '#/definitions/messageId'
-    },
     text: {
-      type: 'string'
+      type: 'object',
+      required: ['append'],
+      properties: {
+        append: {
+          type: 'string'
+        }
+      },
+      additionalProperties: false
     },
     recps: {
       type: 'array',
       items: [
         {
-          $ref: '#/definitions/cloakedMessageId'
+          $ref: '#/definitions/feedId'
+          // $ref: '#/definitions/cloakedMessageId'
         }
       ],
-      additionalItems: {
-        $ref: '#/definitions/feedId'
-      },
-      minItems: 2,
-      maxItems: 16
+      // additionalItems: {
+      //   $ref: '#/definitions/feedId'
+      // },
+      minItems: 1,
+      maxItems: 15
     },
     tangles: {
       type: 'object',
       required: ['application'],
       properties: {
         application: {
-          $ref: '#/definitions/tangle/update'
+          $ref: '#/definitions/tangle/any'
         }
       }
     }

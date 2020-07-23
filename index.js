@@ -25,6 +25,7 @@ module.exports = {
     },
     application: {
       get: 'async',
+      list: 'async',
       create: 'async ',
       accept: 'async'
     },
@@ -167,6 +168,7 @@ function init (ssb, config) {
     },
     application: {
       create: scuttle.application.create,
+      list: scuttle.application.list,
       get: scuttle.application.get,
       accept: scuttle.application.accept
     },
