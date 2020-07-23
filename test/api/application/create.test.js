@@ -7,7 +7,7 @@ test('tribes.application.create', t => {
   /* Kaitiaki creates a group */
   kaitiaki.tribes.create('the pantheon', (groupErr, groupData) => {
     t.error(groupErr)
-    const recps = [groupData.groupInitMsg.value.author]
+    const recps = [kaitiaki.id, server.id]
     /* User creates an application to join group */
     server.tribes.application.create(
       groupData.groupId,
