@@ -10,10 +10,10 @@ module.exports = function GroupApplicationGet (server) {
     ]
 
     server.get({ id: applicationId, private: true }, (rootErr, rootData) => {
+      if (rootErr) cb(rootErr)
       pull(
         server.backlinks.read({ query }),
         pull.collect((err, data) => {
-          if (rootErr) cb(rootErr)
           if (err) cb(err)
           let final = {
             root: applicationId,
