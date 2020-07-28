@@ -20,8 +20,8 @@ module.exports = function CreateGroupApplication (server) {
       return cb(applicationSpec.isValid.errors)
     }
     server.publish(applicationMessage, (_, appData) => {
-      server.get({ id: appData.key, private: true }, (_, finalData) => {
-        cb(_, Object.assign({ key: appData.key }, finalData))
+      server.tribes.application.get(appData.key, (_, finalData) => {
+        cb(_, finalData)
       })
     })
   }

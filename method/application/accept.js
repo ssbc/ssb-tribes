@@ -3,14 +3,17 @@ const applicationSpec = require('../../spec/application/application')
 module.exports = function AcceptGroupApplication (server) {
   return function acceptGroupApplication (applicationId, text, cb) {
     server.tribes.application.get(applicationId, (getErr, applicationData) => {
-      const groupId = applicationData.content.groupId
-      const recps = applicationData.content.recps
+      const groupId = applicationData.groupId
+      const recps = applicationData.recps
       server.tribes.invite(groupId, recps, { text }, (err, invite) => {
         const content = {
           type: 'group/application',
           version: 'v1',
           addMember: {
             add: invite.key
+          },
+          text: {
+            append: text
           },
           recps,
           tangles: {
@@ -23,7 +26,9 @@ module.exports = function AcceptGroupApplication (server) {
         if (!applicationSpec.isValid(content)) {
           return cb(applicationSpec.isValid.errors)
         }
-        server.publish(content, cb)
+        server.publish(content, (_, publishData) => {
+          server.tribes.application.get(applicationId, cb)
+        })
       })
     })
   }

@@ -2,6 +2,10 @@ const test = require('tape')
 const { Server } = require('../../helpers')
 const pull = require('pull-stream')
 
+const text1 = 'Hello, can I join?'
+const text2 = 'Welcome!'
+const text3 = 'Welcome for a second time!'
+
 test('tribes.application.create', t => {
   const kaitiaki = Server({ name: 'createGroup' })
   const server = Server({ name: 'createApplication' })
@@ -38,59 +42,60 @@ test('tribes.application.create', t => {
       server.tribes.application.create(
         groupData.groupId,
         recps,
-        'Hello, can I join?',
+        text1,
         (applicationErr, applicationData) => {
           t.error(applicationErr)
-
           t.equal(typeof applicationData, 'object')
-          t.equal(typeof applicationData.key, 'string')
-          t.equal(typeof applicationData.content, 'object')
-          t.equal(typeof applicationData.content.tangles, 'object')
+          t.equal(typeof applicationData.root, 'string')
+          t.equal(typeof applicationData, 'object')
+          t.equal(typeof applicationData.tangles, 'object')
           /* Kaitiaki lists group applications for a group */
           kaitiaki.tribes.application.list(
             groupData.groupId,
+            false,
             (listErr, listData) => {
               /* Kaitiaki accepts the application */
+              t.error(listErr)
               kaitiaki.tribes.application.accept(
-                listData[0].key,
-                'Welcome!',
+                listData[0].root,
+                text2,
                 (acceptErr, acceptData) => {
                   t.equal(typeof acceptData, 'object')
                   t.error(acceptErr)
                   /* User checks the current application state */
                   server.tribes.application.get(
-                    applicationData.key,
+                    applicationData.root,
                     (getError, getData) => {
-                      console.log('getData', getData)
-                      console.log('getData CONTENT', getData.value.content)
-                      console.log(
-                        'getData TANGLES',
-                        getData.value.content.tangles
-                      )
                       t.error(getError)
-                      server.tribes.list((listErr, listData) => {
-                        t.error(listErr)
-                        t.equal(listData.length, 1)
-                        kaitiaki.close()
-                        server.close()
-                        t.end()
+                      /* User lists the tribes it's a part of */
+                      server.tribes.list((tribesListErr, tribesListData) => {
+                        t.error(tribesListErr)
+                        t.equal(tribesListData.length, 1)
+                        /* Kaitiaki creates a second accept message */
+                        kaitiaki.tribes.application.accept(
+                          listData[0].root,
+                          text3,
+                          (acceptErr2, acceptData2) => {
+                            t.error(acceptErr2)
+                            /* Kaitiaki checks list of applications */
+                            kaitiaki.tribes.application.list(
+                              null,
+                              null,
+                              (upListErr, upListData) => {
+                                t.error(upListErr)
+                                t.deepEqual(upListData[0].text, [
+                                  text1,
+                                  text2,
+                                  text3
+                                ])
+                                kaitiaki.close()
+                                server.close()
+                                t.end()
+                              }
+                            )
+                          }
+                        )
                       })
-                      // const expected = {
-                      //   type: 'group/application',
-                      //   version: 'v1',
-                      //   recps,
-                      //   tangles: {
-                      //     application: {
-                      //       root: applicationData.value.previous,
-                      //       previous: [applicationData.value.previous]
-                      //     }
-                      //   }
-                      // }
-                      // t.deepEqual(
-                      //   getData.content,
-                      //   expected,
-                      //   'create and get group application'
-                      // )
                     }
                   )
                 }
