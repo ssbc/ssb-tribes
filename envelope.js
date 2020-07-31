@@ -9,7 +9,7 @@ function isEnvelope (ciphertext) {
 }
 
 module.exports = function Envelope (keystore, state) {
-  function boxer (content) {
+  function boxer (content, previousFeedState) {
     if (content.recps.length > 16) {
       throw new Error(`private-group spec allows maximum 16 slots, but you've tried to use ${content.recps.length}`)
     }
@@ -43,14 +43,9 @@ module.exports = function Envelope (keystore, state) {
     const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
     const msgKey = new SecretKey().toBuffer()
 
-    if (!state.previous) throw new Error('previous not ready!')
-    // throwing here causes the publish to cb(err)
-    const _previous = state.previous
-    state.previous = undefined
-    // NOTE: clearing state.previous ensures that we never have two messages in our log
-    // which use the same previous value. We were seeing this with some bulk publishing
+    const previousMessageId = new MsgId(previousFeedState.id).toTFK()
 
-    const envelope = box(plaintext, state.feedId, _previous, msgKey, recipentKeys)
+    const envelope = box(plaintext, state.feedId, previousMessageId, msgKey, recipentKeys)
     return envelope.toString('base64') + '.box2'
   }
 
