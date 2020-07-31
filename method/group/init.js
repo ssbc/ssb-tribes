@@ -7,6 +7,12 @@ const { isValid } = require('../../spec/group/init')
 
 module.exports = function GroupCreate (ssb, _, state) {
   return function groupCreate (cb) {
+    if (state.loading.previous) {
+      // TODO 2020-07-31 - maybe we should check state.previous instead
+      setTimeout(() => groupCreate(cb), 500)
+      return
+    }
+
     const groupKey = new Secret()
     const content = {
       type: 'group/init',
