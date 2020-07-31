@@ -43,7 +43,14 @@ module.exports = function Envelope (keystore, state) {
     const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
     const msgKey = new SecretKey().toBuffer()
 
-    const envelope = box(plaintext, state.feedId, state.previous, msgKey, recipentKeys)
+    if (!state.previous) throw new Error('previous not ready!')
+    // throwing here causes the publish to cb(err)
+    const _previous = state.previous
+    state.previous = undefined
+    // NOTE: clearing state.previous ensures that we never have two messages in our log
+    // which use the same previous value. We were seeing this with some bulk publishing
+
+    const envelope = box(plaintext, state.feedId, _previous, msgKey, recipentKeys)
     return envelope.toString('base64') + '.box2'
   }
 

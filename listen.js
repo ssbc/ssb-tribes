@@ -34,13 +34,14 @@ function previous (ssb) {
   )
 
   /* ongoing previous listening */
-  ssb.post(m => {
-    if (m.value.author !== ssb.id) {
-      return
-    }
+  // ssb.post(m => {
+  //   if (m.value.author !== ssb.id) {
+  //     return
+  //   }
 
-    set(m.key)
-  })
+  //   set(m.key)
+  // })
+  ssb.previous(id => set(id))
 
   return subscribe
 }
