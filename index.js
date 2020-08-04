@@ -133,11 +133,21 @@ function init (ssb, config) {
       scuttle.group.init((err, data) => {
         if (err) return cb(err)
 
-        keystore.group.register(data.groupId, { key: data.groupKey, root: data.groupInitMsg.key }, (err) => {
+        const { groupId, groupKey, groupInitMsg: root } = data
+
+        keystore.group.register(groupId, { key: groupKey, root: root.key }, (err) => {
           if (err) return cb(err)
 
-          keystore.group.registerAuthor(data.groupId, ssb.id, (err) => {
+          keystore.group.registerAuthor(groupId, ssb.id, (err) => {
             if (err) return cb(err)
+
+            const readKey = unboxer.key(root.value.content, root.value)
+            if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
+            // NOTE this checks out group/init message was encrypted with the right `previous`.
+            // There is a potential race condition where the init method calls `ssb.getFeedState` to
+            // access `previous` but while encrypting the `group/init` message content another
+            // message is pushed into the queue, making our enveloping invalid.
+
             cb(null, data)
           })
         })
