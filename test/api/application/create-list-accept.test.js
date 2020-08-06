@@ -54,23 +54,27 @@ test('tribes.application.create', t => {
             groupData.groupId,
             false,
             (listErr, listData) => {
-              /* Kaitiaki accepts the application */
               t.error(listErr)
+              t.equal(typeof listData[0], 'object')
+              /* Kaitiaki accepts the application */
               kaitiaki.tribes.application.accept(
                 listData[0].root,
                 text2,
                 (acceptErr, acceptData) => {
-                  t.equal(typeof acceptData, 'object')
                   t.error(acceptErr)
+                  t.equal(typeof acceptData, 'object')
+                  t.equal(acceptData.addMember.length, 1, 'member message sent')
                   /* User checks the current application state */
                   server.tribes.application.get(
                     applicationData.root,
                     (getError, getData) => {
                       t.error(getError)
+                      t.equal(typeof getData, 'object')
                       /* User lists the tribes it's a part of */
                       server.tribes.list((tribesListErr, tribesListData) => {
                         t.error(tribesListErr)
                         t.equal(tribesListData.length, 1)
+                        t.equal(typeof tribesListData[0], 'string')
                         /* Kaitiaki creates a second accept message */
                         kaitiaki.tribes.application.accept(
                           listData[0].root,
