@@ -26,23 +26,20 @@ module.exports = function Envelope (keystore, state) {
       return null
     }
 
-    // HACK TODO (mix) fix this with change to spec discussed with keks
-    // the spec currently disallows encrypting to your own feedId
-    // if (content.recps.find(recp => recp === state.keys.id)) {
-    //   console.warn('private-group spec disallows encrypting to your own feedId. Use a private group only you are in')
-    //   return null // this will allow ssb-private1 to step in
-    // }
+    const recipentKeys = content.recps.reduce((acc, recp) => {
+      if (isGroup(recp)) {
+        const keyInfo = keystore.group.get(recp)
+        if (!keyInfo) throw new Error(`unknown groupId ${recp}, cannot encrypt message`)
 
-    const recipentKeys = content.recps.map(r => {
-      if (isGroup(r)) {
-        const keyInfo = keystore.group.get(r)
-        if (!keyInfo) throw new Error(`unknown groupId ${r}, cannot encrypt message`)
-
-        return keyInfo
+        return [...acc, keyInfo]
+      }
+      // use a special key for your own feedId
+      if (recp === state.keys.id) {
+        return [...acc, ...keystore.ownKeys(recp)]
       }
 
-      return keystore.author.sharedDMKey(r)
-    })
+      return [...acc, keystore.author.sharedDMKey(recp)]
+    }, [])
     const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
     const msgKey = new SecretKey().toBuffer()
 
@@ -61,13 +58,17 @@ module.exports = function Envelope (keystore, state) {
     const prev_msg_id = new MsgId(previous).toTFK()
 
     const trial_group_keys = keystore.author.groupKeys(author)
-    const read_key = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
+    const readKeyFromGroup = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
     // NOTE the group recp is only allowed in the first slot,
     // so we only test group keys in that slot (maxAttempts: 1)
-    if (read_key) return read_key
+    if (readKeyFromGroup) return readKeyFromGroup
 
-    const trial_dm_key = keystore.author.sharedDMKey(author)
-    return unboxKey(envelope, feed_id, prev_msg_id, [trial_dm_key], { maxAttempts: 16 })
+    const trial_dm_keys = [
+      keystore.author.sharedDMKey(author),
+      ...keystore.ownKeys()
+    ]
+
+    return unboxKey(envelope, feed_id, prev_msg_id, trial_dm_keys, { maxAttempts: 16 })
     // we then test all dm keys in up to 16 slots (maxAttempts: 16)
   }
 

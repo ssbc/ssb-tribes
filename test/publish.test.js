@@ -49,7 +49,7 @@ test('publish (to groupId we dont have key for)', t => {
   })
 })
 
-test('publish (DM to feedId)', t => {
+test('publish (group + feedId)', t => {
   const server = Server()
 
   server.tribes.create(null, (err, data) => {
@@ -78,6 +78,34 @@ test('publish (DM to feedId)', t => {
         })
         t.end()
       })
+    })
+  })
+})
+
+test('publish (myFeedId + feedId)', t => {
+  const server = Server()
+
+  const feedId = new FeedId().mock().toSSB()
+
+  const content = {
+    type: 'announce',
+    text: 'summer has arrived in wellington!',
+    recps: [server.id, feedId]
+  }
+
+  server.publish(content, (err, msg) => {
+    t.error(err)
+
+    t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
+
+    server.get({ id: msg.key, private: true, meta: true }, (err, msg) => {
+      t.error(err)
+      t.deepEqual(msg.value.content, content, 'can open envelope!')
+
+      server.close(() => {
+        console.log('closed')
+      })
+      t.end()
     })
   })
 })

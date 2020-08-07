@@ -37,6 +37,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     valueEncoding: InfoEncoding()
   })
 
+  /* GROUP - methods about group data */
   const group = {
     register (groupId, info, cb) {
       if (cache.groups[groupId]) return cb(new Error(`key-store already contains group ${groupId}, cannot register twice`))
@@ -80,6 +81,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     }
   }
 
+  /* MEMBERSHIP - methods which store a joins of group + author */
   const membership = {
     register (groupId, authorId, cb) {
       if (!isFeed(authorId)) return cb(new Error(`key-store to add authors by feedId, got ${authorId}`))
@@ -129,6 +131,31 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     }
   }
 
+  /* OWN KEY - methods for getting your key for encryption to self in DMs */
+  const ownKey = {
+    create (cb) {
+      const key = new SecretKey().toBuffer()
+
+      cache.ownKeys = [...(cache.ownKeys || []), key]
+      level.put([OWN, ssbKeys.id, Date.now()], { key }, cb)
+    },
+    readPersisted (cb) {
+      pull(
+        read(level, {
+          lt: [OWN + '~', undefined, undefined], // "own~" is just above "own" in charwise sort
+          gt: [OWN, null, null]
+        }),
+        pull.map(({ key, value }) => value.key),
+        pull.collect((err, keys) => {
+          if (err) return cb(err)
+
+          cb(null, keys)
+        })
+      )
+    }
+  }
+
+  /* META methods - span GROUP/ MEMBERSHIP */
   function getAuthorGroupKeys (authorId) {
     return membership.getAuthorGroups(authorId)
       .map(groupId => {
@@ -186,7 +213,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     })
   }
 
-  /* load persisted state into cache */
+  /* LOAD STATE - loads persisted states into cache */
   if (loadState) {
     group.readPersisted((err, groups) => {
       if (err) throw err
