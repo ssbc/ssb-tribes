@@ -9,7 +9,7 @@ function isEnvelope (ciphertext) {
 }
 
 module.exports = function Envelope (keystore, state) {
-  function boxer (content) {
+  function boxer (content, previousFeedState) {
     if (content.recps.length > 16) {
       throw new Error(`private-group spec allows maximum 16 slots, but you've tried to use ${content.recps.length}`)
     }
@@ -44,7 +44,9 @@ module.exports = function Envelope (keystore, state) {
     const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
     const msgKey = new SecretKey().toBuffer()
 
-    const envelope = box(plaintext, state.feedId, state.previous, msgKey, recipentKeys)
+    const previousMessageId = new MsgId(previousFeedState.id).toTFK()
+
+    const envelope = box(plaintext, state.feedId, previousMessageId, msgKey, recipentKeys)
     return envelope.toString('base64') + '.box2'
   }
 

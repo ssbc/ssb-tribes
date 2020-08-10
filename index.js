@@ -41,10 +41,8 @@ function init (ssb, config) {
     keys: ssb.keys,
 
     feedId: new FeedId(ssb.id).toTFK(),
-    previous: undefined,
 
     loading: {
-      previous: true,
       keystore: true
     },
 
@@ -62,15 +60,8 @@ function init (ssb, config) {
 
   /* register the boxer / unboxer */
   const { boxer, unboxer } = Envelope(keystore, state)
-  ssb.addBoxer({ init: isBoxerReady, value: boxer })
+  ssb.addBoxer({ value: boxer })
   ssb.addUnboxer({ init: isUnboxerReady, ...unboxer })
-
-  function isBoxerReady (done) {
-    if (state.loading.previous === false) return done()
-    if (state.closed === false) {
-      setTimeout(() => isBoxerReady(done), 500)
-    }
-  }
 
   function isUnboxerReady (done) {
     if (state.loading.keystore === false) return done()
@@ -80,10 +71,6 @@ function init (ssb, config) {
   }
 
   /* start listeners */
-  listen.previous(ssb)(prev => {
-    state.previous = prev
-    if (state.loading.previous) state.loading.previous = false
-  })
   listen.addMember(ssb)(m => {
     const { root, groupKey } = m.value.content
     ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
@@ -152,11 +139,21 @@ function init (ssb, config) {
       scuttle.group.init((err, data) => {
         if (err) return cb(err)
 
-        keystore.group.register(data.groupId, { key: data.groupKey, root: data.groupInitMsg.key }, (err) => {
+        const { groupId, groupKey, groupInitMsg: root } = data
+
+        keystore.group.register(groupId, { key: groupKey, root: root.key }, (err) => {
           if (err) return cb(err)
 
-          keystore.group.registerAuthor(data.groupId, ssb.id, (err) => {
+          keystore.group.registerAuthor(groupId, ssb.id, (err) => {
             if (err) return cb(err)
+
+            const readKey = unboxer.key(root.value.content, root.value)
+            if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
+            // NOTE this checks out group/init message was encrypted with the right `previous`.
+            // There is a potential race condition where the init method calls `ssb.getFeedState` to
+            // access `previous` but while encrypting the `group/init` message content another
+            // message is pushed into the queue, making our enveloping invalid.
+
             cb(null, data)
           })
         })

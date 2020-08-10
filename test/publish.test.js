@@ -1,4 +1,5 @@
 const test = require('tape')
+const pull = require('pull-stream')
 const { Server, GroupId } = require('./helpers')
 const { FeedId } = require('../lib/cipherlinks')
 
@@ -78,5 +79,48 @@ test('publish (DM to feedId)', t => {
         t.end()
       })
     })
+  })
+})
+
+test('publish (bulk)', t => {
+  const server = Server()
+
+  server.tribes.create(null, (_, { groupId }) => {
+    var count = 20
+    const bulk = [...Array(count)]
+      .map(() => ({ type: 'test', recps: [groupId] }))
+
+    bulk.forEach((content, i) => {
+      server.publish(content, (err, msg) => {
+        if (err) t.error(err, `${i + 1} published`)
+        if (typeof msg.value.content !== 'string') t.fail(`${i + 1} encrypted`)
+
+        server.get({ id: msg.key, private: true }, (err, value) => {
+          if (err) t.error(err, `${i + 1} get`)
+          if (typeof value.content !== 'object') t.fail(`${i + 1} decryptable`)
+          if (--count === 0) {
+            t.pass('success!')
+            server.close(t.end)
+          }
+        })
+      })
+    })
+
+    /* works fine */
+    // pull(
+    //   pull.values(bulk),
+    //   pull.asyncMap(server.publish),
+    //   pull.drain(
+    //     () => process.stdout.write('✓'),
+    //     (err) => {
+    //       process.stdout.write('\n')
+    //       t.error(err)
+    //       server.close(t.end)
+    //     }
+    //   )
+    // )
+
+    // TODO ideally need to confirm that all messages are readable too,
+    // because encryption !== encrypting right! (e.g. if previous was wrong)
   })
 })
