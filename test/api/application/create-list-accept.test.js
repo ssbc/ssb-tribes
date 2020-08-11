@@ -48,7 +48,6 @@ test('tribes.application.create', t => {
           t.equal(typeof applicationData, 'object')
           t.equal(typeof applicationData.root, 'string')
           t.equal(typeof applicationData, 'object')
-          t.equal(typeof applicationData.tangles, 'object')
           /* Kaitiaki lists group applications for a group */
           kaitiaki.tribes.application.list(
             { groupId: groupData.groupId, accepted: false },
