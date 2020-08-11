@@ -25,7 +25,8 @@ module.exports = function AcceptGroupApplication (server) {
         if (!applicationSpec.isValid(content)) {
           return cb(applicationSpec.isValid.errors)
         }
-        server.publish(content, (_, publishData) => {
+        server.publish(content, (publishErr, publishData) => {
+          if (publishErr) cb(publishErr)
           server.tribes.application.get(applicationId, cb)
         })
       })
