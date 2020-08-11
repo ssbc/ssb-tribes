@@ -1,4 +1,5 @@
 const Validator = require('is-my-ssb-valid')
+const definitions = require('ssb-schema-definitions')()
 const schema = {
   $schema: 'http://json-schema.org/schema#',
   type: 'object',
@@ -37,17 +38,9 @@ const schema = {
     },
     recps: {
       type: 'array',
-      items: [
-        {
-          $ref: '#/definitions/feedId'
-          // $ref: '#/definitions/cloakedMessageId'
-        }
-      ],
-      // additionalItems: {
-      //   $ref: '#/definitions/feedId'
-      // },
+      items: { $ref: '#/definitions/feedId' },
       minItems: 1,
-      maxItems: 15
+      maxItems: 16
     },
     tangles: {
       type: 'object',
@@ -60,60 +53,7 @@ const schema = {
     }
   },
   additionalProperties: false,
-  definitions: {
-    messageId: {
-      type: 'string',
-      pattern: '^%[a-zA-Z0-9\\/+]{42}[AEIMQUYcgkosw048]=.sha256$'
-    },
-    cloakedMessageId: {
-      type: 'string',
-      pattern: '^%[a-zA-Z0-9\\/+]{42}[AEIMQUYcgkosw048]=.cloaked$'
-    },
-    feedId: {
-      type: 'string',
-      pattern: '^@[a-zA-Z0-9\\/+]{42}[AEIMQUYcgkosw048]=.(?:sha256|ed25519)$'
-    },
-    tangle: {
-      root: {
-        type: 'object',
-        required: ['root', 'previous'],
-        properties: {
-          root: {
-            type: 'null'
-          },
-          previous: {
-            type: 'null'
-          }
-        }
-      },
-      update: {
-        type: 'object',
-        required: ['root', 'previous'],
-        properties: {
-          root: {
-            $ref: '#/definitions/messageId'
-          },
-          previous: {
-            type: 'array',
-            item: {
-              $ref: '#/definitions/messageId'
-            },
-            minItems: 1
-          }
-        }
-      },
-      any: {
-        oneOf: [
-          {
-            $ref: '#/definitions/tangle/root'
-          },
-          {
-            $ref: '#/definitions/tangle/update'
-          }
-        ]
-      }
-    }
-  }
+  definitions
 }
 
 module.exports = {
