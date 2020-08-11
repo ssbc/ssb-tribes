@@ -77,7 +77,21 @@ where:
 
 ### `ssb.tribes.application.get(applicationId, cb)`
 
-Returns the current state of a tribe application.
+Returns the current state of a tribe application. Ex.:
+
+```
+{
+  root: '%CXVDe5AoPVf83CoHYBpfplpzTU/YYkN56yge1nBG9wE=.sha256',
+  applicantId: '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519',
+  groupId: '%A9OUzXtv7BhaAfSMqBzOO6JC8kvwmZWGVxHDAlM+/so=.cloaked',
+  recps:
+   [ '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
+     '@qYeVniXyC0/D9GIlGMAiIKg5jGgJTY7ZEgeikRWIJ/Y=.ed25519',
+     '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519' ],
+  text: [ 'Hello, can I join?', 'Welcome!' ],
+  addMember: [ '%JT31YmU0kuWg82UeZWy6YtAMbEcGouXVLU9JtO0MgcY=.sha256' ]
+}
+```
 
 ### `ssb.tribes.application.list(opts, cb)`
 
