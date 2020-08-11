@@ -1,7 +1,10 @@
 const pull = require('pull-stream')
 
 module.exports = function GroupApplicationList (server) {
-  return function groupApplicationList (groupId, accepted, cb) {
+  return function groupApplicationList (
+    { groupId = null, accepted = null },
+    cb
+  ) {
     const queryGroupId = [
       {
         $filter: {

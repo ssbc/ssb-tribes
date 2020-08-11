@@ -42,7 +42,7 @@ test('tribes.application.create', t => {
       server.tribes.application.create(
         groupData.groupId,
         recps,
-        text1,
+        { text: text1 },
         (applicationErr, applicationData) => {
           t.error(applicationErr)
           t.equal(typeof applicationData, 'object')
@@ -51,15 +51,14 @@ test('tribes.application.create', t => {
           t.equal(typeof applicationData.tangles, 'object')
           /* Kaitiaki lists group applications for a group */
           kaitiaki.tribes.application.list(
-            groupData.groupId,
-            false,
+            { groupId: groupData.groupId, accepted: false },
             (listErr, listData) => {
               t.error(listErr)
               t.equal(typeof listData[0], 'object')
               /* Kaitiaki accepts the application */
               kaitiaki.tribes.application.accept(
                 listData[0].root,
-                text2,
+                { text: text2 },
                 (acceptErr, acceptData) => {
                   t.error(acceptErr)
                   t.equal(typeof acceptData, 'object')
@@ -78,13 +77,12 @@ test('tribes.application.create', t => {
                         /* Kaitiaki creates a second accept message */
                         kaitiaki.tribes.application.accept(
                           listData[0].root,
-                          text3,
+                          { text: text3 },
                           (acceptErr2, acceptData2) => {
                             t.error(acceptErr2)
                             /* Kaitiaki checks list of applications */
                             kaitiaki.tribes.application.list(
-                              null,
-                              null,
+                              {},
                               (upListErr, upListData) => {
                                 t.error(upListErr)
                                 t.deepEqual(upListData[0].text, [

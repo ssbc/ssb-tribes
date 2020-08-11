@@ -1,7 +1,7 @@
 const applicationSpec = require('../../spec/application/application')
 
 module.exports = function AcceptGroupApplication (server) {
-  return function acceptGroupApplication (applicationId, text, cb) {
+  return function acceptGroupApplication (applicationId, { text }, cb) {
     server.tribes.application.get(applicationId, (getErr, applicationData) => {
       const { groupId, recps } = applicationData
       server.tribes.invite(groupId, recps, { text }, (err, invite) => {

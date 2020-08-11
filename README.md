@@ -67,7 +67,7 @@ where:
 
 _This method calls `group.add` and `group.addAuthors` for you (adding you)_
 
-### `ssb.tribes.application.create(groupdId, opts, cb)`
+### `ssb.tribes.application.create(groupdId, recps, opts, cb)`
 
 Creates a tribe application message directed to the administrators of a private-group.
 
