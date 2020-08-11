@@ -8,7 +8,7 @@ module.exports = function CreateGroupApplication (server) {
       type: 'group/application',
       version: 'v1',
       groupId,
-      recps,
+      recps: [...recps, server.id],
       text: {
         append: text
       },
@@ -19,7 +19,8 @@ module.exports = function CreateGroupApplication (server) {
     if (!applicationSpec.isValid(applicationMessage)) {
       return cb(applicationSpec.isValid.errors)
     }
-    server.publish(applicationMessage, (_, appData) => {
+    server.publish(applicationMessage, (appErr, appData) => {
+      if (appErr) return cb(appErr)
       server.tribes.application.get(appData.key, (_, finalData) => {
         cb(_, finalData)
       })
