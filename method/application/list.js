@@ -1,10 +1,11 @@
 const pull = require('pull-stream')
 
 module.exports = function GroupApplicationList (server) {
-  return function groupApplicationList (
-    { groupId = null, accepted = null },
-    cb
-  ) {
+  return function groupApplicationList ({ groupId, accepted }, cb) {
+    if (typeof accepted !== 'boolean' && typeof accepted !== 'undefined')
+      throw new Error(
+        'tribes.application.list expected accepted to be (undefined | true | false)'
+      )
     const queryGroupId = [
       {
         $filter: {
@@ -44,11 +45,9 @@ module.exports = function GroupApplicationList (server) {
       pull.map(i => i.key),
       pull.asyncMap(server.tribes.application.get),
       pull.filter(i => {
-        if (accepted !== null) {
-          if (accepted === true) {
-            return i.addMember
-          } else return !i.addMember
-        } else return i
+        if (accepted === undefined) return true
+        if (accepted === true) return i.addMember && i.addMember.length
+        if (accepted === false) return !i.addMember || i.addMember.length === 0
       }),
       pull.collect((err, data) => {
         cb(err, data)
