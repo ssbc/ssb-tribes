@@ -67,21 +67,34 @@ where:
 
 _This method calls `group.add` and `group.addAuthors` for you (adding you)_
 
-### `ssb.tribes.application.create(groupdId, text, cb)`
+### `ssb.tribes.application.create(groupdId, opts, cb)`
 
 Creates a tribe application message directed to the administrators of a private-group.
+
+where:
+- `opts` *Object*:
+  - `text` *String*: A text to be viewed by the Kaitiakis of a group
 
 ### `ssb.tribes.application.get(applicationId, cb)`
 
 Returns the current state of a tribe application.
 
-### `ssb.tribes.application.list(groupId, accepted, cb)`
+### `ssb.tribes.application.list(opts, cb)`
 
-Returns a list with all group applications. **groupId** and **accepted** are optional (pass `null` if not used), and can be used to filter applications for a specific group or applications that have been accepted or not.
+Returns a list with all group applications.
 
-### `ssb.tribes.application.accept(applicationId, text, cb)`
+where:
+- `opts` *Object*:
+  - `groupId` *String*: filter applications for a specific group
+  - `accepted` *Boolean*: filter applications that have been accepted or not
+
+### `ssb.tribes.application.accept(applicationId, opts, cb)`
 
 This runs `ssb.tribes.invite` to invite the person to the group, then publishes an update to the application linking to that message.
+
+where:
+- `opts` *Object*:
+  - `text` *String*: A text to be viewed by the applicant
 
 ### `ssb.tribes.invite(groupId, [authorId], opts, cb)`
 
