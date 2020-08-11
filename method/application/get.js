@@ -1,4 +1,6 @@
 const pull = require('pull-stream')
+const { isValid } = require('../../spec/application/application')
+
 module.exports = function GroupApplicationGet (server) {
   return function groupApplicationGet (applicationId, cb) {
     const query = [
@@ -10,11 +12,15 @@ module.exports = function GroupApplicationGet (server) {
     ]
 
     server.get({ id: applicationId, private: true }, (rootErr, rootData) => {
-      if (rootErr) cb(rootErr)
+      if (!isValid(rootData)) {
+        return cb(isValid.errors)
+      }
+      if (rootErr) return cb(rootErr)
       pull(
         server.backlinks.read({ query }),
+        pull.filter(m => isValid(m)),
         pull.collect((err, data) => {
-          if (err) cb(err)
+          if (err) return cb(err)
           let final = {
             root: applicationId,
             applicantId: rootData.author,
@@ -25,10 +31,9 @@ module.exports = function GroupApplicationGet (server) {
           if (!data || data.length < 1) {
             const res = {
               ...final,
-              ...rootData.content,
               text: [rootData.content.text.append || '']
             }
-            cb(null, res)
+            return cb(null, res)
           } else {
             const reduced = data.reduce((prev, curr) => {
               /* First message*/
