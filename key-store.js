@@ -29,7 +29,8 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   var cache = {
     groups: {}, // ------ maps groupId > group.info
     memberships: {}, // - maps authorId > [groupId]
-    authors: {} // ------ maps authorId > { key, scheme: SharedDMKey } for that author
+    authors: {}, // ----- maps authorId > { key, scheme: SharedDMKey } for that author
+    ownKeys: []
   }
 
   const level = Level(path, {
@@ -136,7 +137,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     create (cb) {
       const key = new SecretKey().toBuffer()
 
-      cache.ownKeys = [...(cache.ownKeys || []), key]
+      cache.ownKeys = [...cache.ownKeys, key]
       level.put([OWN, ssbKeys.id, Date.now()], { key }, cb)
     },
     readPersisted (cb) {
@@ -245,6 +246,17 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       sharedDMKey: getSharedDMKey // ------------------------ sync
     },
     processAddMember: patient(processAddMember),
+    ownKeys () { // ----------------------------------------- sync
+      if (!cache.ownKeys.length) {
+        ownKey.create((err) => {
+          if (err) throw err
+        })
+      }
+
+      return cache.ownKeys.map(key => {
+        return { key, scheme: keySchemes.feed_id_self }
+      })
+    },
     close: level.close.bind(level)
   }
 

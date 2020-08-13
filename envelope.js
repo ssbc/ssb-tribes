@@ -35,7 +35,7 @@ module.exports = function Envelope (keystore, state) {
       }
       // use a special key for your own feedId
       if (recp === state.keys.id) {
-        return [...acc, ...keystore.ownKeys(recp)]
+        return [...acc, keystore.ownKeys(recp)[0]]
       }
 
       return [...acc, keystore.author.sharedDMKey(recp)]
