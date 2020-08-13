@@ -23,6 +23,12 @@ module.exports = {
     link: {
       create: 'async'
     },
+    application: {
+      get: 'async',
+      list: 'async',
+      create: 'async ',
+      accept: 'async'
+    },
     findByFeedId: 'async',
     get: 'async',
     list: 'async'
@@ -156,6 +162,12 @@ function init (ssb, config) {
     invite: scuttle.group.addMember,
     link: {
       create: scuttle.link.create
+    },
+    application: {
+      create: scuttle.application.create,
+      list: scuttle.application.list,
+      get: scuttle.application.get,
+      accept: scuttle.application.accept
     },
     findByFeedId: scuttle.link.findGroupByFeedId,
     get: (id, cb) => isUnboxerReady(() => cb(null, keystore.group.get(id))),

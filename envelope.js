@@ -26,11 +26,12 @@ module.exports = function Envelope (keystore, state) {
       return null
     }
 
+    // HACK TODO (mix) fix this with change to spec discussed with keks
     // the spec currently disallows encrypting to your own feedId
-    if (content.recps.find(recp => recp === state.keys.id)) {
-      console.warn('private-group spec disallows encrypting to your own feedId. Use a private group only you are in')
-      return null // this will allow ssb-private1 to step in
-    }
+    // if (content.recps.find(recp => recp === state.keys.id)) {
+    //   console.warn('private-group spec disallows encrypting to your own feedId. Use a private group only you are in')
+    //   return null // this will allow ssb-private1 to step in
+    // }
 
     const recipentKeys = content.recps.map(r => {
       if (isGroup(r)) {
