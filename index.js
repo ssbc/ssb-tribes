@@ -60,14 +60,14 @@ function init (ssb, config) {
 
   /* register the boxer / unboxer */
   const { boxer, unboxer } = Envelope(keystore, state)
-  ssb.addBoxer({ value: boxer })
-  ssb.addUnboxer({ init: isUnboxerReady, ...unboxer })
+  ssb.addBoxer({ init: isKeystoreReady, value: boxer })
+  ssb.addUnboxer({ init: isKeystoreReady, ...unboxer })
 
-  function isUnboxerReady (done) {
+  function isKeystoreReady (done) {
+    if (state.closed === true) return
     if (state.loading.keystore === false) return done()
-    if (state.closed === false) {
-      setTimeout(() => isUnboxerReady(done), 500)
-    }
+
+    setTimeout(() => isKeystoreReady(done), 500)
   }
 
   /* start listeners */
@@ -170,7 +170,7 @@ function init (ssb, config) {
       accept: scuttle.application.accept
     },
     findByFeedId: scuttle.link.findGroupByFeedId,
-    get: (id, cb) => isUnboxerReady(() => cb(null, keystore.group.get(id))),
-    list: (cb) => isUnboxerReady(() => cb(null, keystore.group.list()))
+    get: (id, cb) => isKeystoreReady(() => cb(null, keystore.group.get(id))),
+    list: (cb) => isKeystoreReady(() => cb(null, keystore.group.list()))
   }
 }

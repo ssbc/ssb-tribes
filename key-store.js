@@ -8,9 +8,11 @@ const { keySchemes } = require('private-group-spec')
 const { isFeed, isMsg, isCloakedMsg: isGroup } = require('ssb-ref')
 
 const directMessageKey = require('./lib/direct-message-key')
+const SecretKey = require('./lib/secret-key')
 
 const GROUP = 'group'
 const MEMBER = 'member'
+const OWN = 'own_key'
 
 // TODO add requirement for all group.add to have: { key, scheme } ?
 // at the moment we're assuming all scheme are for private groups but that might change
@@ -29,7 +31,8 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   var cache = {
     groups: {}, // ------ maps groupId > group.info
     memberships: {}, // - maps authorId > [groupId]
-    authors: {} // ------ maps authorId > { key, scheme: SharedDMKey } for that author
+    authors: {}, // ----- maps authorId > { key, scheme: SharedDMKey } for that author
+    ownKeys: []
   }
 
   const level = Level(path, {
@@ -37,6 +40,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     valueEncoding: InfoEncoding()
   })
 
+  /* GROUP - methods about group data */
   const group = {
     register (groupId, info, cb) {
       if (cache.groups[groupId]) return cb(new Error(`key-store already contains group ${groupId}, cannot register twice`))
@@ -80,6 +84,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     }
   }
 
+  /* MEMBERSHIP - methods which store a joins of group + author */
   const membership = {
     register (groupId, authorId, cb) {
       if (!isFeed(authorId)) return cb(new Error(`key-store to add authors by feedId, got ${authorId}`))
@@ -129,6 +134,31 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     }
   }
 
+  /* OWN KEY - methods for getting your key for encryption to self in DMs */
+  const ownKey = {
+    create (cb) {
+      const key = new SecretKey().toBuffer()
+
+      cache.ownKeys = [...cache.ownKeys, key]
+      level.put([OWN, ssbKeys.id, Date.now()], { key }, cb)
+    },
+    readPersisted (cb) {
+      pull(
+        read(level, {
+          lt: [OWN + '~', undefined, undefined], // "own~" is just above "own" in charwise sort
+          gt: [OWN, null, null]
+        }),
+        pull.map(({ key, value }) => value.key),
+        pull.collect((err, keys) => {
+          if (err) return cb(err)
+
+          cb(null, keys)
+        })
+      )
+    }
+  }
+
+  /* META methods - span GROUP/ MEMBERSHIP */
   function getAuthorGroupKeys (authorId) {
     return membership.getAuthorGroups(authorId)
       .map(groupId => {
@@ -186,7 +216,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     })
   }
 
-  /* load persisted state into cache */
+  /* LOAD STATE - loads persisted states into cache */
   if (loadState) {
     group.readPersisted((err, groups) => {
       if (err) throw err
@@ -218,6 +248,21 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       sharedDMKey: getSharedDMKey // ------------------------ sync
     },
     processAddMember: patient(processAddMember),
+    ownKeys () { // ----------------------------------------- sync
+      if (!cache.ownKeys.length) {
+        ownKey.create((err) => {
+          if (err) throw err
+        })
+      }
+
+      if (!cache.ownKeys.length) {
+        throw new Error('key-store failed to provide ownKeys')
+      }
+
+      return cache.ownKeys.map(key => {
+        return { key, scheme: keySchemes.feed_id_self }
+      })
+    },
     close: level.close.bind(level)
   }
 
