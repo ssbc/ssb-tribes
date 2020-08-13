@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 const test = require('tape')
 const { keySchemes } = require('private-group-spec')
 const { generate } = require('ssb-keys')

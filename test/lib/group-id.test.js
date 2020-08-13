@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 const test = require('tape')
 const vectors = [
   require('private-group-spec/vectors/group-id1.json')

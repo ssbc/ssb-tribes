@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 const fs = require('fs')
 const { join, dirname } = require('path')
 const error_codes = require('envelope-spec/error_codes.json')

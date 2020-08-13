@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 const test = require('tape')
 const { generate } = require('ssb-keys')
 const vectors = [
