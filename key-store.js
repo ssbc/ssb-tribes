@@ -8,9 +8,11 @@ const { keySchemes } = require('private-group-spec')
 const { isFeed, isMsg, isCloakedMsg: isGroup } = require('ssb-ref')
 
 const directMessageKey = require('./lib/direct-message-key')
+const SecretKey = require('./lib/secret-key')
 
 const GROUP = 'group'
 const MEMBER = 'member'
+const OWN = 'own_key'
 
 // TODO add requirement for all group.add to have: { key, scheme } ?
 // at the moment we're assuming all scheme are for private groups but that might change
