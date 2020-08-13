@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 const test = require('tape')
 const pull = require('pull-stream')
 const envelope = require('../envelope')

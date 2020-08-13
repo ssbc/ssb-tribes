@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const { box, unboxKey, unboxBody } = require('envelope-js')
 
