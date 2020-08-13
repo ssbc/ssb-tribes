@@ -1,5 +1,5 @@
 const test = require('tape')
-const pull = require('pull-stream')
+// const pull = require('pull-stream')
 const { Server, GroupId } = require('./helpers')
 const { FeedId } = require('../lib/cipherlinks')
 

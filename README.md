@@ -67,11 +67,12 @@ where:
 
 _This method calls `group.add` and `group.addAuthors` for you (adding you)_
 
-### `ssb.tribes.application.create(groupdId, recps, opts, cb)`
+### `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
 
 Creates a tribe application message directed to the administrators of a private-group.
 
 where:
+- `groupAdmins` *[FeedId]* is an array of the admins you are sending your application to
 - `opts` *Object*:
   - `text` *String*: A text to be viewed by the Kaitiakis of a group
 
@@ -81,17 +82,30 @@ Returns the current state of a tribe application. Ex.:
 
 ```
 {
-  root: '%CXVDe5AoPVf83CoHYBpfplpzTU/YYkN56yge1nBG9wE=.sha256',
+  id: '%CXVDe5AoPVf83CoHYBpfplpzTU/YYkN56yge1nBG9wE=.sha256',
   applicantId: '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519',
   groupId: '%A9OUzXtv7BhaAfSMqBzOO6JC8kvwmZWGVxHDAlM+/so=.cloaked',
-  recps:
-   [ '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
-     '@qYeVniXyC0/D9GIlGMAiIKg5jGgJTY7ZEgeikRWIJ/Y=.ed25519',
-     '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519' ],
-  text: [ 'Hello, can I join?', 'Welcome!' ],
+  groupAdmins: [
+    '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
+    '@qYeVniXyC0/D9GIlGMAiIKg5jGgJTY7ZEgeikRWIJ/Y=.ed25519',
+  ],
+  comments: [
+    { 
+      author: '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519'
+      text: 'Hello, can I join?'
+    },
+    {
+      author: '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
+      text: 'Welcome!'
+    }
+  ],
   addMember: [ '%JT31YmU0kuWg82UeZWy6YtAMbEcGouXVLU9JtO0MgcY=.sha256' ]
 }
 ```
+
+NOTE:
+- `groupAdmins` are the people the applicant have sent their application to
+- `addMember` is a list of any `group/add-member` messages which have been published so a person can easily confirm they were added (and have the group key)
 
 ### `ssb.tribes.application.list(opts, cb)`
 
@@ -109,6 +123,7 @@ This runs `ssb.tribes.invite` to invite the person to the group, then publishes 
 where:
 - `opts` *Object*:
   - `text` *String*: A text to be viewed by the applicant
+
 
 ### `ssb.tribes.invite(groupId, [authorId], opts, cb)`
 

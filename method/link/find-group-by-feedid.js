@@ -1,7 +1,7 @@
 const { isFeed } = require('ssb-ref')
 const pull = require('pull-stream')
 
-const { isValid } = require('../../spec/link/feed-group')
+const { isRoot: isValid } = require('../../spec/link/feed-group')
 
 module.exports = function FindByFeedId (server) {
   return function findByFeedId (feedId, cb) {

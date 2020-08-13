@@ -1,5 +1,5 @@
 const { isCloakedMsgId: isGroupId } = require('ssb-ref')
-const { isValid } = require('../../spec/link/feed-group')
+const { isRoot: isValid } = require('../../spec/link/feed-group')
 
 module.exports = function CreateFeedGroupLink (server) {
   return function createFeedGroupLink ({ group, name }, cb) {

@@ -1,5 +1,5 @@
 const test = require('tape')
-const { isValid } = require('../../../../spec/link/feed-group')
+const { isRoot: isValid } = require('../../../../spec/link/feed-group')
 const { GroupId } = require('../../../helpers')
 const { FeedId: FI } = require('../../../../lib/cipherlinks')
 

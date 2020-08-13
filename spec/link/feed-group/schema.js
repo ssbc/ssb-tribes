@@ -47,4 +47,6 @@ const schema = {
   }
 }
 
-module.exports = JSON.stringify(schema, null, 2)
+module.exports = {
+  root: JSON.stringify(schema, null, 2)
+}

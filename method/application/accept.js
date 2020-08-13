@@ -1,33 +1,32 @@
-const applicationSpec = require('../../spec/application/application')
+const { isUpdate: isValid } = require('../../spec/application')
 
 module.exports = function AcceptGroupApplication (server) {
-  return function acceptGroupApplication (applicationId, { text }, cb) {
-    server.tribes.application.get(applicationId, (getErr, applicationData) => {
-      const { groupId, recps } = applicationData
-      server.tribes.invite(groupId, recps, { text }, (err, invite) => {
+  return function acceptGroupApplication (id, { text }, cb) {
+    server.tribes.application.get(id, (getErr, applicationData) => {
+      const { groupId, applicantId, groupAdmins } = applicationData
+
+      server.tribes.invite(groupId, [applicantId], { text }, (err, invite) => {
+        if (err) return cb(err)
+
         const content = {
           type: 'group/application',
           version: 'v1',
-          addMember: {
-            add: invite.key
-          },
-          text: {
-            append: text
-          },
-          recps,
+          addMember: { [invite.key]: 1 },
+          comment: { append: text },
+          recps: [applicantId, ...groupAdmins],
           tangles: {
             application: {
-              root: applicationId,
-              previous: [applicationData.key]
+              root: id,
+              previous: [id]
             }
           }
         }
-        if (!applicationSpec.isValid(content)) {
-          return cb(applicationSpec.isValid.errors)
-        }
-        server.publish(content, (publishErr, publishData) => {
-          if (publishErr) cb(publishErr)
-          server.tribes.application.get(applicationId, cb)
+        if (!isValid(content)) return cb(isValid.errors)
+
+        server.publish(content, (err, publishData) => {
+          if (err) return cb(err)
+
+          server.tribes.application.get(id, cb)
         })
       })
     })

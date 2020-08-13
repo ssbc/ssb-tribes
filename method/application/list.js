@@ -2,10 +2,11 @@ const pull = require('pull-stream')
 
 module.exports = function GroupApplicationList (server) {
   return function groupApplicationList ({ groupId, accepted }, cb) {
-    if (typeof accepted !== 'boolean' && typeof accepted !== 'undefined')
+    if (typeof accepted !== 'boolean' && typeof accepted !== 'undefined') {
       throw new Error(
         'tribes.application.list expected accepted to be (undefined | true | false)'
       )
+    }
     const queryGroupId = [
       {
         $filter: {
