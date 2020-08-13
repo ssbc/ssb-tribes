@@ -91,11 +91,11 @@ Returns the current state of a tribe application. Ex.:
   ],
   comments: [
     { 
-      author: '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519'
+      authorId: '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519'
       text: 'Hello, can I join?'
     },
     {
-      author: '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
+      authorId: '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
       text: 'Welcome!'
     }
   ],

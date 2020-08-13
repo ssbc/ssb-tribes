@@ -69,7 +69,7 @@ function getComment (value) {
   }
 
   return {
-    author: value.author,
+    authorId: value.author,
     text
   }
 }

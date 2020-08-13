@@ -52,7 +52,7 @@ test('tribes.application.*', t => {
         t.true(isMsg(applicationData.id), 'application has an id')
         t.deepEqual(
           applicationData.comments[0],
-          { author: stranger.id, text: text1 },
+          { authorId: stranger.id, text: text1 },
           'application has initial comment'
         )
 
@@ -71,7 +71,7 @@ test('tribes.application.*', t => {
               t.error(err, 'stranger checks current state of application')
               t.deepEqual(
                 getData.comments[1],
-                { author: kaitiaki.id, text: text2 },
+                { authorId: kaitiaki.id, text: text2 },
                 'can see comment from kaitiaki'
               )
               t.equal(acceptData.addMember.length, 1, 'can see have been invited')
@@ -89,9 +89,9 @@ test('tribes.application.*', t => {
                     t.error(err, 'kaitiaki check all applications')
 
                     t.deepEqual(upListData[0].comments, [
-                      { author: stranger.id, text: text1 },
-                      { author: kaitiaki.id, text: text2 },
-                      { author: kaitiaki.id, text: text3 }
+                      { authorId: stranger.id, text: text1 },
+                      { authorId: kaitiaki.id, text: text2 },
+                      { authorId: kaitiaki.id, text: text3 }
                     ], 'kaitiaki sees all comments')
                     kaitiaki.close()
                     stranger.close()
