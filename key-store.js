@@ -253,6 +253,10 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
         })
       }
 
+      if (!cache.ownKeys.length) {
+        throw new Error('key-store failed to provide ownKeys')
+      }
+
       return cache.ownKeys.map(key => {
         return { key, scheme: keySchemes.feed_id_self }
       })
