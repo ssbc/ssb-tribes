@@ -71,7 +71,7 @@ function init (ssb, config) {
   }
 
   /* start listeners */
-  listen.addMember(ssb)(m => {
+  listen.addMember(ssb, m => {
     const { root, groupKey } = m.value.content
     ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
       if (err) throw err

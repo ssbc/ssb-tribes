@@ -1,30 +1,24 @@
-const pull = require('pull-stream')
+const flumeView = require('flumeview-reduce')
 const { isValid } = require('./spec/group/add-member')
 
 module.exports = {
   addMember
 }
 
-function addMember (ssb) {
-  var listeners = []
+const VERSION = 1
+function addMember (ssb, emit) {
+  // HACK: leveraging flume to access stream of newest messages
+  ssb._flumeUse('add-member-dummy-index', flumeView(
+    VERSION,
+    (_, msg) => {
+      if (msg.value.author === ssb.id) return _ // ignore messages I write
+      if (!isValid(msg)) return _
 
-  function subscribe (listener) {
-    listeners.push(listener)
-  }
-
-  // TODO problem is this doesn't track what group/add-member have been processed
-  // and watching "live" doesn't really guarentee ...
-  // I think we need a flumeview here because that tracks what's been past it / processed.
-
-  pull(
-    ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
-    pull.filter(m => m.sync !== true), // live queries emit { sync: true } when up to speed!
-    pull.filter(m => m.value.author !== ssb.id), // ignore messages I write
-    pull.filter(isValid),
-    pull.drain(m => {
-      listeners.forEach(fn => fn(m))
-    })
-  )
-
-  return subscribe
+      // HACK: using this ssb.emit to be able to test this listener
+      // TODO: change to only use ssb.emit when testing?
+      ssb.emit('group/add-member', msg)
+      emit(msg)
+      return _
+    }
+  ))
 }
