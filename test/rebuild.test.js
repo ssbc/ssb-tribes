@@ -4,78 +4,92 @@ const pull = require('pull-stream')
 const { Server } = require('./helpers')
 const { FeedId } = require('../lib/cipherlinks')
 
+function replicate ({ from, to, through = noop }) {
+  pull(
+    from.createHistoryStream({ id: from.id, live: true }),
+    pull.through(through),
+    pull.drain(m => {
+      to.add(m.value, (err) => {
+        if (err) throw err
+        console.log(`replicated ${m.key}`)
+      })
+    })
+  )
+}
+function noop () {}
+
 test('rebuild', t => {
-  const A = Server() // me
-  const B = Server() // some friend
+  const me = Server() // me
+  const admin = Server() // some friend
 
   var messages = []
-  var groupId
-
-  A.rebuild.hook(function (fn, [cb]) {
-    t.pass('rebuild called!')
-    const replacementCb = () => {
-      messages.forEach(({ key }, i) => {
-        A.get({ id: key, private: true }, (err, val) => {
-          if (err) throw err
-          t.equal(typeof val.content, 'object', `auto-unboxes ${val.content.type}`)
-        })
-      })
-
-      A.close()
-      t.end()
-      cb()
-    }
-
-    fn.apply(this, [replacementCb])
+  replicate({
+    from: admin,
+    to: me,
+    through: m => messages.push(m.key)
   })
 
-  B.tribes.create({}, (err, data) => {
+  var groupId
+
+  me.rebuild.hook(function (rebuild, [cb]) {
+    t.pass('I automatically call a rebuild')
+
+    rebuild(() => {
+      cb()
+      t.true(me.status().sync.sync, 'all indexes updated') // 2
+
+      pull(
+        me.createUserStream({ id: admin.id, private: true }),
+        pull.drain(
+          m => {
+            t.equal(typeof m.value.content, 'object', `I auto-unbox msg of type: ${m.value.content.type}`)
+          },
+          (err) => {
+            if (err) throw err
+            admin.close()
+            me.close()
+            t.end()
+          }
+        )
+      )
+    })
+    t.false(me.status().sync.sync, 'all indexes updating') // 1
+  })
+
+  admin.tribes.create({}, (err, data) => {
     if (err) throw err
 
-    messages.push(data.groupInitMsg)
     groupId = data.groupId
     console.log(`created group: ${groupId}`)
 
-    B.tribes.invite(groupId, [A.id], { text: 'ahoy' }, (err, invite) => {
+    admin.tribes.invite(groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
+      t.error(err, 'admin adds me to group')
       if (err) throw err
-      messages.push(invite)
-      B.close()
-
-      pull(
-        pull.values(messages),
-        pull.asyncMap((msg, cb) => {
-          msg.value
-            ? A.add(msg.value, cb)
-            : A.add(msg, cb)
-        }),
-        // pull.through(m => console.log('replicating', m.key)),
-        pull.collect(err => {
-          if (err) throw err
-        })
-      )
     })
   })
 })
 
-test('rebuild (not called from own add-member)', t => {
+test('rebuild (not called when I invite another member)', t => {
   const server = Server()
 
-  server.rebuild.hook(function (fn, [cb]) {
-    t.error(new Error('should not be rebuilding'))
+  var rebuildCalled = false
+  server.rebuild.hook(function (rebuild, args) {
+    rebuildCalled = true
 
-    fn.apply(this, [cb])
+    rebuild(...args)
   })
 
   server.tribes.create(null, (err, data) => {
-    t.error(err, 'no error')
+    t.error(err, 'I create a group')
 
     const { groupId } = data
     const feedId = new FeedId().mock().toSSB()
 
     server.tribes.invite(groupId, [feedId], {}, (err) => {
-      t.error(err, 'no error')
+      t.error(err, 'I add someone to the group')
 
       setTimeout(() => {
+        t.false(rebuildCalled, 'I did not rebuild my indexes')
         server.close()
         t.end()
       }, 1e3)
