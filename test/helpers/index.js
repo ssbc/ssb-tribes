@@ -5,6 +5,7 @@ const decodeLeaves = require('./decode-leaves')
 const encodeLeaves = require('./encode-leaves')
 const DHFeedKeys = require('./dh-feed-keys')
 const print = require('./print')
+const replicate = require('./replicate')
 const Server = require('./test-bot')
 
 module.exports = {
@@ -17,5 +18,6 @@ module.exports = {
   decodeLeaves,
   encodeLeaves,
   print,
+  replicate,
   Server
 }

@@ -41,8 +41,11 @@ module.exports = function GroupApplicationList (server) {
       }
     ]
 
+    const query = groupId ? queryGroupId : queryAll
+
     pull(
-      server.query.read({ query: groupId ? queryGroupId : queryAll }),
+      server.messagesByType({ type: 'group/application' }),
+      // server.query.read({ query }),
       pull.map(i => i.key),
       pull.asyncMap(server.tribes.application.get),
       pull.filter(i => {
