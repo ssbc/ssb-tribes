@@ -44,9 +44,12 @@ module.exports = function GroupApplicationList (server) {
     const query = groupId ? queryGroupId : queryAll
 
     pull(
-      server.messagesByType({ type: 'group/application' }),
-      // server.query.read({ query }),
+      // server.messagesByType({ type: 'group/application', private: true }),
+      server.query.read({ query, private: true }),
       pull.map(i => i.key),
+      pull.through(m => {
+        console.log('HERE', m)
+      }),
       pull.asyncMap(server.tribes.application.get),
       pull.filter(i => {
         if (accepted === undefined) return true

@@ -3,19 +3,23 @@ const { isRoot, isUpdate } = require('../../spec/application')
 
 module.exports = function GroupApplicationGet (server) {
   return function groupApplicationGet (applicationId, cb) {
-    server.get({ id: applicationId, private: true }, (err, rootData) => {
+    server.get({ id: applicationId, private: true, meta: true }, (err, root) => {
       if (err) return cb(err)
-      if (!isRoot(rootData)) return cb(isRoot.errors)
+      if (!isRoot(root)) {
+        console.log(JSON.stringify(root, null, 2))
+        console.log('not a valid appliction root')
+        return cb(isRoot.errors)
+      }
 
       fetchUpdates(applicationId, (err, updates) => {
         if (err) return cb(err)
 
         var initialState = {
-          comments: [getComment(rootData)],
+          comments: [getComment(root)],
           addMember: []
         }
         const reduced = updates.reduce((acc, curr) => {
-          acc.comments.push(getComment(curr.value))
+          acc.comments.push(getComment(curr))
           acc.addMember = [
             ...acc.addMember,
             ...getAddMember(curr.value)
@@ -26,9 +30,9 @@ module.exports = function GroupApplicationGet (server) {
 
         cb(null, {
           id: applicationId,
-          applicantId: rootData.author,
-          groupId: rootData.content.groupId,
-          groupAdmins: rootData.content.recps.filter(id => id !== rootData.author),
+          applicantId: root.value.author,
+          groupId: root.value.content.groupId,
+          groupAdmins: root.value.content.recps.filter(id => id !== root.value.author),
           ...reduced
         })
       })
@@ -59,17 +63,18 @@ module.exports = function GroupApplicationGet (server) {
   }
 }
 
-function getComment (value) {
+function getComment (msg) {
+  const { comment, addMember } = msg.value.content
   let text = ''
-  if (value.content.comment && value.content.comment.append) {
-    text = value.content.comment.append
+  if (comment && comment.append) {
+    text = comment.append
   }
-  if (!text && value.content.addMember && Object.keys(value.content.addMember).length) {
+  if (!text && addMember && Object.keys(addMember).length) {
     text = 'application accepted'
   }
 
   return {
-    authorId: value.author,
+    authorId: msg.value.author,
     text
   }
 }

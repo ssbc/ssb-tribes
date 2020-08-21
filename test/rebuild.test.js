@@ -4,9 +4,6 @@ const pull = require('pull-stream')
 const { Server, replicate } = require('./helpers')
 const { FeedId } = require('../lib/cipherlinks')
 
-function abbrev (key) {
-  return key.slice(0, 9)
-}
 function nMessages (n, { type = 'post', recps } = {}) {
   return new Array(20).fill(type).map((val, i) => {
     const content = { type, count: i }

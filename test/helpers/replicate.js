@@ -1,3 +1,5 @@
+const pull = require('pull-stream')
+
 module.exports = function replicate (
   { from, to, live = true, name = abbrev, through },
   done
@@ -5,6 +7,7 @@ module.exports = function replicate (
   pull(
     from.createHistoryStream({ id: from.id, live }),
     pull.through(through),
+    pull.filter(m => m.sync !== true),
     pull.asyncMap((m, cb) => to.add(m.value, cb)),
     pull.asyncMap((m, cb) =>
       to.get({ id: m.key, private: true, meta: true }, cb)
@@ -28,4 +31,8 @@ module.exports = function replicate (
       }
     )
   )
+}
+
+function abbrev (key) {
+  return key.slice(0, 9)
 }

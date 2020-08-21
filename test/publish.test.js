@@ -1,6 +1,7 @@
 const test = require('tape')
+const { promisify: p } = require('util')
 // const pull = require('pull-stream')
-const { Server, GroupId } = require('./helpers')
+const { Server, GroupId, replicate } = require('./helpers')
 const { FeedId } = require('../lib/cipherlinks')
 
 test('publish (to groupId)', t => {
@@ -25,8 +26,7 @@ test('publish (to groupId)', t => {
         t.error(err)
         t.deepEqual(msg.value.content, content, 'can open envelope!')
 
-        server.close()
-        t.end()
+        server.close(t.end)
       })
     })
   })
@@ -44,8 +44,7 @@ test('publish (to groupId we dont have key for)', t => {
 
   server.publish(content, (err) => {
     t.match(err.message, /unknown groupId/, 'returns error')
-    server.close()
-    t.end()
+    server.close(t.end)
   })
 })
 
@@ -73,41 +72,39 @@ test('publish (group + feedId)', t => {
         t.error(err)
         t.deepEqual(msg.value.content, content, 'can open envelope!')
 
-        server.close(() => {
-          console.log('closed')
-        })
-        t.end()
+        server.close(t.end)
       })
     })
   })
 })
 
-test('publish (myFeedId + feedId)', t => {
-  const server = Server()
-
-  const feedId = new FeedId().mock().toSSB()
+test('publish (DMs: myFeedId + feedId)', async t => {
+  const alice = Server()
+  const bob = Server()
+  const name = (id) => {
+    if (id === alice.id) return 'alice'
+    if (id === bob.id) return 'bob  '
+  }
 
   const content = {
     type: 'announce',
     text: 'summer has arrived in wellington!',
-    recps: [server.id, feedId]
+    recps: [alice.id, bob.id]
   }
+  const msg = await p(alice.publish)(content)
+  await p(alice.publish)({ type: 'doop' })
+  t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
 
-  server.publish(content, (err, msg) => {
-    t.error(err)
+  const aliceGet = await p(alice.get)({ id: msg.key, private: true, meta: true })
+  t.deepEqual(aliceGet.value.content, content, 'alice can open envelope!')
 
-    t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
+  await p(replicate)({ from: alice, to: bob, name, live: false })
+  const bobGet = await p(bob.get)({ id: msg.key, private: true, meta: true })
+  t.deepEqual(bobGet.value.content, content, 'bob can open envelope!')
 
-    server.get({ id: msg.key, private: true, meta: true }, (err, msg) => {
-      t.error(err)
-      t.deepEqual(msg.value.content, content, 'can open envelope!')
-
-      server.close(() => {
-        console.log('closed')
-      })
-      t.end()
-    })
-  })
+  await p(alice.close)()
+  await p(bob.close)()
+  t.end()
 })
 
 test('publish (bulk)', t => {
