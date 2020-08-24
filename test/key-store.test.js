@@ -292,6 +292,23 @@ test('key-store', t => {
       keyStore.close()
     },
 
+    () => {
+      const DESCRIPTION = 'ownKeys (persisted)'
+
+      const storePath = TmpPath()
+      let keyStore = KeyStore(storePath, myKeys, null, { loadState: false })
+
+      const keys = keyStore.ownKeys()
+
+      keyStore.close((err) => {
+        if (err) throw err
+        keyStore = KeyStore(storePath, myKeys, () => {
+          t.deepEqual(keyStore.ownKeys(), keys, DESCRIPTION)
+          keyStore.close()
+        })
+      })
+    },
+
     // ## processAddMember
     //
     // this method handles incoming group/add-member messages

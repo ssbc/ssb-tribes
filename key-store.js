@@ -226,8 +226,13 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
         if (err) throw err
         cache.memberships = memberships
 
-        isReady = true
-        onReady()
+        ownKey.readPersisted((err, ownKeys) => {
+          if (err) throw err
+          cache.ownKeys = ownKeys
+
+          isReady = true
+          onReady()
+        })
       })
     })
   }
