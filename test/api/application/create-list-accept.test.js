@@ -4,6 +4,8 @@ const { isMsg } = require('ssb-ref')
 const keys = require('ssb-keys')
 const { promisify: p } = require('util')
 
+// const sleep = async (t) => new Promise(resolve => setTimeout(resolve, t))
+
 const text1 = 'Hello, can I join?'
 const text2 = 'Welcome!'
 const text3 = 'Welcome for a second time!'
@@ -25,6 +27,13 @@ test('tribes.application.*', async t => {
       case stranger.id: return 'stranger'
       default: return 'unknown'
     }
+  }
+
+  const finish = (err) => {
+    kaitiaki.close()
+    stranger.close()
+    t.error(err, 'saw no errors')
+    t.end()
   }
 
   replicate({ from: stranger, to: kaitiaki, name })
@@ -50,13 +59,13 @@ test('tribes.application.*', async t => {
     /* Stranger creates an application to join 3 tribes */
     const admins = [kaitiaki.id]
     const createApplication = p(stranger.tribes.application.create)
-    const applicationData = await createApplication(groupId, admins, { text: text1 })
+    let application = await createApplication(groupId, admins, { text: text1 })
     await createApplication(groupId2, admins, { text: text1 })
     await createApplication(groupId3, admins, { text: text1 })
 
-    t.true(isMsg(applicationData.id), 'application has an id')
+    t.true(isMsg(application.id), 'application has an id')
     t.deepEqual(
-      applicationData.comments[0],
+      application.comments[0],
       { authorId: stranger.id, text: text1 },
       'application has initial comment'
     )
@@ -65,14 +74,15 @@ test('tribes.application.*', async t => {
       groupId,
       accepted: false
     })
-    t.equal(listData[0].id, applicationData.id, 'kaitiaki can see same application')
+    t.deepEqual(listData[0], application, 'kaitiaki can see same application')
 
     const listData2 = await p(stranger.tribes.application.list)({})
-    console.log(listData2)
 
     /* Stranger closes + restarts server */
     await p(stranger.close)()
     stranger = Server({ ...strangerOpts, startUnclean: true })
+    // have to restart replication after closing server
+    replicate({ from: kaitiaki, to: stranger, name })
 
     /* Stranger checks list of applications */
     const listData3 = await p(stranger.tribes.application.list)({})
@@ -83,93 +93,41 @@ test('tribes.application.*', async t => {
       listData[0].id,
       { text: text2 }
     )
-    t.equal(acceptData.addMember.length, 1, 'group/add-member message sent')
+    t.true(isMsg(acceptData.addMember[0]), 'group/add-member message sent')
 
-    /* User checks the current application state */
-    const getData = await p(stranger.tribes.application.get)(applicationData.id)
+    /* Stranger checks the current application state */
+    const getData = await p(stranger.tribes.application.get)(application.id)
+
     t.deepEqual(
       getData.comments[1],
       { authorId: kaitiaki.id, text: text2 },
-      'can see comment from kaitiaki'
+      'stranger can see comment from kaitiaki'
     )
-    t.equal(acceptData.addMember.length, 1, 'can see have been invited')
+    t.equal(getData.addMember.length, 1, 'stranger can see group/add-member')
 
     /* User can now publish to group */
-    // stranger.publish(
-    //   { type: 'hooray', recps: [groupId] },
-  } catch (error) {
-    kaitiaki.close()
-    stranger.close()
-    t.error(error, 'should not error')
-    t.end()
+    const published = await p(stranger.publish)({ type: 'hooray', recps: [groupId] })
+    t.true(published, 'stranger can now publish to group')
+
+    /* Duplicate acceptance */
+    await p(kaitiaki.tribes.application.accept)(
+      listData[0].id,
+      { text: text3 }
+    )
+
+    application = await p(stranger.tribes.application.get)(application.id)
+    t.deepEqual(
+      application.comments,
+      [
+        { authorId: stranger.id, text: text1 },
+        { authorId: kaitiaki.id, text: text2 },
+        { authorId: kaitiaki.id, text: text3 }
+      ],
+      'stranger sees all comments'
+    )
+
+    finish()
+  } catch (err) {
+    finish(err)
   }
 })
-
-// catch (error) {
-//   t.error(error, 'kaitiaki can call up application')
-// }
-
-//             ,
-//             (listErr, listData) => {
-
-//                 ,
-//                 (err, acceptData) => {
-//                   t.error(err, 'kaitiaki accepts')
-
-//                     (err, getData) => {
-//                       t.error(
-//                         err,
-//                         'stranger checks current state of application'
-//                       )
-
-//                         err => {
-//                           t.error(
-//                             err,
-//                             'stranger is now part of group and can publish to it!'
-//                           )
-
-//                           /* Kaitiaki creates a second accept message */
-//                           kaitiaki.tribes.application.accept(
-//                             listData[0].id,
-//                             { text: text3 },
-//                             (err, acceptData2) => {
-//                               t.error(err, 'second acceptance')
-
-//                               /* Kaitiaki checks list of applications */
-//                               kaitiaki.tribes.application.list(
-//                                 {},
-//                                 (err, upListData) => {
-//                                   t.error(
-//                                     err,
-//                                     'kaitiaki check all applications'
-//                                   )
-
-//                                   t.deepEqual(
-//                                     upListData[0].comments,
-//                                     [
-//                                       { authorId: stranger.id, text: text1 },
-//                                       { authorId: kaitiaki.id, text: text2 },
-//                                       { authorId: kaitiaki.id, text: text3 }
-//                                     ],
-//                                     'kaitiaki sees all comments'
-//                                   )
-//                                   kaitiaki.close()
-//                                   stranger.close()
-//                                   t.end()
-//                                 }
-//                               )
-//                             }
-//                           )
-//                         }
-//                       )
-//                     }
-//                   )
-//                 }
-//               )
-//             }
-//           )
-//         }
-//       )
-//     })
-//   })
-// })
