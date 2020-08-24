@@ -46,8 +46,6 @@ test('tribes.application.*', async t => {
     const { groupId: groupId2 } = await createTribe({})
     const { groupId: groupId3 } = await createTribe({})
     const { groupId: groupId4 } = await createTribe({})
-    const { groupId: groupId5 } = await createTribe({})
-    const { groupId: groupId6 } = await createTribe({})
 
     /* User lists tribes it's part of */
     const initialList = await p(stranger.tribes.list)()
