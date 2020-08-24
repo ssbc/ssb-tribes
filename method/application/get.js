@@ -6,8 +6,6 @@ module.exports = function GroupApplicationGet (server) {
     server.get({ id: applicationId, private: true, meta: true }, (err, root) => {
       if (err) return cb(err)
       if (!isRoot(root)) {
-        console.log(JSON.stringify(root, null, 2))
-        console.log('not a valid appliction root')
         return cb(isRoot.errors)
       }
 

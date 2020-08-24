@@ -47,23 +47,23 @@ module.exports = function GroupApplicationList (server) {
 
     const query = groupId ? queryGroupId : queryAll
 
-    // TODO this may be to sugary for such a low level module
-    // I think filtering and fetching application detail should perhaps be handled elsewhere
-    // that we you get pass in a get
-
     pull(
-      // server.messagesByType({ type: 'group/application', private: true }),
-      server.query.read({ query, private: true }),
+      server.query.read({ query }),
       pull.map(i => i.key),
-      get !== undefined
+
+      // (optionally) convert applicationIds into application records
+      (get !== undefined)
         ? paraMap(get, 4) // 4 = width of parallel querying
         : null,
-      accepted !== undefined
+
+      // (optionally) filter applications by whether accepted
+      (accepted !== undefined)
         ? pull.filter(i => {
           if (accepted === true) return i.addMember && i.addMember.length
           if (accepted === false) return !i.addMember || i.addMember.length === 0
         })
         : null,
+
       pull.collect((err, data) => {
         cb(err, data)
       })
