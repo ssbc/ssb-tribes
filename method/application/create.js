@@ -4,6 +4,7 @@ const { isRoot: isValid } = require('../../spec/application')
 module.exports = function CreateGroupApplication (server) {
   return function createGroupApplication (groupId, groupAdmins, { text }, cb) {
     if (!isGroupId(groupId)) return cb(new Error('expects a valid groupId'))
+
     const applicationMessage = {
       type: 'group/application',
       version: 'v1',

@@ -1,8 +1,8 @@
 const test = require('tape')
-const { Server, replicate } = require('../../helpers')
 const { isMsg } = require('ssb-ref')
 const keys = require('ssb-keys')
 const { promisify: p } = require('util')
+const { Server, replicate } = require('../../helpers')
 
 // const sleep = async (t) => new Promise(resolve => setTimeout(resolve, t))
 
@@ -42,26 +42,33 @@ test('tribes.application.*', async t => {
   try {
     /* Kaitiaki creates many tribes */
     const createTribe = p(kaitiaki.tribes.create)
-    const { groupId } = await p(kaitiaki.tribes.create)({})
-    const { groupId: groupId2 } = await createTribe({})
-    const { groupId: groupId3 } = await createTribe({})
-    const { groupId: groupId4 } = await createTribe({})
+    const groups = await Promise.all([
+      createTribe({}),
+      createTribe({}),
+      createTribe({}),
+      createTribe({})
+    ])
+    const groupIds = groups.map(g => g.groupId)
+    const [groupId, groupId2, groupId3] = groupIds
 
     /* User lists tribes it's part of */
     const initialList = await p(stranger.tribes.list)()
-    t.equal(
-      initialList.length,
-      0,
-      'tribes.list shows stranger is not part of group'
-    )
+    t.equal(initialList.length, 0, 'stranger sees no applications')
+
     /* Stranger creates an application to join 3 tribes */
     const admins = [kaitiaki.id]
     const createApplication = p(stranger.tribes.application.create)
-    let application = await createApplication(groupId, admins, { text: text1 })
-    await createApplication(groupId2, admins, { text: text1 })
-    await createApplication(groupId3, admins, { text: text1 })
+    const applications = await Promise.all([
+      createApplication(groupId, admins, { text: text1 }),
+      createApplication(groupId2, admins, { text: text1 }),
+      createApplication(groupId3, admins, { text: text1 })
+    ])
 
-    t.true(isMsg(application.id), 'application has an id')
+    t.true(
+      applications.every(a => isMsg(a.id)),
+      'stranger makes some applications'
+    )
+    let [application] = applications
     t.deepEqual(
       application.comments[0],
       { authorId: stranger.id, text: text1 },
@@ -70,6 +77,7 @@ test('tribes.application.*', async t => {
     /* Kaitiaki lists applications for a tribe */
     const listData = await p(kaitiaki.tribes.application.list)({
       groupId,
+      get: true,
       accepted: false
     })
     t.deepEqual(listData[0], application, 'kaitiaki can see same application')

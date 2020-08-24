@@ -107,14 +107,15 @@ NOTE:
 - `groupAdmins` are the people the applicant have sent their application to
 - `addMember` is a list of any `group/add-member` messages which have been published so a person can easily confirm they were added (and have the group key)
 
-### `ssb.tribes.application.list(opts, cb)`
+### `ssb.tribes.application.list(cb)`
 
-Returns a list with all group applications.
+where `cb` calls back with an Array of application ids.
 
-where:
-- `opts` *Object*:
-  - `groupId` *String*: filter applications for a specific group
-  - `accepted` *Boolean*: filter applications that have been accepted or not
+Alternatively, you can call with opts `ssb.tribes.application.list(opts, cb)`
+where `opts` *Object* with properties:
+  - `groupId` *MessagedId*: return only application for a specific group
+  - `get` *Function | true* - runs an async function on each applicationId before calling back. If `true` is passed, this is the internal `ssb.tribes.application.get`.
+  - `accepted` *Boolean*: filter applications that have been accepted or not. This requires a `get` which has an `addMember` property similar to the output you see in `ssb.tribes.application.get`.
 
 ### `ssb.tribes.application.accept(applicationId, opts, cb)`
 

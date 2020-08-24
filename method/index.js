@@ -17,6 +17,7 @@ module.exports = function Method (ssb, keystore, state) {
       create: patient(CreateLink(ssb)),
       findGroupByFeedId: FindByGroupByFeedId(ssb)
     },
+    // TODO - rm patient from these?
     application: {
       create: patient(CreateGroupApplication(ssb)),
       get: patient(GetGroupApplication(ssb)),
