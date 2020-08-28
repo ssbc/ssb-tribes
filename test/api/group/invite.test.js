@@ -3,10 +3,10 @@ const { Server } = require('../../helpers')
 const { FeedId } = require('../../../lib/cipherlinks')
 
 test('tribes.invite', t => {
-  const server = Server()
+  const kaitiaki = Server()
 
-  server.tribes.create('the pantheon', (err, data) => {
-    t.error(err)
+  kaitiaki.tribes.create('the pantheon', (err, data) => {
+    t.error(err, 'creates group')
 
     const { groupId, groupKey, groupInitMsg } = data
     const authorIds = [
@@ -14,10 +14,12 @@ test('tribes.invite', t => {
       new FeedId().mock().toSSB()
     ]
 
-    server.tribes.invite(groupId, authorIds, { text: 'welcome friends' }, (err, invite) => {
-      t.error(err)
+    kaitiaki.tribes.invite(groupId, authorIds, { text: 'welcome friends' }, (err, invite) => {
+      t.error(err, 'sends invite')
 
-      server.get({ id: invite.key, private: true }, (_, value) => {
+      console.log(invite)
+
+      kaitiaki.get({ id: invite.key, private: true }, (_, value) => {
         const expected = {
           type: 'group/add-member',
           version: 'v1',
@@ -37,7 +39,7 @@ test('tribes.invite', t => {
 
         setTimeout(() => {
           t.end()
-          server.close()
+          kaitiaki.close()
         }, 1e3)
       })
     })

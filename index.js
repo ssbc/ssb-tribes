@@ -159,7 +159,15 @@ function init (ssb, config) {
         })
       })
     },
-    invite: scuttle.group.addMember,
+    invite (groupId, authorIds, opts = {}, cb) {
+      scuttle.group.addMember(groupId, authorIds, opts, (err, data) => {
+        if (err) return cb(err)
+        keystore.group.registerAuthors(groupId, authorIds, (err) => {
+          if (err) return cb(err)
+          cb(null, data)
+        })
+      })
+    },
     link: {
       create: scuttle.link.create
     },

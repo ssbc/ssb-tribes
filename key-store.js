@@ -244,7 +244,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       get: group.get, // ------------------------------------ sync
       list: group.list, // ---------------------------------- sync
       registerAuthor: patient(membership.register),
-      // registerAuthors: patient(membership.registerMany),
+      registerAuthors: patient(membership.registerMany),
       readPersisted: group.readPersisted
     },
     author: {
