@@ -141,6 +141,14 @@ where:
 
 _This method calls `group.addAuthors` for you (adding that person to the group register for you)_
 
+### `ssb.tribes.addNewAuthorListener(fn)`
+
+Listens for when new authors are added to a tribe, and fires a given function
+
+- `fn` *Function* - a function to call when a new author is added to the tribe. The function receives:
+
+  - `groupId` *String* - the id of the tribe
+  - `newAuthors` *Array* - array of new authors added to the tribe
 
 ### `ssb.tribes.register(groupId, info, cb)`
 
