@@ -45,7 +45,7 @@ function init (ssb, config) {
     loading: {
       keystore: true
     },
-    authorListeners: [],
+    newAuthorListeners: [],
 
     closed: false
   }
@@ -86,7 +86,7 @@ function init (ssb, config) {
       keystore.processAddMember({ groupId, groupKey, root, authors }, (err, newAuthors) => {
         if (err) throw err
         if (newAuthors.length) {
-          state.authorListeners.forEach(fn => fn({ groupId, newAuthors }))
+          state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
 
           console.log('rebuild!!!   (ﾉ´ヮ´)ﾉ*:･ﾟ✧')
           ssb.rebuild(() => console.log('rebuild finished'))
@@ -157,7 +157,7 @@ function init (ssb, config) {
             // access `previous` but while encrypting the `group/init` message content another
             // message is pushed into the queue, making our enveloping invalid.
 
-            state.authorListeners.forEach(fn => fn({ groupId, newAuthors: [ssb.id] }))
+            state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [ssb.id] }))
 
             cb(null, data)
           })
@@ -184,7 +184,7 @@ function init (ssb, config) {
     },
     findByFeedId: scuttle.link.findGroupByFeedId,
     addNewAuthorListener (fn) {
-      state.authorListeners.push(fn)
+      state.newAuthorListeners.push(fn)
     },
     get: (id, cb) => isKeystoreReady(() => cb(null, keystore.group.get(id))),
     list: (cb) => isKeystoreReady(() => cb(null, keystore.group.list()))
