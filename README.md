@@ -178,6 +178,27 @@ where:
 - `cb` *Function* - has signature `cb(err, success)`
 
 
+### `ssb.tribes.list(cb)`
+
+Returns a list of all known group IDs.
+
+### `ssb.tribes.get(groupID, cb)`
+
+Returns group metadata for a given group:
+
+- `key`
+- `root`
+- `scheme`
+
+### `ssb.tribes.listAuthors(groupId, cb)`
+
+Lists all the authors (feedIds) who you know are part of the group with id `groupId`
+
+
+
+
+
+
 ### `ssb.tribes.link.create({ group, name }, cb)`
 
 Creates a message of type `link/feed-group` which links your feedId to a valid group. (i.e. you can only create links between your feedId and profiles at the moment)
@@ -190,11 +211,12 @@ Arguments:
 Note:
 - this link will be encrypted to the group you're linking to (i.e. link will have `recps: [groupId]`)
 
-### `ssb.tribes.findByfeedId(feedId, cb)`
+### `ssb.tribes.findByFeedId(feedId, cb)`
 
-where:
+Find groups which have linked with a feedId (see `ssb.tribes.link.create`).
+
 - `feedId` *FeedId* is a string
-- `cb` *function* is a callback with signature `cb(err, data)` where `data` is an array of items of form:
+- `cb` *function* is a callback with signature `cb(err, data)` where `data` is an Array of items of form:
   ```
   {
     groupId: GroupId,
@@ -210,19 +232,7 @@ where:
   }
   ```
 
-NOTE: the strange format of the data is to leave easy support for multiple editors in the future
-
-### `ssb.tribes.list(cb)`
-
-Returns a list of all known group IDs.
-
-### `ssb.tribes.get(groupID, cb)`
-
-Returns group metadata for a given group:
-
-- `key`
-- `root`
-- `scheme`
+NOTE: the strange format with states is to leave easy support for multiple editors (of a link to a group) in the future
 
 ## TODO
 
