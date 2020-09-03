@@ -20,6 +20,9 @@ module.exports = {
     registerAuthors: 'async',
     create: 'async',
     invite: 'async',
+    get: 'async',
+    list: 'async',
+    listAuthors: 'async',
     link: {
       create: 'async'
     },
@@ -29,9 +32,7 @@ module.exports = {
       create: 'async ',
       accept: 'async'
     },
-    findByFeedId: 'async',
-    get: 'async',
-    list: 'async'
+    findByFeedId: 'async'
   },
   init
 }
@@ -173,20 +174,27 @@ function init (ssb, config) {
         })
       })
     },
+    list (cb) {
+      isKeystoreReady(() => cb(null, keystore.group.list()))
+    },
+    get (id, cb) {
+      isKeystoreReady(() => cb(null, keystore.group.get(id)))
+    },
+    listAuthors (groupId, cb) {
+      isKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
+    },
     link: {
       create: scuttle.link.create
     },
+    findByFeedId: scuttle.link.findGroupByFeedId,
     application: {
       create: scuttle.application.create,
       list: scuttle.application.list,
       get: scuttle.application.get,
       accept: scuttle.application.accept
     },
-    findByFeedId: scuttle.link.findGroupByFeedId,
     addNewAuthorListener (fn) {
       state.newAuthorListeners.push(fn)
-    },
-    get: (id, cb) => isKeystoreReady(() => cb(null, keystore.group.get(id))),
-    list: (cb) => isKeystoreReady(() => cb(null, keystore.group.list()))
+    }
   }
 }

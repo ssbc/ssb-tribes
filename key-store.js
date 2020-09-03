@@ -30,7 +30,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   var isReady = !loadState
   var cache = {
     groups: {}, // ------ maps groupId > group.info
-    memberships: {}, // - maps authorId > [groupId]
+    memberships: {}, // - maps authorId > Set([groupId])
     authors: {}, // ----- maps authorId > { key, scheme: SharedDMKey } for that author
     ownKeys: []
   }
@@ -106,6 +106,10 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
     },
     getAuthorGroups (authorId) {
       return Array.from(cache.memberships[authorId] || [])
+    },
+    getGroupAuthors (groupId) {
+      return Object.keys(cache.memberships)
+        .filter(authorId => cache.memberships[authorId].has(groupId))
     },
 
     readPersisted (cb) {
@@ -243,6 +247,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       register: patient(group.register),
       get: group.get, // ------------------------------------ sync
       list: group.list, // ---------------------------------- sync
+      listAuthors: membership.getGroupAuthors, // ----------- sync
       registerAuthor: patient(membership.register),
       registerAuthors: patient(membership.registerMany),
       readPersisted: group.readPersisted
