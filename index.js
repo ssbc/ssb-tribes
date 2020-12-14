@@ -104,6 +104,15 @@ function init (ssb, config) {
           .filter(id => id !== ssb.id)
           .forEach(id => ssb.replicate.request({ id, replicate: true }))
       })
+
+      state.loading.keystore.once((s) => {
+        const peers = keystore.group.list()
+          .flatMap(groupId => keystore.group.listAuthors(groupId))
+          .filter(feedId => feedId !== ssb.id)
+
+        Array.from(new Set(peers))
+          .forEach(id => ssb.replicate.request({ id, replicate: true }))
+      })
     }
   })
 

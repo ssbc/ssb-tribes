@@ -1,9 +1,13 @@
 const test = require('tape')
 const { promisify: p } = require('util')
+const Keys = require('ssb-keys')
 const { Server, replicate } = require('./helpers')
 
 test.only('replicate group members', async t => {
-  const alice = Server({ installReplicate: true })
+  const aliceName = 'alice-' + Date.now()
+  const aliceKeys = Keys.generate()
+
+  let alice = Server({ name: aliceName, keys: aliceKeys, installReplicate: true })
   const bob = Server()
   const celId = '@f/6sQ6d2CMxRUhLpspgGIulDxDCwYD7DzFzPNr7u5AU=.ed25519'
   const ericId = '@FrhvDFmy9Taz8V94LgOBIOTUbyIaeluRlyFIceiYG4w=.ed25519'
@@ -12,6 +16,7 @@ test.only('replicate group members', async t => {
     if (id === bob.id) return 'bob'
     if (id === celId) return 'cel'
     if (id === ericId) return 'eric'
+    return id
   }
 
   const expected = [
@@ -19,6 +24,7 @@ test.only('replicate group members', async t => {
     'cel',
     'eric'
   ]
+  t.plan(expected.length + 2) // first time, then persisted (which collects results)
   let i = 0
 
   alice.replicate.request.hook((request, args) => {
@@ -29,10 +35,7 @@ test.only('replicate group members', async t => {
 
     request(...args)
 
-    if (i < expected.length) return
-    alice.close()
-    bob.close()
-    t.end()
+    if (i === expected.length) testPersistence()
   })
 
   const { groupId: aliceGroup } = await p(alice.tribes.create)({})
@@ -42,4 +45,29 @@ test.only('replicate group members', async t => {
   await p(bob.tribes.invite)(bobGroup, [alice.id, celId, ericId], {})
 
   replicate({ from: bob, to: alice, name })
+
+  function testPersistence () {
+    bob.close()
+
+    const requested = []
+    alice.close(err => {
+      t.error(err, 'restarting alice')
+      alice = Server({ name: aliceName, keys: aliceKeys, installReplicate: true, startUnclean: true })
+      alice.replicate.request.hook((request, args) => {
+        const n = name(args[0].id)
+        requested.push(n)
+        if (requested.length === expected.length) setTimeout(next, 500)
+        // setTimeout is rough way to call ready to compare results
+        // - we don't want to just run comparison if we have 3 results... what if there were 10!
+        // - leaves space for other requests to sneek in
+
+        request(...args)
+      })
+    })
+
+    function next () {
+      t.deepEqual(requested.sort(), expected.sort(), 'replication of peers in groups persisted')
+      alice.close()
+    }
+  }
 })
