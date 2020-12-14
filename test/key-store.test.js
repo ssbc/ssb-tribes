@@ -17,7 +17,7 @@ function FeedId () {
   return new _FeedId().mock().toSSB()
 }
 
-var i = 0
+let i = 0
 function TmpPath () {
   return `/tmp/key-store-${Date.now()}-${i++}`
 }

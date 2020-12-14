@@ -12,7 +12,7 @@ module.exports = function GroupApplicationGet (server) {
       fetchUpdates(applicationId, (err, updates) => {
         if (err) return cb(err)
 
-        var initialState = {
+        const initialState = {
           comments: [getComment(root)],
           addMember: []
         }

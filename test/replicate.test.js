@@ -3,7 +3,7 @@ const { promisify: p } = require('util')
 const Keys = require('ssb-keys')
 const { Server, replicate } = require('./helpers')
 
-test.only('replicate group members', async t => {
+test('replicate group members', async t => {
   const aliceName = 'alice-' + Date.now()
   const aliceKeys = Keys.generate()
 

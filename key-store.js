@@ -27,8 +27,8 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
   mkdirp.sync(path)
 
   /* state */
-  var isReady = !loadState
-  var cache = {
+  let isReady = !loadState
+  const cache = {
     groups: {}, // ------ maps groupId > group.info
     memberships: {}, // - maps authorId > Set([groupId])
     authors: {}, // ----- maps authorId > { key, scheme: SharedDMKey } for that author
@@ -297,7 +297,7 @@ function InfoEncoding () {
       })
     },
     decode (str) {
-      var info = JSON.parse(str)
+      const info = JSON.parse(str)
       if (info.key) info.key = toKeyBuffer(info.key)
 
       return info

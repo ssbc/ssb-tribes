@@ -39,7 +39,7 @@ module.exports = {
 }
 
 function init (ssb, config) {
-  var state = {
+  const state = {
     keys: ssb.keys,
 
     feedId: new FeedId(ssb.id).toTFK(),
@@ -106,11 +106,13 @@ function init (ssb, config) {
       })
 
       state.loading.keystore.once((s) => {
-        const peers = keystore.group.list()
-          .flatMap(groupId => keystore.group.listAuthors(groupId))
-          .filter(feedId => feedId !== ssb.id)
+        const peers = new Set()
+        keystore.group.list()
+          .map(groupId => keystore.group.listAuthors(groupId))
+          .forEach(authors => authors.forEach(author => peers.add(author)))
 
-        Array.from(new Set(peers))
+        peers.delete(ssb.id)
+        Array.from(peers)
           .forEach(id => ssb.replicate.request({ id, replicate: true }))
       })
     }

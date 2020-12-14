@@ -14,16 +14,16 @@ function createRecords (server, t, cb) {
   // it calls back with the groupId and the list of published messages
 
   /* state */
-  var published = [] // contents of messages we published
-  var lastMsgId
+  const published = [] // contents of messages we published
+  let lastMsgId
 
   server.tribes.create({}, (err, { groupId } = {}) => {
     t.error(err, 'creates group')
 
-    var recps = [groupId]
+    const recps = [groupId]
     // recps = null // passes all tests
 
-    var count = 0
+    let count = 0
     pull(
       pull.values([PROFILE, LINK, PROFILE, LINK]),
       // pull.values([PROFILE, LINK, PROFILE, LINK, PROFILE]), // ✓ checkIndex
@@ -74,7 +74,7 @@ function testSuite (indexName, createSource) {
 
   test(indexName, t => {
     const name = `${indexName}-be-good-${Date.now()}`
-    var server = Server({ name })
+    let server = Server({ name })
     const keys = server.keys
 
     createRecords(server, t, (_, { groupId, published }) => {
@@ -94,7 +94,7 @@ function testSuite (indexName, createSource) {
             }
             server.publish(anything, (err) => {
               t.error(err, 'publish anything')
-              var keys = server.keys
+              const keys = server.keys
               server.close(err => {
                 if (err) throw err
                 server = Server({ name, keys, startUnclean: true })

@@ -19,8 +19,8 @@ test('tribes.application.*', async t => {
     name: 'kaitiaki-test-' + Date.now(),
     keys: keys.generate()
   }
-  var kaitiaki = Server(kaitiakiOpts)
-  var stranger = Server(strangerOpts)
+  const kaitiaki = Server(kaitiakiOpts)
+  let stranger = Server(strangerOpts)
   const name = (id) => {
     switch (id) {
       case kaitiaki.id: return 'kaitiaki'

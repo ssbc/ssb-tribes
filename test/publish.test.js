@@ -111,7 +111,7 @@ test('publish (bulk)', t => {
   const server = Server()
 
   server.tribes.create(null, (_, { groupId }) => {
-    var count = 20
+    let count = 20
     const bulk = [...Array(count)]
       .map(() => ({ type: 'test', recps: [groupId] }))
 

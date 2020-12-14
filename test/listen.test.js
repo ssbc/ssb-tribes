@@ -7,11 +7,11 @@ test('listen.addMember', t => {
   const A = Server() // me
   const B = Server() // some friend
 
-  var messages = []
-  var root
-  var groupId
+  const messages = []
+  let root
+  let groupId
 
-  var heardCount = 0
+  let heardCount = 0
   // NOTE with auto-rebuild active, this listener gets hit twice:
   // 1. first time we see group/add-member (unboxed with DM key)
   // 2. after rebuild

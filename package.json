@@ -4,8 +4,7 @@
   "description": "a scuttlebutt (secret-stack) plugin which adds envelope encryption capabilities",
   "main": "index.js",
   "scripts": {
-    "test": "tape 'test/**/*.test.js'",
-    "test:pretty": "npm test | tap-spec",
+    "test": "tape 'test/**/*.test.js' | faucet",
     "lint": "standard --fix",
     "generate": "rm test/generate/*/* && node test/generate/index.js"
   },
@@ -35,13 +34,13 @@
     "ssb-tangle": "^2.1.0"
   },
   "devDependencies": {
+    "faucet": "0.0.1",
     "is-canonical-base64": "^1.1.1",
     "scuttle-testbot": "^1.4.0",
     "ssb-backlinks": "^2.1.1",
     "ssb-query": "^2.4.5",
     "ssb-replicate": "^1.3.2",
-    "standard": "^14.3.4",
-    "tap-spec": "^5.0.0",
+    "standard": "^16.0.3",
     "tape": "^4.13.3"
   },
   "keywords": [

@@ -71,7 +71,7 @@ test('rebuild (I am added to a group)', t => {
     }
   }
 
-  var groupId
+  let groupId
   replicate({ from: admin, to: alice, name })
   replicate({ from: admin, to: bob, name })
 
@@ -101,7 +101,7 @@ test('rebuild (I am added to a group)', t => {
     })
   })
 
-  var rebuildCount = 0
+  let rebuildCount = 0
   bob.rebuild.hook(function (rebuild, [cb]) {
     const _count = ++rebuildCount
 
@@ -165,7 +165,7 @@ test('rebuild (I am added to a group)', t => {
 test('rebuild (not called when I invite another member)', t => {
   const server = Server()
 
-  var rebuildCalled = false
+  let rebuildCalled = false
   server.rebuild.hook(function (rebuild, args) {
     rebuildCalled = true
 
