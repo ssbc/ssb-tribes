@@ -2,6 +2,7 @@ const { join } = require('path')
 const pull = require('pull-stream')
 const set = require('lodash.set')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
+const Obz = require('obz')
 
 const KeyStore = require('./key-store')
 const Envelope = require('./envelope')
@@ -44,7 +45,7 @@ function init (ssb, config) {
     feedId: new FeedId(ssb.id).toTFK(),
 
     loading: {
-      keystore: true
+      keystore: Obz()
     },
     newAuthorListeners: [],
 
@@ -53,7 +54,7 @@ function init (ssb, config) {
 
   /* secret keys store / helper */
   const keystore = KeyStore(join(config.path, 'tribes/keystore'), ssb.keys, () => {
-    state.loading.keystore = false
+    state.loading.keystore.set(false)
   })
   ssb.close.hook(function (fn, args) {
     state.closed = true
@@ -62,14 +63,14 @@ function init (ssb, config) {
 
   /* register the boxer / unboxer */
   const { boxer, unboxer } = Envelope(keystore, state)
-  ssb.addBoxer({ init: isKeystoreReady, value: boxer })
-  ssb.addUnboxer({ init: isKeystoreReady, ...unboxer })
+  ssb.addBoxer({ init: onKeystoreReady, value: boxer })
+  ssb.addUnboxer({ init: onKeystoreReady, ...unboxer })
 
-  function isKeystoreReady (done) {
+  function onKeystoreReady (done) {
     if (state.closed === true) return
-    if (state.loading.keystore === false) return done()
+    if (state.loading.keystore.value === false) return done()
 
-    setTimeout(() => isKeystoreReady(done), 500)
+    state.loading.keystore.once(done)
   }
 
   /* start listeners */
@@ -175,13 +176,13 @@ function init (ssb, config) {
       })
     },
     list (cb) {
-      isKeystoreReady(() => cb(null, keystore.group.list()))
+      onKeystoreReady(() => cb(null, keystore.group.list()))
     },
     get (id, cb) {
-      isKeystoreReady(() => cb(null, keystore.group.get(id)))
+      onKeystoreReady(() => cb(null, keystore.group.get(id)))
     },
     listAuthors (groupId, cb) {
-      isKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
+      onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
     },
     link: {
       create: scuttle.link.create
