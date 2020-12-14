@@ -97,6 +97,16 @@ function init (ssb, config) {
     })
   })
 
+  setImmediate(() => {
+    if (ssb.replicate) {
+      state.newAuthorListeners.push(({ newAuthors }) => {
+        newAuthors
+          .filter(id => id !== ssb.id)
+          .forEach(id => ssb.replicate.request({ id, replicate: true }))
+      })
+    }
+  })
+
   /* We care about group/add-member messages others have posted which:
    * 1. add us to a new group
    * 2. add other people to a group we're already in
