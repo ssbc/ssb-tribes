@@ -26,35 +26,64 @@ const ssb = stack(config)
 
 
 ```js
-const content = {
-  type: 'post',
-  test: 'kia ora, e te whānau',
-  recps: [ <GroupId>, <FeedId> ]
-}
+ssb.tribes.create({}, (err, info) => {
+  const { groupId } = info
 
-ssb.publish(content, (err, data) => {
-  // tada, encrypted
+  const content = {
+    type: 'post',
+    test: 'kia ora, e te whānau',
+    recps: [groupId] // <<< you can now put a groupId in the recps
+  }
+  ssb.publish(content, (err, msg) => {
+    // tada msg is encrypted to group!
+
+    const cookie = '@YXkE3TikkY4GFMX3lzXUllRkNTbj5E+604AkaO1xbz8=.ed25519'
+    const staltz = '@QlCTpvY7p9ty2yOFrv1WU1AE88aoQc4Y7wYal7PFc+w=.ed25519'
+
+    ssb.tribes.invite(groupId, [cookie, statlz], {}, (err, invite) => {
+      // two friends have been sent an invite which includes the decryption key for the group
+      // they can now read the message I just published, and publish their own messages to the group
+
+    })
+  })
 })
 ```
 
-Later, any of the following will result in a happiliy readable message (for you and those who share the `GroupKey`):
-- you use `server.get(msgKey, { private: true }, cb)`
-- you run any db query which might have matched that message
+## Behaviour
 
-**NOTE**:
+This plugin provides functions for creating groups and administering things about them, but it also provides a bunch of "automatic" behviour.
+
+1. **When you publish a message with `recps` it will auto-encrypt** the content when:
+    - there are 1-16 FeedIds (direct mesaaging)
+    - there is 1 GroupId (private group messaging)
+    - there is 1 GroupId followed by 1-15 FeedId
+        - NOTE this is currently only recommended for group invite messages as it's easy to leak group info
+2. **When you receive an encrypted message with suffix `.box2` it will attempt to auto-decrypt** the content:
+    - on success this value will then be accessible in all database queries/ indexes
+    - if it fails because it didn't have the key, the message gets passed to the next auto-decrypter to attempt
+    - if it fails because something is clearly horribly wrong in the encyprtion and it should have worked, it throws an error (check this)
+3. **When you receive an invite to a new group, you will auto-decrypt all messages**
+    - we re-index your whole database, which will reveal new messages you can decrypt
+        - in the future we will only re-index messages you previously could not decrypt
+    - keys for groups are stored in a off-chain key-store
+4. **If you've been given the readKey for a particular message, you can use that**
+    - e.g. `ssb.get({ id, private: true, key: readKey }, cb)`
+
+**NOTES**:
 - Work on this project was resourced by Āhau. The name "tribes" was suggested by that project, and the API mostly reflects that. Some internal variables also use "group", as this is following the  _private group spec_. You can read tribe/ group interchangeably.
 - Each tribe has a `<GroupId>` (a unique identifier) which can be mapped to that tribe's `<GroupKey>` (a shared encryption key). The `<GroupId>` is related to the initialisation message for the tribe, but is safe to share (leaks no info about who started the group). The reason we can't use the "public" part of the `<GroupKey>` as an id (like `<FeedId>`) is that there isn't a public part - it's a symmetric key!
 - `<FeedId>` is synonymous with the public key of a particular device (`@...sha256`). The private group spec details how we map this to a shared key between you (the author) and that recipient.
 
+
 ## Requirements
 
 A Secret-Stack server running the plugins:
-- `ssb-db`
+- `ssb-db` >= 20.3.0
 - `ssb-tribes`
-- `ssb-backlinks` - used for adding group tangle meta data to messages + loading applications
+- `ssb-backlinks` >= 2.1.1 - used for adding group tangle meta data to messages + loading applications
 
 - `ssb-replicate` - (optional) used to auto-replicate people who you're in groups with
-- `ssb-query` - (optional) used for listing applications
+- `ssb-query` >= 2.4.5 - (optional) used for listing applications
 
 ## API
 
@@ -63,7 +92,7 @@ A Secret-Stack server running the plugins:
 Mint a new private group.
 
 where:
-- `opts` *Object* (currently not used)
+- `opts` *Object* (currently no opts you can pass in but empty object still required)
 - `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
   - `groupId` *String* - a cipherlink that's safe to use publicly to name the group, and is used in `recps` to trigger enveloping messages to that group
   - `groupKey` *Buffer*  - the symmetric key used for encryption by the group
@@ -103,9 +132,9 @@ Returns a list of all known group IDs.
 
 Returns group metadata for a given group:
 
-- `key`
-- `root`
-- `scheme`
+- `key` - the decryption key for the group
+- `scheme` - the scheme the key is associated with (e.g. DM, group)
+- `root` - the initial message which started the group
 
 ### `ssb.tribes.listAuthors(groupId, cb)`
 
