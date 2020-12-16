@@ -2,6 +2,7 @@ const { join } = require('path')
 const pull = require('pull-stream')
 const set = require('lodash.set')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
+const Obz = require('obz')
 
 const KeyStore = require('./key-store')
 const Envelope = require('./envelope')
@@ -38,13 +39,13 @@ module.exports = {
 }
 
 function init (ssb, config) {
-  var state = {
+  const state = {
     keys: ssb.keys,
 
     feedId: new FeedId(ssb.id).toTFK(),
 
     loading: {
-      keystore: true
+      keystore: Obz()
     },
     newAuthorListeners: [],
 
@@ -53,7 +54,7 @@ function init (ssb, config) {
 
   /* secret keys store / helper */
   const keystore = KeyStore(join(config.path, 'tribes/keystore'), ssb.keys, () => {
-    state.loading.keystore = false
+    state.loading.keystore.set(false)
   })
   ssb.close.hook(function (fn, args) {
     state.closed = true
@@ -62,14 +63,14 @@ function init (ssb, config) {
 
   /* register the boxer / unboxer */
   const { boxer, unboxer } = Envelope(keystore, state)
-  ssb.addBoxer({ init: isKeystoreReady, value: boxer })
-  ssb.addUnboxer({ init: isKeystoreReady, ...unboxer })
+  ssb.addBoxer({ init: onKeystoreReady, value: boxer })
+  ssb.addUnboxer({ init: onKeystoreReady, ...unboxer })
 
-  function isKeystoreReady (done) {
+  function onKeystoreReady (done) {
     if (state.closed === true) return
-    if (state.loading.keystore === false) return done()
+    if (state.loading.keystore.value === false) return done()
 
-    setTimeout(() => isKeystoreReady(done), 500)
+    state.loading.keystore.once(done)
   }
 
   /* start listeners */
@@ -94,6 +95,27 @@ function init (ssb, config) {
         }
       })
     })
+  })
+
+  setImmediate(() => {
+    if (ssb.replicate) {
+      state.newAuthorListeners.push(({ newAuthors }) => {
+        newAuthors
+          .filter(id => id !== ssb.id)
+          .forEach(id => ssb.replicate.request({ id, replicate: true }))
+      })
+
+      state.loading.keystore.once((s) => {
+        const peers = new Set()
+        keystore.group.list()
+          .map(groupId => keystore.group.listAuthors(groupId))
+          .forEach(authors => authors.forEach(author => peers.add(author)))
+
+        peers.delete(ssb.id)
+        Array.from(peers)
+          .forEach(id => ssb.replicate.request({ id, replicate: true }))
+      })
+    }
   })
 
   /* We care about group/add-member messages others have posted which:
@@ -175,13 +197,13 @@ function init (ssb, config) {
       })
     },
     list (cb) {
-      isKeystoreReady(() => cb(null, keystore.group.list()))
+      onKeystoreReady(() => cb(null, keystore.group.list()))
     },
     get (id, cb) {
-      isKeystoreReady(() => cb(null, keystore.group.get(id)))
+      onKeystoreReady(() => cb(null, keystore.group.get(id)))
     },
     listAuthors (groupId, cb) {
-      isKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
+      onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
     },
     link: {
       create: scuttle.link.create

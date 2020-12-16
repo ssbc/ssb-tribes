@@ -59,9 +59,10 @@ module.exports = function GroupApplicationList (server) {
       // (optionally) filter applications by whether accepted
       (accepted !== undefined)
         ? pull.filter(i => {
-          if (accepted === true) return i.addMember && i.addMember.length
-          if (accepted === false) return !i.addMember || i.addMember.length === 0
-        })
+            if (accepted === true) return i.addMember && i.addMember.length
+            if (accepted === false) return !i.addMember || i.addMember.length === 0
+            throw new Error('accepted must be a Boolean')
+          })
         : null,
 
       pull.collect((err, data) => {

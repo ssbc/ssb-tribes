@@ -14,14 +14,14 @@ test('addNewAuthorListener', async t => {
     if (id === newPerson.id) return 'newPerson'
   }
 
-  var groupId
+  let groupId // eslint-disable-line
 
   admin.tribes.addNewAuthorListener(({ newAuthors, groupId: _groupId }) => {
     t.deepEqual(newAuthors.map(name), ['admin'], 'admin = returns expected newAuthors')
     setTimeout(() => t.equal(_groupId, groupId, 'admin = returns expected groupId'), 500)
   })
 
-  var groupData = await p(admin.tribes.create)({})
+  const groupData = await p(admin.tribes.create)({})
   groupId = groupData.groupId
   await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
 

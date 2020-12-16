@@ -1,16 +1,22 @@
 const Server = require('scuttle-testbot')
 
-module.exports = function TestBot (opts) {
+module.exports = function TestBot (opts = {}) {
   // opts = {
   //   name: String,
   //   startUnclean: Boolean,
   //   keys: SecretKeys
+  //
+  //   replicate: Boolean
   // }
 
-  const server = Server // eslint-disable-line
+  let stack = Server // eslint-disable-line
     .use(require('../..')) // ssb-tribes
     .use(require('ssb-backlinks'))
-    .use(require('ssb-query'))(opts)
+    .use(require('ssb-query'))
 
-  return server
+  if (opts.installReplicate === true) {
+    stack = stack.use(require('ssb-replicate'))
+  }
+
+  return stack(opts)
 }
