@@ -4,6 +4,14 @@ const Keys = require('ssb-keys')
 const { Server, replicate } = require('./helpers')
 
 test('replicate group members', async t => {
+
+  const expected = [
+    'bob',
+    'cel',
+    'eric'
+  ]
+  t.plan(expected.length + 2) // first time, then persisted (which collects results)
+
   const aliceName = 'alice-' + Date.now()
   const aliceKeys = Keys.generate()
 
@@ -19,12 +27,6 @@ test('replicate group members', async t => {
     return id
   }
 
-  const expected = [
-    'bob',
-    'cel',
-    'eric'
-  ]
-  t.plan(expected.length + 2) // first time, then persisted (which collects results)
   let i = 0
 
   alice.replicate.request.hook((request, args) => {

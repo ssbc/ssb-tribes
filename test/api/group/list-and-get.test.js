@@ -2,7 +2,8 @@ const test = require('tape')
 const { Server } = require('../../helpers')
 
 test('list + get groups', (t) => {
-  let server = Server({ name: 'list' })
+  const name = `list-and-get-groups-${Date.now()}`
+  let server = Server({ name: name })
   const keys = server.keys
 
   server.tribes.create(null, (err, data) => {
@@ -25,7 +26,7 @@ test('list + get groups', (t) => {
         server.close(err => {
           t.error(err, 'closes server')
 
-          server = Server({ name: 'list', startUnclean: true, keys })
+          server = Server({ name: name, startUnclean: true, keys })
           server.tribes.list((err, newList) => {
             if (err) throw err
 

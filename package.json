@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "tape 'test/**/*.test.js' | faucet",
+    "test:windows": "tape test/**/*.test.js | faucet",
     "lint": "standard --fix",
     "generate": "rm test/generate/*/* && node test/generate/index.js"
   },
