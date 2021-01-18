@@ -1,5 +1,58 @@
 const test = require('tape')
 const { Server } = require('../helpers')
+const GetGroupTangle = require('../../lib/get-group-tangle')
+
+test('get-group-tangle unit test', t => {
+  const name = `get-group-tangle-${Date.now()}`
+  const server = Server({ name: name })
+
+  //    - creating a group and publishing messages (ssb-tribes)
+  server.tribes.create({}, (err, data) => {
+    if (err) throw err
+    const keystore = {
+      group: {
+        get (groupId) {
+          return { ...data, root: data.groupInitMsg.key } // rootMsgId
+        }
+      }
+    }
+    const getGroupTangle = GetGroupTangle(server, keystore)
+    // NOTE: Tribes create callsback with different data than keystore.group.get :(
+    // Somebody should probably fix that
+
+    getGroupTangle(data.groupId, (err, { root, previous }) => {
+      if (err) throw err
+      const rootKey = data.groupInitMsg.key
+      t.deepEqual({ root, previous }, { root: rootKey, previous: [rootKey] }, 'root should be tip')
+    })
+
+    //  publishing to the group:
+    const content = {
+      type: 'memo',
+      root: data.groupId,
+      message: 'unneccessary',
+      recps: [data.groupId]
+    }
+
+    server.publish(content, (err, msg) => {
+      if (err) throw err
+      getGroupTangle(data.groupId, (err, { root, previous }) => {
+        if (err) throw err
+        t.deepEqual({ root, previous }, { root: data.groupInitMsg.key, previous: [msg.key] }, 'adding message to root')
+      })
+
+      server.publish(content, (err, msg) => {
+        if (err) throw err
+        getGroupTangle(data.groupId, (err, { root, previous }) => {
+          if (err) throw err
+          t.deepEqual({ root, previous }, { root: data.groupInitMsg.key, previous: [msg.key] }, 'adding message to tip')
+          server.close()
+          t.end()
+        })
+      })
+    })
+  })
+})
 
 test('get-group-tangle', t => {
   const tests = [
@@ -23,13 +76,14 @@ test('get-group-tangle', t => {
 
           ssb.publish(content, (err, msg) => {
             t.error(err, 'publish a message')
+            console.log('Message in test: ', msg)
 
             ssb.get({ id: msg.key, private: true }, (err, A) => {
               t.error(err, 'get that message back')
 
               t.deepEqual(
-                A.content.tangles.group,
-                { root: groupRoot, previous: [groupRoot] },
+                A.content.tangles.group, // actual
+                { root: groupRoot, previous: [groupRoot] }, // expected
                 DESCRIPTION + ' (auto added tangles.group)'
               )
 

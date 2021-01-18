@@ -17,7 +17,7 @@ module.exports = function GroupInvite (ssb, keystore, state) {
         },
 
         group: { root, previous: [root] }
-        // this is a dummy entry which is over-written in publish hook
+        // NOTE: this is a dummy entry which is over-written in publish hook
         // it's needed to pass isValid
       },
       recps: [groupId, ...authorIds]

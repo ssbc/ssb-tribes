@@ -132,6 +132,7 @@ function init (ssb, config) {
   const getGroupTangle = GetGroupTangle(ssb, keystore)
   ssb.publish.hook(function (fn, args) {
     const [content, cb] = args
+    console.log(content)
     if (!content.recps) return fn.apply(this, args)
     if (!isGroup(content.recps[0])) return fn.apply(this, args)
 

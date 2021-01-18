@@ -4,7 +4,6 @@ const Keys = require('ssb-keys')
 const { Server, replicate } = require('./helpers')
 
 test('replicate group members', async t => {
-
   const expected = [
     'bob',
     'cel',

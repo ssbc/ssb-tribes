@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "tape 'test/**/*.test.js' | faucet",
-    "test:windows": "tape test/**/*.test.js | faucet",
+    "test:windows": "tape test/**/*.test.js",
     "lint": "standard --fix",
     "generate": "rm test/generate/*/* && node test/generate/index.js"
   },
@@ -29,15 +29,16 @@
     "pull-paramap": "^1.2.2",
     "pull-stream": "^3.6.14",
     "sodium-native": "^3.2.0",
-    "ssb-keys": "^8.0.0",
-    "ssb-ref": "^2.14.0",
-    "ssb-schema-definitions": "^3.1.0",
-    "ssb-tangle": "^2.1.0"
+    "ssb-keys": "^8.0.1",
+    "ssb-ref": "^2.14.3",
+    "ssb-schema-definitions": "^3.1.0"
   },
   "devDependencies": {
+    "@tangle/reduce": "^2.0.0",
+    "@tangle/strategy": "^1.4.1",
     "faucet": "0.0.1",
     "is-canonical-base64": "^1.1.1",
-    "scuttle-testbot": "^1.4.0",
+    "scuttle-testbot": "^1.5.2",
     "ssb-backlinks": "^2.1.1",
     "ssb-query": "^2.4.5",
     "ssb-replicate": "^1.3.2",

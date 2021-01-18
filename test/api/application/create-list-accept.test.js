@@ -137,3 +137,9 @@ test('tribes.application.*', async t => {
     finish(err)
   }
 })
+
+// function wait (time) {
+//   return new Promise((resolve, reject) => {
+//     setTimeout(() => resolve(), time)
+//   })
+// }
