@@ -35,9 +35,8 @@ test('tribes.application.*', async t => {
     t.error(err, 'saw no errors')
     t.end()
   }
-
-  replicate({ from: stranger, to: kaitiaki, name })
-  replicate({ from: kaitiaki, to: stranger, name })
+  replicate({ from: stranger, to: kaitiaki, name, live: true })
+  replicate({ from: kaitiaki, to: stranger, name, live: true })
 
   try {
     /* Kaitiaki creates many tribes */
@@ -88,7 +87,8 @@ test('tribes.application.*', async t => {
     await p(stranger.close)()
     stranger = Server({ ...strangerOpts, startUnclean: true })
     // have to restart replication after closing server
-    replicate({ from: kaitiaki, to: stranger, name })
+
+    replicate({ from: kaitiaki, to: stranger, name, live: true })
 
     /* Stranger checks list of applications */
     const listData3 = await p(stranger.tribes.application.list)({})
@@ -138,8 +138,8 @@ test('tribes.application.*', async t => {
   }
 })
 
-// function wait (time) {
-//   return new Promise((resolve, reject) => {
-//     setTimeout(() => resolve(), time)
-//   })
-// }
+function wait(time) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => resolve(), time)
+  })
+}

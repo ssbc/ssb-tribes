@@ -22,7 +22,7 @@ test('rebuild (I am added to a group)', t => {
     }
   }
 
-  replicate({ from: admin, to: me, name })
+  replicate({ from: admin, to: me, name, live: true })
 
   me.rebuild.hook(function (rebuild, [cb]) {
     t.pass('I automatically call a rebuild')
@@ -72,8 +72,8 @@ test('rebuild (I am added to a group)', t => {
   }
 
   let groupId
-  replicate({ from: admin, to: alice, name })
-  replicate({ from: admin, to: bob, name })
+  replicate({ from: admin, to: alice, name, live: true })
+  replicate({ from: admin, to: bob, name, live: true })
 
   alice.rebuild.hook(function (rebuild, [cb]) {
     rebuild(() => {

@@ -36,14 +36,8 @@ function addMember (ssb, emit) {
     ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
     pull.filter(m => m.sync !== true),
     pull.filter(m => m.value.author !== ssb.id),
-    pull.through(m => {
-      console.log(m.value.content)
-      console.log(isValid(m))
-      console.log(isValid.error)
-    }),
     pull.filter(isValid),
     pull.drain(m => {
-      console.log('gotcha!', m)
       messages.push(m)
     })
   )

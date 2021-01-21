@@ -4,6 +4,9 @@ const Keys = require('ssb-keys')
 const { Server, replicate } = require('./helpers')
 
 test('replicate group members', async t => {
+  // this checks that if a person is in your group then you will be replicating them
+  // required to make sure you have all content
+
   const expected = [
     'bob',
     'cel',

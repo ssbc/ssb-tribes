@@ -132,7 +132,6 @@ function init (ssb, config) {
   const getGroupTangle = GetGroupTangle(ssb, keystore)
   ssb.publish.hook(function (fn, args) {
     const [content, cb] = args
-    console.log(content)
     if (!content.recps) return fn.apply(this, args)
     if (!isGroup(content.recps[0])) return fn.apply(this, args)
 
@@ -201,7 +200,12 @@ function init (ssb, config) {
       onKeystoreReady(() => cb(null, keystore.group.list()))
     },
     get (id, cb) {
-      onKeystoreReady(() => cb(null, keystore.group.get(id)))
+      onKeystoreReady(() => {
+        const data = keystore.group.get(id)
+        if (!data) return cb(new Error(`unknown groupId ${id})`))
+
+        cb(null, data)
+      })
     },
     listAuthors (groupId, cb) {
       onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
