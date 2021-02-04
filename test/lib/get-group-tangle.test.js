@@ -1,6 +1,7 @@
 const test = require('tape')
 const { Server, replicate } = require('../helpers')
 const pull = require('pull-stream')
+const pullParamap = require('pull-paramap')
 const GetGroupTangle = require('../../lib/get-group-tangle')
 
 test('get-group-tangle unit test', t => {
@@ -261,3 +262,47 @@ test('get-group-tangle with branch', t => {
     })
   }
 })
+
+// test('get-group-tangle (bench)', t => {
+//   const server = Server()
+//   const n = 2000
+//   const inputs = new Array(n).fill(0)
+//   let count = 0
+//   const times = []
+
+//   const start = Date.now()
+
+//   server.tribes.create({}, (err, info) => {
+//     const { groupId } = info
+
+//     const content = () => ({
+//       type: 'thing',
+//       body: 'the quick brown fox jumped over the lazy dog. the quick brown fox jumped over the lazy dog.',
+//       recps: [groupId]
+//     })
+
+//     pull(
+//       pull.values(inputs),
+//       pullParamap((_, cb) => {
+//         server.publish(content(), cb)
+//       }, 10),
+//       pull.drain(
+//         m => {
+//           count++
+//           if (count % 100 === 0) {
+//             const diff = Date.now() - start
+//             console.log('*', count, diff - times[times.length - 1])
+//             times.push(diff)
+//           }
+//         },
+//         (err) => {
+//           if (err) throw err
+
+//           console.log(times)
+//           server.close()
+//           t.end()
+//         }
+//       )
+//     )
+//   })
+// })
