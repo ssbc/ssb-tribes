@@ -2,12 +2,11 @@ const Init = require('./group/init')
 const AddMember = require('./group/add-member')
 const CreateLink = require('./link/create')
 const FindByGroupByFeedId = require('./link/find-group-by-feedid')
-const CreateGroupApplication = require('./application/create')
-const GetGroupApplication = require('./application/get')
-const ListGroupApplication = require('./application/list')
-const AcceptGroupApplication = require('./application/accept')
+const Application = require('./application')
 
 module.exports = function Method (ssb, keystore, state) {
+  const application = Application(ssb)
+
   return {
     group: {
       init: patient(Init(ssb, keystore, state)),
@@ -19,10 +18,13 @@ module.exports = function Method (ssb, keystore, state) {
     },
     // TODO - rm patient from these?
     application: {
-      create: patient(CreateGroupApplication(ssb)),
-      get: patient(GetGroupApplication(ssb)),
-      list: patient(ListGroupApplication(ssb)),
-      accept: patient(AcceptGroupApplication(ssb))
+      create: patient(application.create),
+      read: patient(application.read), // note get not read
+      update: patient(application.update),
+      comment: patient(application.comment),
+      accept: patient(application.accept),
+      reject: patient(application.reject),
+      list: patient(application.list)
     }
   }
 
