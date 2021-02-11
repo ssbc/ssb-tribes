@@ -32,12 +32,12 @@ test('tribes.application.update', async t => {
   )
 
   /* alice cannot approve */
-  const descision = { approved: true }
+  const decision = { approved: true }
   let res
   try {
-    res = await p(alice.tribes.application.update)(id, { descision })
+    res = await p(alice.tribes.application.update)(id, { decision })
   } catch (err) {
-    t.match(err.message, /Invalid update message/, 'applicant cannot publish descision')
+    t.match(err.message, /Invalid update message/, 'applicant cannot publish decision')
   }
   if (res) t.fail('alice should not be allowed to decide!')
 
@@ -45,9 +45,9 @@ test('tribes.application.update', async t => {
 
   await p(replicate)({ from: alice, to: kaitiaki })
 
-  res = await p(kaitiaki.tribes.application.update)(id, { descision })
+  res = await p(kaitiaki.tribes.application.update)(id, { decision })
 
-  t.true(res, 'kaitiaki can publish descision')
+  t.true(res, 'kaitiaki can publish decision')
 
   alice.close()
   kaitiaki.close()

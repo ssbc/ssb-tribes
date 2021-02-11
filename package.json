@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@tangle/linear-append": "^1.0.0",
-    "@tangle/overwrite": "^2.0.0",
+    "@tangle/overwrite": "^2.0.1",
     "@tangle/reduce": "^3.0.1",
     "@tangle/strategy": "^2.0.1",
     "charwise": "^3.0.1",

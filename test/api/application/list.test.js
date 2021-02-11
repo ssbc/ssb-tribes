@@ -10,7 +10,7 @@ const text1 = 'Hello, can I join?'
 const text2 = 'Welcome!'
 const text3 = 'Welcome for a second time!'
 
-test('tribes.application.*', async t => {
+test('tribes.application.list', async t => {
   const strangerOpts = {
     name: 'stranger-test-' + Date.now(),
     keys: keys.generate()
@@ -58,21 +58,17 @@ test('tribes.application.*', async t => {
     const admins = [kaitiaki.id]
     const createApplication = p(stranger.tribes.application.create)
     const applications = await Promise.all([
-      createApplication(groupId, admins, { text: text1 }),
-      createApplication(groupId2, admins, { text: text1 }),
-      createApplication(groupId3, admins, { text: text1 })
+      createApplication(groupId, admins, { comment: text1 }),
+      createApplication(groupId2, admins, { comment: text1 }),
+      createApplication(groupId3, admins, { comment: text1 })
     ])
 
     t.true(
-      applications.every(a => isMsg(a.id)),
+      applications.every(a => isMsg(a)),
       'stranger makes some applications'
     )
-    let [application] = applications
-    t.deepEqual(
-      application.comments[0],
-      { authorId: stranger.id, text: text1 },
-      'application has initial comment'
-    )
+    let application = await p(stranger.tribes.application.read)(applications[0])
+
     /* Kaitiaki lists applications for a tribe */
     const listData = await p(kaitiaki.tribes.application.list)({
       groupId,
@@ -95,22 +91,23 @@ test('tribes.application.*', async t => {
     t.deepEqual(listData2, listData3, 'stranger list same after restart')
 
     /* Kaitiaki accepts the application */
-    const acceptData = await p(kaitiaki.tribes.application.accept)(
+
+    await p(kaitiaki.tribes.application.accept)(
       listData[0].id,
-      { text: text2 }
+      { applicationComment: text2 }
     )
-    t.true(isMsg(acceptData.addMember[0]), 'group/add-member message sent')
 
     /* Stranger checks the current application state */
-    const getData = await p(stranger.tribes.application.get)(application.id)
+    const getData = await p(stranger.tribes.application.read)(application.id)
 
     t.deepEqual(
-      getData.comments[1],
-      { authorId: kaitiaki.id, text: text2 },
+      getData.history[1].body,
+      text2,
       'stranger can see comment from kaitiaki'
     )
-    t.equal(getData.addMember.length, 1, 'stranger can see group/add-member')
+    t.true(isMsg(getData.history[2].body.addMember), 'stranger can see group/add-member')
 
+    await wait(500)
     /* User can now publish to group */
     const published = await p(stranger.publish)({ type: 'hooray', recps: [groupId] })
     t.true(published, 'stranger can now publish to group')
@@ -118,19 +115,23 @@ test('tribes.application.*', async t => {
     /* Duplicate acceptance */
     await p(kaitiaki.tribes.application.accept)(
       listData[0].id,
-      { text: text3 }
+      { applicationComment: text3 }
     )
 
-    application = await p(stranger.tribes.application.get)(application.id)
+    application = await p(stranger.tribes.application.read)(application.id)
     t.deepEqual(
-      application.comments,
+      application.history.map(h => ({ author: h.author, body: h.body })),
       [
-        { authorId: stranger.id, text: text1 },
-        { authorId: kaitiaki.id, text: text2 },
-        { authorId: kaitiaki.id, text: text3 }
+        { author: stranger.id, body: text1 },
+        { author: kaitiaki.id, body: text2 },
+        { author: kaitiaki.id, body: {} }, // WIP
+        { author: kaitiaki.id, body: text3 },
+        { author: kaitiaki.id, body: {} } // WIP
       ],
       'stranger sees all comments'
     )
+    // This is really just testing READ, can delete
+    // but it does test duplicate accept
 
     finish()
   } catch (err) {
@@ -138,7 +139,7 @@ test('tribes.application.*', async t => {
   }
 })
 
-function wait(time) {
+function wait (time) {
   return new Promise((resolve, reject) => {
     setTimeout(() => resolve(), time)
   })

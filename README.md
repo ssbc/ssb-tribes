@@ -232,7 +232,7 @@ where:
 
 ### `ssb.tribes.application.get(applicationId, cb)`
 
-Returns the current state of a tribe application. Ex.:
+Returns the current state of a tribe application. e.g.
 
 ```
 {
@@ -243,23 +243,51 @@ Returns the current state of a tribe application. Ex.:
     '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
     '@qYeVniXyC0/D9GIlGMAiIKg5jGgJTY7ZEgeikRWIJ/Y=.ed25519',
   ],
-  comments: [
-    { 
-      authorId: '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519'
-      text: 'Hello, can I join?'
-    },
+  answers: [
     {
-      authorId: '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
-      text: 'Welcome!'
+      q: 'where are you from?',
+      a: 'I was born in Hawkes Bay'
     }
   ],
-  addMember: [ '%JT31YmU0kuWg82UeZWy6YtAMbEcGouXVLU9JtO0MgcY=.sha256' ]
+  deciscion: {
+    approved: true,
+    addMember: '%pfplpzTU/YYkN56yge1CXVDe5AoPVf83CoHYBnBG9wE=.sha256'
+    // link to message which added them to group
+  },
+  history: [
+    {
+      type: 'answers',
+      author: '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519', // applicationId
+      timestamp: 1613003009958,
+      body: [
+        {
+          q: 'where are you from?',
+          a: 'I was born in Hawkes Bay'
+        }
+      ]
+    },
+    {
+      type: 'comment',
+      author: kaitiaki.id,
+      timestamp: 1613003010973,
+      body: 'WELCOME!'
+    },
+    {
+      type: 'decision',
+      author: '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519', // groupAdmins[0]
+      timestamp: 1613003010973,
+      body: {
+       approved: true
+       addMember: '%pfplpzTU/YYkN56yge1CXVDe5AoPVf83CoHYBnBG9wE=.sha256'
+      }
+    }
+  ]
 }
 ```
 
 NOTE:
 - `groupAdmins` are the people the applicant have sent their application to
-- `addMember` is a list of any `group/add-member` messages which have been published so a person can easily confirm they were added (and have the group key)
+- if two decisions are concurrently posted by two different admins, the `decision` field shows the one with most recent timestamp. However the `history` will contain the full history of actions
 
 ### `ssb.tribes.application.list(cb)`
 
