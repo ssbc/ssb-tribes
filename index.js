@@ -31,7 +31,7 @@ module.exports = {
 
     application: {
       create: 'async ',
-      read: 'async',
+      get: 'async',
       comment: 'async',
       accept: 'async',
       reject: 'async',

@@ -67,7 +67,7 @@ test('tribes.application.list', async t => {
       applications.every(a => isMsg(a)),
       'stranger makes some applications'
     )
-    let application = await p(stranger.tribes.application.read)(applications[0])
+    let application = await p(stranger.tribes.application.get)(applications[0])
 
     /* Kaitiaki lists applications for a tribe */
     let listData = await p(kaitiaki.tribes.application.list)({
@@ -98,7 +98,7 @@ test('tribes.application.list', async t => {
     )
 
     /* Stranger checks the current application state */
-    const getData = await p(stranger.tribes.application.read)(application.id)
+    const getData = await p(stranger.tribes.application.get)(application.id)
 
     t.deepEqual(
       getData.history[1].body,
@@ -118,7 +118,7 @@ test('tribes.application.list', async t => {
       { applicationComment: text3 }
     )
 
-    application = await p(stranger.tribes.application.read)(application.id)
+    application = await p(stranger.tribes.application.get)(application.id)
     t.deepEqual(
       application.history.map(h => {
         const _h = { author: h.author, body: h.body }
@@ -138,6 +138,9 @@ test('tribes.application.list', async t => {
     // This is really just testing READ, can delete
     // but it does test duplicate accept
 
+    await p(kaitiaki.tribes.application.reject)(applications[0], {}) // already approved! rejection should do nothing
+    await p(kaitiaki.tribes.application.reject)(applications[1], {})
+
     listData = await p(kaitiaki.tribes.application.list)({
       accepted: true // accepted
     })
@@ -146,12 +149,12 @@ test('tribes.application.list', async t => {
     listData = await p(kaitiaki.tribes.application.list)({
       accepted: false // rejected
     })
-    t.equal(listData.length, 0, 'kaitiaki sees no rejected applications')
+    t.equal(listData.length, 1, 'kaitiaki sees 1 rejected applications')
 
     listData = await p(kaitiaki.tribes.application.list)({
       accepted: null // unresponded
     })
-    t.equal(listData.length, 2, 'kaitiaki sees 4 applications with no decision')
+    t.equal(listData.length, 1, 'kaitiaki sees 1 applications with no decision')
 
     finish()
   } catch (err) {

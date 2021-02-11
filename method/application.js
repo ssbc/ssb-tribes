@@ -25,9 +25,19 @@ module.exports = function Application (ssb) {
         recps: [...adminIds, ssb.id]
       }, cb)
     },
-    read (applicationId, cb) {
+    get (applicationId, cb) {
       crut.read(applicationId, (err, application) => {
         if (err) return cb(err)
+
+        // find the latest accept/ reject decisions
+        const decisions = application.states[0].history.reduce((acc, h) => {
+          if (h.type !== 'decision') return acc
+
+          if (h.body.accepted) acc.accept = h.body
+          else acc.reject = h.body
+
+          return acc
+        }, { accept: null, reject: null })
 
         cb(null, {
           id: applicationId,
@@ -36,8 +46,7 @@ module.exports = function Application (ssb) {
           groupAdmins: application.recps.filter(a => a !== application.originalAuthor),
 
           answers: application.states[0].answers,
-          decision: application.states[0].decision,
-
+          decision: decisions.accept || decisions.reject || null, // accept > reject > nothng
           history: application.states[0].history
         })
       })
@@ -56,7 +65,7 @@ module.exports = function Application (ssb) {
         groupIntro = ''
       } = opts
 
-      ssb.tribes.application.read(applicationId, (err, application) => {
+      ssb.tribes.application.get(applicationId, (err, application) => {
         if (err) return cb(err)
 
         const { groupId, applicantId } = application
@@ -93,8 +102,8 @@ module.exports = function Application (ssb) {
 }
 
 function groupApplicationList (server, opts, cb) {
-  if (opts.get === true) opts.get = server.tribes.application.read
-  if (opts.accepted !== undefined && !opts.get) opts.get = server.tribes.application.read
+  if (opts.get === true) opts.get = server.tribes.application.get
+  if (opts.accepted !== undefined && !opts.get) opts.get = server.tribes.application.get
 
   const optsError = findOptsError(opts)
   if (optsError) return cb(optsError)
@@ -133,7 +142,7 @@ function groupApplicationList (server, opts, cb) {
     // (optionally) filter applications by whether accepted
     (accepted !== undefined)
       ? pull.filter(a => {
-          if (accepted === null) return a.decision === null
+          if (accepted === null) return a.decision === null // no response
           return a.decision && a.decision.accepted === accepted // boolean
         })
       : null,

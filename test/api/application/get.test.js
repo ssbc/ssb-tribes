@@ -2,7 +2,7 @@ const test = require('tape')
 const { promisify: p } = require('util')
 const { Server, GroupId, replicate } = require('../../helpers')
 
-test('tribes.application.read', async t => {
+test('tribes.application.get', async t => {
   const alice = Server()
   const kaitiaki = Server()
 
@@ -30,7 +30,7 @@ test('tribes.application.read', async t => {
 
   await p(replicate)({ from: kaitiaki, to: alice })
 
-  const application = await p(alice.tribes.application.read)(id)
+  const application = await p(alice.tribes.application.get)(id)
 
   const expected = {
     id,
@@ -81,7 +81,7 @@ test('tribes.application.read', async t => {
     ]
   }
 
-  t.deepEqual(application, expected, 'reads application')
+  t.deepEqual(application, expected, 'gets application')
 
   alice.close()
   kaitiaki.close()

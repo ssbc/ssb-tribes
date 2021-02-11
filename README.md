@@ -154,7 +154,7 @@ These endpoints give you access to additional features, such as:
     - `ssb.tribes.findByFeedId(feedId, cb)`
 - **managing people applying to join to a group**
     - `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
-    - `ssb.tribes.application.read(applicationId, cb)`
+    - `ssb.tribes.application.get(applicationId, cb)`
     - `ssb.tribes.application.comment(applicationId, comment, cb)`
     - `ssb.tribes.application.accept(applicationId, opts, cb)`
     - `ssb.tribes.application.reject(applicationId, opts, cb)`
@@ -247,7 +247,7 @@ where:
 - `opts` *Object*:
   - `reason` *String*: a message to be viewed in the application thread along with the rejection
 
-### `ssb.tribes.application.read(applicationId, cb)`
+### `ssb.tribes.application.get(applicationId, cb)`
 
 Returns the current state of a tribe application. e.g.
 
@@ -304,7 +304,9 @@ Returns the current state of a tribe application. e.g.
 
 NOTE:
 - `groupAdmins` are the people the applicant have sent their application to
-- if two decisions are concurrently posted by two different admins, the `decision` field shows the one with most recent timestamp. However the `history` will contain the full history of actions
+- if two decisions are concurrently posted by two different admins, the `decision` field shows:
+  - the latest acceptance decision
+  - OR if there's been no acceptance the latest rejection (by authored timestamp)
 
 ### `ssb.tribes.application.list(cb)`
 

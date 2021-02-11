@@ -19,7 +19,7 @@ module.exports = function Method (ssb, keystore, state) {
     // TODO - rm patient from these?
     application: {
       create: patient(application.create),
-      read: patient(application.read), // note get not read
+      get: patient(application.get), // note get not read
       update: patient(application.update),
       comment: patient(application.comment),
       accept: patient(application.accept),
