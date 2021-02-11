@@ -120,13 +120,18 @@ test('tribes.application.list', async t => {
 
     application = await p(stranger.tribes.application.read)(application.id)
     t.deepEqual(
-      application.history.map(h => ({ author: h.author, body: h.body })),
+      application.history.map(h => {
+        const _h = { author: h.author, body: h.body }
+        delete h.body.addMember
+        // just prune these links off as too hard / not relevant (and tested in accept)
+        return _h
+      }),
       [
         { author: stranger.id, body: text1 },
         { author: kaitiaki.id, body: text2 },
-        { author: kaitiaki.id, body: {} }, // WIP
+        { author: kaitiaki.id, body: { approved: true } },
         { author: kaitiaki.id, body: text3 },
-        { author: kaitiaki.id, body: {} } // WIP
+        { author: kaitiaki.id, body: { approved: true } }
       ],
       'stranger sees all comments'
     )

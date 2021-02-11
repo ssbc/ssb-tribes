@@ -76,88 +76,71 @@ module.exports = function Application (ssb) {
         })
       })
     },
-    reject (applicationId, reason = '', cb) {
+    reject (applicationId, opts = {}, cb) {
       const input = {
         decision: { approved: false }
       }
-      if (reason && reason.length) input.comment = reason
+      if (opts.reason && opts.reason.length) input.comment = opts.reason
       crut.update(applicationId, input, cb)
     },
 
     list (opts, cb) {
-      GroupApplicationList(ssb)(opts, cb)
+      if (typeof opts === 'function') return groupApplicationList(ssb, {}, opts)
+
+      groupApplicationList(ssb, opts, cb)
     }
   }
 }
 
-function GroupApplicationList (server) {
-  return function groupApplicationList (opts, cb) {
-    if (typeof opts === 'function') return groupApplicationList({}, cb)
+function groupApplicationList (server, opts, cb) {
+  if (opts.get === true) opts.get = server.tribes.application.read
+  const optsError = findOptsError(opts)
+  if (optsError) return cb(optsError)
 
-    if (opts.get === true) opts.get = server.tribes.application.read
-    const optsError = findOptsError(opts)
-    if (optsError) return cb(optsError)
-
-    const { groupId, get, accepted } = opts
-    const queryGroupId = [
-      {
-        $filter: {
-          value: {
-            content: {
-              type: 'group/application',
-              groupId,
-              tangles: {
-                application: {
-                  root: null
-                }
+  const { groupId, get, accepted } = opts
+  const query = [
+    {
+      $filter: {
+        value: {
+          content: {
+            type: 'group/application',
+            tangles: {
+              application: {
+                root: null
               }
             }
           }
         }
       }
-    ]
-    const queryAll = [
-      {
-        $filter: {
-          value: {
-            content: {
-              type: 'group/application',
-              tangles: {
-                application: {
-                  root: null
-                }
-              }
-            }
-          }
-        }
-      }
-    ]
+    }
+  ]
 
-    const query = groupId ? queryGroupId : queryAll
+  pull(
+    server.query.read({ query }),
+    (groupId)
+      ? pull.filter(m => m.value.content.groupId === groupId)
+      : null,
 
-    pull(
-      server.query.read({ query }),
-      pull.map(i => i.key),
+    pull.map(m => m.key),
 
-      // (optionally) convert applicationIds into application records
-      (get !== undefined)
-        ? paraMap(get, 4) // 4 = width of parallel querying
-        : null,
+    // (optionally) convert applicationIds into application records
+    (get !== undefined)
+      ? paraMap(get, 4) // 4 = width of parallel querying
+      : null,
 
-      // (optionally) filter applications by whether accepted
-      (accepted !== undefined)
-        ? pull.filter(i => {
-            if (accepted === true) return i.addMember && i.addMember.length
-            if (accepted === false) return !i.addMember || i.addMember.length === 0
-            throw new Error('accepted must be a Boolean')
-          })
-        : null,
+    // (optionally) filter applications by whether accepted
+    (accepted !== undefined)
+      ? pull.filter(i => {
+          if (accepted === true) return i.addMember && i.addMember.length
+          if (accepted === false) return !i.addMember || i.addMember.length === 0
+          throw new Error('accepted must be a Boolean')
+        })
+      : null,
 
-      pull.collect((err, data) => {
-        cb(err, data)
-      })
-    )
-  }
+    pull.collect((err, data) => {
+      cb(err, data)
+    })
+  )
 }
 
 function findOptsError ({ groupId, get, accepted }) {

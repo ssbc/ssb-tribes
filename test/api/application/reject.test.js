@@ -16,7 +16,7 @@ test('tribes.application.reject', async t => {
   await p(replicate)({ from: alice, to: kaitiaki })
 
   const reason = 'hey this group is no longer accepting new people'
-  const rejectId = await p(kaitiaki.tribes.application.reject)(id, reason)
+  const rejectId = await p(kaitiaki.tribes.application.reject)(id, { reason })
 
   const val = await p(kaitiaki.get)({ id: rejectId, private: true })
   t.deepEqual(

@@ -154,9 +154,11 @@ These endpoints give you access to additional features, such as:
     - `ssb.tribes.findByFeedId(feedId, cb)`
 - **managing people applying to join to a group**
     - `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
-    - `ssb.tribes.application.get(applicationId, cb)`
-    - `ssb.tribes.application.list(cb)`
+    - `ssb.tribes.application.read(applicationId, cb)`
+    - `ssb.tribes.application.comment(applicationId, comment, cb)`
     - `ssb.tribes.application.accept(applicationId, opts, cb)`
+    - `ssb.tribes.application.reject(applicationId, opts, cb)`
+    - `ssb.tribes.application.list(cb)`
 
 ### `ssb.tribes.register(groupId, info, cb)`
 
@@ -230,7 +232,22 @@ where:
 - `opts` *Object*:
   - `text` *String*: A text to be viewed by the Kaitiakis of a group
 
-### `ssb.tribes.application.get(applicationId, cb)`
+### `ssb.tribes.application.accept(applicationId, opts, cb)`
+
+This runs `ssb.tribes.invite` to invite the person to the group, then publishes an update to the application linking to that message.
+
+where:
+- `opts` *Object*:
+  - `applicationComment` *String*: a message to be viewed in the application thread along with the acceptant
+  - `groupIntro` *String*: a message that will be published along with the `group/add-member` message
+
+### `ssb.tribes.application.reject(applicationId, opts, cb)`
+
+where:
+- `opts` *Object*:
+  - `reason` *String*: a message to be viewed in the application thread along with the rejection
+
+### `ssb.tribes.application.read(applicationId, cb)`
 
 Returns the current state of a tribe application. e.g.
 
@@ -249,7 +266,7 @@ Returns the current state of a tribe application. e.g.
       a: 'I was born in Hawkes Bay'
     }
   ],
-  deciscion: {
+  decision: {
     approved: true,
     addMember: '%pfplpzTU/YYkN56yge1CXVDe5AoPVf83CoHYBnBG9wE=.sha256'
     // link to message which added them to group
@@ -298,15 +315,6 @@ where `opts` *Object* with properties:
   - `groupId` *MessagedId*: return only application for a specific group
   - `get` *Function | true* - runs an async function on each applicationId before calling back. If `true` is passed, this is the internal `ssb.tribes.application.get`.
   - `accepted` *Boolean*: filter applications that have been accepted or not. This requires a `get` which has an `addMember` property similar to the output you see in `ssb.tribes.application.get`.
-
-### `ssb.tribes.application.accept(applicationId, opts, cb)`
-
-This runs `ssb.tribes.invite` to invite the person to the group, then publishes an update to the application linking to that message.
-
-where:
-- `opts` *Object*:
-  - `text` *String*: A text to be viewed by the applicant
-
 
 
 
