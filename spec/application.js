@@ -18,9 +18,9 @@ const answersSchema = {
 const commentSchema = { type: 'string' }
 const decisionSchema = {
   type: 'object',
-  required: ['approved'],
+  required: ['accepted'],
   properties: {
-    approved: { type: 'boolean' },
+    accepted: { type: 'boolean' },
     addMember: { type: 'string', pattern: msgIdRegex }
   },
   additionalProperties: false

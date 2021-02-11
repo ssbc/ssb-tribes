@@ -32,7 +32,7 @@ test('tribes.application.update', async t => {
   )
 
   /* alice cannot approve */
-  const decision = { approved: true }
+  const decision = { accepted: true }
   let res
   try {
     res = await p(alice.tribes.application.update)(id, { decision })

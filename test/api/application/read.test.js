@@ -23,7 +23,7 @@ test('tribes.application.read', async t => {
   await p(replicate)({ from: alice, to: kaitiaki })
 
   const tipId = await p(kaitiaki.tribes.application.update)(id, {
-    decision: { approved: true },
+    decision: { accepted: true },
     comment: 'WELCOME!'
   })
   const t3 = (await p(kaitiaki.get)(tipId)).timestamp
@@ -44,7 +44,7 @@ test('tribes.application.read', async t => {
         a: 'hawaiian'
       }
     ],
-    decision: { approved: true },
+    decision: { accepted: true },
 
     // this section was materialised from the other mutable sections
     // using some getTransformation trickery
@@ -76,7 +76,7 @@ test('tribes.application.read', async t => {
         type: 'decision',
         author: kaitiaki.id,
         timestamp: t3,
-        body: { approved: true }
+        body: { accepted: true }
       }
     ]
   }

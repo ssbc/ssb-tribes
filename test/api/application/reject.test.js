@@ -24,7 +24,7 @@ test('tribes.application.reject', async t => {
     {
       type: 'group/application',
       comment: { set: reason },
-      decision: { set: { approved: false } },
+      decision: { set: { accepted: false } },
       recps: [...adminIds, alice.id],
       tangles: {
         application: { root: id, previous: [id] }

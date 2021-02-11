@@ -27,15 +27,17 @@ module.exports = {
     link: {
       create: 'async'
     },
+    findByFeedId: 'async',
+
     application: {
       create: 'async ',
-      get: 'async',
       read: 'async',
       comment: 'async',
       accept: 'async',
+      reject: 'async',
+      update: 'async',
       list: 'async,'
-    },
-    findByFeedId: 'async'
+    }
   },
   init
 }
@@ -216,12 +218,10 @@ function init (ssb, config) {
       create: scuttle.link.create
     },
     findByFeedId: scuttle.link.findGroupByFeedId,
-    application: {
-      ...scuttle.application,
-      get: scuttle.application.read // legacy
-    },
     addNewAuthorListener (fn) {
       state.newAuthorListeners.push(fn)
-    }
+    },
+
+    application: scuttle.application
   }
 }

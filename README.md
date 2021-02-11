@@ -267,7 +267,7 @@ Returns the current state of a tribe application. e.g.
     }
   ],
   decision: {
-    approved: true,
+    accepted: true,
     addMember: '%pfplpzTU/YYkN56yge1CXVDe5AoPVf83CoHYBnBG9wE=.sha256'
     // link to message which added them to group
   },
@@ -294,7 +294,7 @@ Returns the current state of a tribe application. e.g.
       author: '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519', // groupAdmins[0]
       timestamp: 1613003010973,
       body: {
-       approved: true
+       accepted: true
        addMember: '%pfplpzTU/YYkN56yge1CXVDe5AoPVf83CoHYBnBG9wE=.sha256'
       }
     }
@@ -314,11 +314,16 @@ Alternatively, you can call with opts `ssb.tribes.application.list(opts, cb)`
 where `opts` *Object* with properties:
   - `groupId` *MessagedId*: return only application for a specific group
   - `get` *Function | true* - runs an async function on each applicationId before calling back. If `true` is passed, this is the internal `ssb.tribes.application.get`.
-  - `accepted` *Boolean*: filter applications that have been accepted or not. This requires a `get` which has an `addMember` property similar to the output you see in `ssb.tribes.application.get`.
+  - `accepted` *(Boolean|null)*: filter applications that have been accepted or not.
+    - `accepted: true` gets you applications which have been accepted
+    - `accepted: false` gets you applications which have been rejected
+    - `accepted: null` gets you applications which haven't had a decision made on them yet
+    - If you set this, you get full application records back
 
 
 
 ## TODO
 
 - [ ] add the latest known "sequence" at time of add-member, so we know if we need to reindex!
+- [ ] more tests around applications which have multiple decisions made on them
 

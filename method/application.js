@@ -66,7 +66,7 @@ module.exports = function Application (ssb) {
 
           const input = {
             decision: {
-              approved: true,
+              accepted: true,
               addMember: invite.key
             }
           }
@@ -78,7 +78,7 @@ module.exports = function Application (ssb) {
     },
     reject (applicationId, opts = {}, cb) {
       const input = {
-        decision: { approved: false }
+        decision: { accepted: false }
       }
       if (opts.reason && opts.reason.length) input.comment = opts.reason
       crut.update(applicationId, input, cb)
@@ -94,6 +94,8 @@ module.exports = function Application (ssb) {
 
 function groupApplicationList (server, opts, cb) {
   if (opts.get === true) opts.get = server.tribes.application.read
+  if (opts.accepted !== undefined && !opts.get) opts.get = server.tribes.application.read
+
   const optsError = findOptsError(opts)
   if (optsError) return cb(optsError)
 
@@ -130,10 +132,9 @@ function groupApplicationList (server, opts, cb) {
 
     // (optionally) filter applications by whether accepted
     (accepted !== undefined)
-      ? pull.filter(i => {
-          if (accepted === true) return i.addMember && i.addMember.length
-          if (accepted === false) return !i.addMember || i.addMember.length === 0
-          throw new Error('accepted must be a Boolean')
+      ? pull.filter(a => {
+          if (accepted === null) return a.decision === null
+          return a.decision && a.decision.accepted === accepted // boolean
         })
       : null,
 
@@ -143,6 +144,7 @@ function groupApplicationList (server, opts, cb) {
   )
 }
 
+const VALID_ACCEPTED = [undefined, null, true, false]
 function findOptsError ({ groupId, get, accepted }) {
   const head = 'tribes.application.list expected '
   if (groupId && !isGroup(groupId)) {
@@ -152,8 +154,8 @@ function findOptsError ({ groupId, get, accepted }) {
     return new Error(`${head} "get" to be (Function), got ${typeof get}`)
   }
   if (accepted !== undefined) {
-    if (typeof accepted !== 'boolean') {
-      return new Error(`${head} "accepted" to be (undefined | true | false), got ${accepted}`)
+    if (!VALID_ACCEPTED.includes(accepted)) {
+      return new Error(`${head} "accepted" to be (undefined | null | true | false), got ${accepted}`)
     }
     if (typeof get !== 'function') {
       return new Error(`${head} declaring "accepted" requires "get" to be (Function), got ${typeof get}`)

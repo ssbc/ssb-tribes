@@ -39,7 +39,7 @@ test('tribes.application.accept', async t => {
           comment: { set: applicationComment },
           decision: {
             set: {
-              approved: true,
+              accepted: true,
               addMember: groupAddMsg.key
             }
           },

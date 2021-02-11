@@ -70,12 +70,12 @@ test('tribes.application.list', async t => {
     let application = await p(stranger.tribes.application.read)(applications[0])
 
     /* Kaitiaki lists applications for a tribe */
-    const listData = await p(kaitiaki.tribes.application.list)({
+    let listData = await p(kaitiaki.tribes.application.list)({
       groupId,
       get: true,
-      accepted: false
+      accepted: null // unresponded
     })
-    t.deepEqual(listData[0], application, 'kaitiaki can see same application')
+    t.deepEqual(listData, [application], 'kaitiaki can see same application')
 
     const listData2 = await p(stranger.tribes.application.list)({})
 
@@ -129,14 +129,29 @@ test('tribes.application.list', async t => {
       [
         { author: stranger.id, body: text1 },
         { author: kaitiaki.id, body: text2 },
-        { author: kaitiaki.id, body: { approved: true } },
+        { author: kaitiaki.id, body: { accepted: true } },
         { author: kaitiaki.id, body: text3 },
-        { author: kaitiaki.id, body: { approved: true } }
+        { author: kaitiaki.id, body: { accepted: true } }
       ],
       'stranger sees all comments'
     )
     // This is really just testing READ, can delete
     // but it does test duplicate accept
+
+    listData = await p(kaitiaki.tribes.application.list)({
+      accepted: true // accepted
+    })
+    t.equal(listData.length, 1, 'kaitiaki sees 1 accepted applications')
+
+    listData = await p(kaitiaki.tribes.application.list)({
+      accepted: false // rejected
+    })
+    t.equal(listData.length, 0, 'kaitiaki sees no rejected applications')
+
+    listData = await p(kaitiaki.tribes.application.list)({
+      accepted: null // unresponded
+    })
+    t.equal(listData.length, 2, 'kaitiaki sees 4 applications with no decision')
 
     finish()
   } catch (err) {
