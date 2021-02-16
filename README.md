@@ -206,7 +206,7 @@ Find groups which have linked with a feedId (see `ssb.tribes.link.create`).
 
 - `feedId` *FeedId* is a string
 - `cb` *function* is a callback with signature `cb(err, data)` where `data` is an Array of items of form:
-  ```
+  ```js
   {
     groupId: GroupId,
     recps: Recps, // an array of recipients who know about this link (should just be the group)
@@ -230,7 +230,8 @@ Creates a tribe application message directed to the administrators of a private-
 where:
 - `groupAdmins` *[FeedId]* is an array of the admins you are sending your application to
 - `opts` *Object*:
-  - `text` *String*: A text to be viewed by the Kaitiakis of a group
+  - `answers` *Array*: A collection of questions and their answers of form `[{ q: String, a: String }, ...]`
+  - `comment` *String*: A text to be viewed by the Kaitiakis of a group
 
 ### `ssb.tribes.application.accept(applicationId, opts, cb)`
 
@@ -251,7 +252,7 @@ where:
 
 Returns the current state of a tribe application. e.g.
 
-```
+```js
 {
   id: '%CXVDe5AoPVf83CoHYBpfplpzTU/YYkN56yge1nBG9wE=.sha256',
   applicantId: '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519',
@@ -294,7 +295,7 @@ Returns the current state of a tribe application. e.g.
       author: '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519', // groupAdmins[0]
       timestamp: 1613003010973,
       body: {
-       accepted: true
+       accepted: true,
        addMember: '%pfplpzTU/YYkN56yge1CXVDe5AoPVf83CoHYBnBG9wE=.sha256'
       }
     }
