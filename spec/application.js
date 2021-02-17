@@ -38,7 +38,7 @@ module.exports = {
     },
     version: {
       type: 'string',
-      pattern: '^(v1|v2)$',
+      pattern: '^v2$',
       required: true
     }
   },

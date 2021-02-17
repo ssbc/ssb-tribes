@@ -1,8 +1,6 @@
 const test = require('tape')
 const { promisify: p } = require('util')
 const { Server, GroupId, replicate } = require('../../helpers')
-const ApplicationSpec = require('../../../spec/application')
-const Crut = require('ssb-crut')
 
 test('tribes.application.get', async t => {
   const alice = Server()
@@ -90,35 +88,28 @@ test('tribes.application.get', async t => {
   t.end()
 })
 
-test('v1 applications', t => {
+test('tribes.application.get (v1 application)', t => {
+  const ssb = Server()
+
   const v1RootNodeT = {
     type: 'group/application',
     version: 'v1',
     groupId: '%EPdhGFkWxLn2k7kzthIddA8yqdX8VwjmhmTes0gMMqE=.cloaked',
     recps: [
-      '@58MByuWxOHWJmpXlVdhdWha0z/n2efYb0bR+hO2EBpQ=.ed25519',
-      '@rHfP8mgPkmWT+KYkNoQMef+dFJLD3wi4gVdU+1LoABI=.ed25519'
+      '@rHfP8mgPkmWT+KYkNoQMef+dFJLD3wi4gVdU+1LoABI=.ed25519',
+      ssb.id
     ],
-    comment: { append: 'hello' },
-    tangles: { application: { root: null, previous: null } },
-    history: {
-      '0000-1605139400278-@rHfP8mgPkmWT+KYkNoQMef+dFJLD3wi4gVdU+1LoABI=.ed25519-0': {
-        type: 'comment',
-        author: '@rHfP8mgPkmWT+KYkNoQMef+dFJLD3wi4gVdU+1LoABI=.ed25519',
-        timestamp: 1605139400278,
-        body: undefined
-      }
-    }
+    text: { append: 'hello' },
+    tangles: { application: { root: null, previous: null } }
   }
 
-  const ssb = Server()
+  ssb.publish(v1RootNodeT, (err, m) => {
+    if (err) throw err
 
-  // run it through the spec
-  const crut = new Crut(ssb, ApplicationSpec)
-
-  t.true(crut.spec.isRoot(v1RootNodeT), 'old v1 items should pass the new spec')
-  t.error(crut.spec.isRoot.errorsString, 'spec.isRoot returns no errors')
-
-  ssb.close()
-  t.end()
+    ssb.tribes.application.get(m.key, (err) => {
+      t.match(err.message, /not a valid group\/application/)
+      ssb.close()
+      t.end()
+    })
+  })
 })

@@ -162,6 +162,41 @@ test('tribes.application.list', async t => {
   }
 })
 
+test('tribes.application.list (v1 application)', t => {
+  const ssb = Server()
+
+  const v1RootNodeT = {
+    type: 'group/application',
+    version: 'v1',
+    groupId: '%EPdhGFkWxLn2k7kzthIddA8yqdX8VwjmhmTes0gMMqE=.cloaked',
+    recps: [
+      '@rHfP8mgPkmWT+KYkNoQMef+dFJLD3wi4gVdU+1LoABI=.ed25519',
+      ssb.id
+    ],
+    text: { append: 'hello' },
+    tangles: { application: { root: null, previous: null } }
+  }
+
+  ssb.publish(v1RootNodeT, (err, m) => {
+    if (err) throw err
+
+    ssb.tribes.application.list({}, (err, results) => {
+      if (err) throw err
+
+      t.deepEqual(results, [], 'v1 applications are excluded (opts: {})')
+
+      ssb.tribes.application.list({ get: true }, (err, results) => {
+        if (err) throw err
+
+        t.deepEqual(results, [], 'v1 applications are excluded (opts: { get: true })')
+
+        ssb.close()
+        t.end()
+      })
+    })
+  })
+})
+
 function wait (time) {
   return new Promise((resolve, reject) => {
     setTimeout(() => resolve(), time)
