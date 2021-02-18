@@ -11,4 +11,7 @@ os:
   - osx
   - windows
 
-
+script:
+  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then npm test; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then npm run test:windows; fi
+  - npm run lint
