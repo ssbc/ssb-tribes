@@ -111,7 +111,6 @@ test('tribes.application.list', async t => {
     let ready = false
     while (!ready) {
       const list = await p(stranger.tribes.list)()
-      console.log(list)
       if (list.length) ready = true
       else await wait(500)
     }

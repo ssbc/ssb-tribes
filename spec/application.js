@@ -84,7 +84,7 @@ module.exports = {
 function History () {
   const uniqueKeyPattern = [
     '^\\d{4}', // tangle-distance
-    '\\d{13,}', // timestamp
+    '[\\d\\.]{13,}', // timestamp
     '@[a-zA-Z0-9/+]{43}=\\.ed25519', // feedId
     '\\d+$' // count (nth historyItem from within particular message)
   ].join('-')

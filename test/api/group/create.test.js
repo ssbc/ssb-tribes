@@ -3,6 +3,7 @@ const { Server } = require('../../helpers')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
 
 test('tribes.create', t => {
+  t.plan(2)
   const server = Server()
 
   // this is more of an integration test over the api
@@ -14,6 +15,5 @@ test('tribes.create', t => {
     t.true(Buffer.isBuffer(groupKey) && groupKey.length === 32, 'returns group symmetric key - groupKey')
 
     server.close()
-    t.end()
   })
 })
