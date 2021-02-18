@@ -107,7 +107,15 @@ test('tribes.application.list', async t => {
     )
     t.true(isMsg(getData.history[2].body.addMember), 'stranger can see group/add-member')
 
-    await wait(500)
+    // takes a moment for the stranger to process new membership
+    let ready = false
+    while (!ready) {
+      const list = await p(stranger.tribes.list)()
+      console.log(list)
+      if (list.length) ready = true
+      else await wait(500)
+    }
+
     /* User can now publish to group */
     const published = await p(stranger.publish)({ type: 'hooray', recps: [groupId] })
     t.true(published, 'stranger can now publish to group')
