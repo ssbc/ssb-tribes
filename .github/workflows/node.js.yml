@@ -28,7 +28,14 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
     - run: npm run build --if-present
-    - run: npm test
-    - if [ ${{ matrix.os }} != "windows-latest" ]; then npm test; fi
-    - if [ ${{ matris.os }} = "windows-latest" ]; then npm run test:windows; fi
-    - npm run lint
+    - name: test (linux)
+      run: npm test
+      if: matrix.os == 'linux-latest'
+    - name: test (mac)
+      run: npm test
+      if: matrix.os == 'macos-latest'
+    - name: test (windows)
+      run: npm run test:windows
+      if: matrix.os == 'windows-latest'
+    - name: linting
+      run: npm run lint
