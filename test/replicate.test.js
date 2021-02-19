@@ -3,8 +3,7 @@ const { promisify: p } = require('util')
 const Keys = require('ssb-keys')
 const { Server, replicate } = require('./helpers')
 
-test('replicate group members', { skip: true 
-}, async t => {
+test('replicate group members', async t => {
   t.plan(6)
   // 3 calls to request
   // 1 successful shutdown
@@ -36,8 +35,9 @@ test('replicate group members', { skip: true
   }
 
   let i = 0
-  
-  replicate({ from: bob, to: alice, name })
+
+  replicate({ from: bob, to: alice, name, live: true })
+
   alice.replicate.request.hook((request, args) => {
     const n = name(args[0].id)
 
@@ -46,9 +46,8 @@ test('replicate group members', { skip: true
 
     request(...args)
 
-    if (i === expected.length) setTimeout(testPersistence, 1000)
+    if (i === expected.length) testPersistence()
   })
-
 
   try {
     const { groupId: aliceGroup } = await p(alice.tribes.create)({})
@@ -60,20 +59,16 @@ test('replicate group members', { skip: true
     t.fail(err)
   }
 
-
-
   function testPersistence () {
     const requested = []
-    alice.close()
-    setTimeout(() => {
-      t.error(null, 'shutdown (alice)')
+    alice.close((err) => {
+      t.error(err, 'shutdown (alice)')
 
       try {
         alice = Server({ name: aliceName, keys: aliceKeys, installReplicate: true, startUnclean: true })
         alice.replicate.request.hook((request, args) => {
           const n = name(args[0].id)
           requested.push(n)
-          console.log('replicated!')
           if (requested.length === expected.length) setTimeout(finish, 500)
           // setTimeout is rough way to call ready to compare results
           // - we don't want to just run comparison if we have 3 results... what if there were 10!
@@ -84,16 +79,14 @@ test('replicate group members', { skip: true
         t.pass('restart (alice)')
       } catch (err) {
         t.fail(err)
-        finish() 
+        finish()
       }
-    }, 1000)
-
+    })
 
     function finish () {
       t.deepEqual(requested.sort(), expected.sort(), 'replication of peers in groups persisted')
       alice.close()
-      bob.close() // leave bob closing here to stop windows closing the tests when we shut alice down
-
+      bob.close() // leave bob closing here to stop windows closing the tests when we shut alice down?
     }
   }
 })

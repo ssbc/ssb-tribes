@@ -2,7 +2,7 @@ const test = require('tape')
 const { Server } = require('../../helpers')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
 
-test('tribes.create', t => {
+test('tribes.create', { skip: true }, t => {
   t.plan(2)
   const server = Server()
 
