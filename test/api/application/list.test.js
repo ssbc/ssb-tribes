@@ -98,24 +98,31 @@ test('tribes.application.list', async t => {
     )
 
     /* Stranger checks the current application state */
-    const getData = await p(stranger.tribes.application.get)(application.id)
+    // takes a moment for the stranger to process new membership
+    let isReady = false
+    while (!isReady) {
+      application = await p(stranger.tribes.application.get)(application.id)
+      isReady = application && application.history && application.history.length > 1
+
+      if (!isReady) await wait(500)
+    }
 
     t.deepEqual(
-      getData.history[1].body,
+      application.history[1].body,
       text2,
       'stranger can see comment from kaitiaki'
     )
-    t.true(isMsg(getData.history[2].body.addMember), 'stranger can see group/add-member')
-
-    // takes a moment for the stranger to process new membership
-    let ready = false
-    while (!ready) {
-      const list = await p(stranger.tribes.list)()
-      if (list.length) ready = true
-      else await wait(500)
-    }
+    t.true(isMsg(application.history[2].body.addMember), 'stranger can see group/add-member')
 
     /* User can now publish to group */
+    // takes a moment for group/add-member to be read, keystore to be updated
+    isReady = false
+    while (!isReady) {
+      const groups = await p(stranger.tribes.list)()
+      isReady = groups.length
+
+      if (!isReady) await wait(500)
+    }
     const published = await p(stranger.publish)({ type: 'hooray', recps: [groupId] })
     t.true(published, 'stranger can now publish to group')
 
@@ -125,7 +132,14 @@ test('tribes.application.list', async t => {
       { applicationComment: text3 }
     )
 
-    application = await p(stranger.tribes.application.get)(application.id)
+    isReady = false
+    while (!isReady) {
+      application = await p(stranger.tribes.application.get)(application.id)
+      isReady = application && application.history && application.history.length > 3
+
+      if (!isReady) await wait(500)
+    }
+
     t.deepEqual(
       application.history.map(h => {
         const _h = { author: h.author, body: h.body }

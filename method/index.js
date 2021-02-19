@@ -29,11 +29,10 @@ module.exports = function Method (ssb, keystore, state) {
   }
 
   function patient (fn) {
-    // this can be improved later
     return function (...args) {
-      if (!state.isReady) return setTimeout(() => fn.apply(null, args), 500)
+      if (state.loading.keystore.value === true) return fn(...args)
 
-      fn.apply(null, args)
+      state.loading.keystore.once(() => fn(...args))
     }
   }
 }
