@@ -13,24 +13,30 @@ test('tribes.application.get', async t => {
   ]
   const comment = "p.s. I'm also into adding chilli to hawaiin!"
 
-  const id = await p(alice.tribes.application.create)(groupId, adminIds, { answers })
-  const t1 = (await p(alice.get)(id)).timestamp
+  let id, update1, application
+  let t1, t2, t3
+  try {
+    id = await p(alice.tribes.application.create)(groupId, adminIds, { answers })
+    t1 = (await p(alice.get)(id)).timestamp
 
-  const update1 = await p(alice.tribes.application.update)(id, { comment })
-  const t2 = (await p(alice.get)(update1)).timestamp
+    update1 = await p(alice.tribes.application.update)(id, { comment })
+    t2 = (await p(alice.get)(update1)).timestamp
 
-  /* kaitiaki approves */
-  await p(replicate)({ from: alice, to: kaitiaki })
+    /* kaitiaki approves */
+    await p(replicate)({ from: alice, to: kaitiaki })
 
-  const tipId = await p(kaitiaki.tribes.application.update)(id, {
-    decision: { accepted: true },
-    comment: 'WELCOME!'
-  })
-  const t3 = (await p(kaitiaki.get)(tipId)).timestamp
+    const tipId = await p(kaitiaki.tribes.application.update)(id, {
+      decision: { accepted: true },
+      comment: 'WELCOME!'
+    })
+    t3 = (await p(kaitiaki.get)(tipId)).timestamp
 
-  await p(replicate)({ from: kaitiaki, to: alice })
+    await p(replicate)({ from: kaitiaki, to: alice })
 
-  const application = await p(alice.tribes.application.get)(id)
+    application = await p(alice.tribes.application.get)(id)
+  } catch (err) {
+    t.fail(err)
+  }
 
   const expected = {
     id,

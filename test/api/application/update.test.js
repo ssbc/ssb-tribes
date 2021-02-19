@@ -13,11 +13,14 @@ test('tribes.application.update', async t => {
   ]
   const comment = "p.s. I'm also into adding chilli to hawaiin!"
 
-  const id = await p(alice.tribes.application.create)(groupId, adminIds, { answers })
-
-  const updateId = await p(alice.tribes.application.update)(id, { comment })
-
-  const val = await p(alice.get)({ id: updateId, private: true })
+  let id, val
+  try {
+    id = await p(alice.tribes.application.create)(groupId, adminIds, { answers })
+    const updateId = await p(alice.tribes.application.update)(id, { comment })
+    val = await p(alice.get)({ id: updateId, private: true })
+  } catch (err) {
+    t.fail(err)
+  }
   t.deepEqual(
     val.content,
     {
@@ -42,10 +45,12 @@ test('tribes.application.update', async t => {
   if (res) t.fail('alice should not be allowed to decide!')
 
   /* kaitiaki can approve */
-
-  await p(replicate)({ from: alice, to: kaitiaki })
-
-  res = await p(kaitiaki.tribes.application.update)(id, { decision })
+  try {
+    await p(replicate)({ from: alice, to: kaitiaki })
+    res = await p(kaitiaki.tribes.application.update)(id, { decision })
+  } catch (err) {
+    t.fail(err)
+  }
 
   t.true(res, 'kaitiaki can publish decision')
 

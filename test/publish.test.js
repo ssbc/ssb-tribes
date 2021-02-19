@@ -91,19 +91,24 @@ test('publish (DMs: myFeedId + feedId)', async t => {
     text: 'summer has arrived in wellington!',
     recps: [alice.id, bob.id]
   }
-  const msg = await p(alice.publish)(content)
-  await p(alice.publish)({ type: 'doop' })
-  t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
 
-  const aliceGet = await p(alice.get)({ id: msg.key, private: true, meta: true })
-  t.deepEqual(aliceGet.value.content, content, 'alice can open envelope!')
+  try {
+    const msg = await p(alice.publish)(content)
+    await p(alice.publish)({ type: 'doop' })
+    t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
 
-  await p(replicate)({ from: alice, to: bob, name, live: false })
-  const bobGet = await p(bob.get)({ id: msg.key, private: true, meta: true })
-  t.deepEqual(bobGet.value.content, content, 'bob can open envelope!')
+    const aliceGet = await p(alice.get)({ id: msg.key, private: true, meta: true })
+    t.deepEqual(aliceGet.value.content, content, 'alice can open envelope!')
 
-  await p(alice.close)()
-  await p(bob.close)()
+    await p(replicate)({ from: alice, to: bob, name, live: false })
+    const bobGet = await p(bob.get)({ id: msg.key, private: true, meta: true })
+    t.deepEqual(bobGet.value.content, content, 'bob can open envelope!')
+
+    await p(alice.close)()
+    await p(bob.close)()
+  } catch (err) {
+    t.fail(err)
+  }
   t.end()
 })
 

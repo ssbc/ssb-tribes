@@ -7,19 +7,24 @@ test('tribes.application.accept', async t => {
   const kaitiaki = Server()
   const alice = Server()
 
-  const { groupId } = await p(kaitiaki.tribes.create)({})
-
+  const applicationComment = 'So good you made it!'
+  const groupIntro = 'Everyone I would like you to welcome John'
   const adminIds = [kaitiaki.id]
   const answers = [
     { q: 'what is your favourate pizza flavour', a: 'hawaiian' }
   ]
 
-  const id = await p(alice.tribes.application.create)(groupId, adminIds, { answers })
-  await p(replicate)({ from: alice, to: kaitiaki })
+  let id
+  try {
+    const { groupId } = await p(kaitiaki.tribes.create)({})
 
-  const applicationComment = 'So good you made it!'
-  const groupIntro = 'Everyone I would like you to welcome John'
-  await p(kaitiaki.tribes.application.accept)(id, { applicationComment, groupIntro })
+    id = await p(alice.tribes.application.create)(groupId, adminIds, { answers })
+    await p(replicate)({ from: alice, to: kaitiaki })
+
+    await p(kaitiaki.tribes.application.accept)(id, { applicationComment, groupIntro })
+  } catch (err) {
+    t.fail(err)
+  }
 
   pull(
     kaitiaki.createUserStream({ id: kaitiaki.id, reverse: true, private: true }),
