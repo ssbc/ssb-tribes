@@ -11,17 +11,15 @@ test('tribes.invite', async t => {
     if (id === newPerson.id) return 'new person'
   }
 
-  const {
-    groupId, groupKey, groupInitMsg
-  } = await p(kaitiaki.tribes.create)({})
-  t.true(groupId, 'creates group')
-
-  const authorIds = [
-    newPerson.id,
-    new FeedId().mock().toSSB()
-  ]
-
   try {
+    const { groupId, groupKey, groupInitMsg } = await p(kaitiaki.tribes.create)({})
+    t.true(groupId, 'creates group')
+
+    const authorIds = [
+      newPerson.id,
+      new FeedId().mock().toSSB()
+    ]
+
     let invite = await p(kaitiaki.tribes.invite)(
       groupId, authorIds, { text: 'welcome friends' }
     )
