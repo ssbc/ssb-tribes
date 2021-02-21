@@ -13,8 +13,13 @@ test('tribes.application.create', async t => {
     { q: 'what is your favourate pizza flavour', a: 'hawaiian' }
   ]
 
-  const id = await p(server.tribes.application.create)(groupId, adminIds, { answers })
-  const val = await p(server.get)({ id, private: true })
+  let id, val
+  try {
+    id = await p(server.tribes.application.create)(groupId, adminIds, { answers })
+    val = await p(server.get)({ id, private: true })
+  } catch (err) {
+    t.fail(err)
+  }
   t.deepEqual(
     val.content,
     {

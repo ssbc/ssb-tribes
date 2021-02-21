@@ -141,9 +141,11 @@ function init (ssb, config) {
 
     getGroupTangle(content.recps[0], (err, tangle) => {
       if (err) {
-        console.warn(err)
-        // NOTE there are two ways an err can occur in getGroupTangle, and we don't
-        // want to cb(err) with either in this hook. Rather we pass it on to boxers to throw
+        // NOTE there are two ways an err can occur in getGroupTangle
+        // 1. recps is not a groupId
+        // 2. unknown groupId,
+        //
+        // Rather than cb(err) here we we pass it on to boxers to see if an err is needed
         return fn.apply(this, args)
       }
 

@@ -98,17 +98,31 @@ test('tribes.application.list', async t => {
     )
 
     /* Stranger checks the current application state */
-    const getData = await p(stranger.tribes.application.get)(application.id)
+    // takes a moment for the stranger to process new membership
+    let isReady = false
+    while (!isReady) {
+      application = await p(stranger.tribes.application.get)(application.id)
+      isReady = application && application.history && application.history.length > 1
+
+      if (!isReady) await wait(500)
+    }
 
     t.deepEqual(
-      getData.history[1].body,
+      application.history[1].body,
       text2,
       'stranger can see comment from kaitiaki'
     )
-    t.true(isMsg(getData.history[2].body.addMember), 'stranger can see group/add-member')
+    t.true(isMsg(application.history[2].body.addMember), 'stranger can see group/add-member')
 
-    await wait(500)
     /* User can now publish to group */
+    // takes a moment for group/add-member to be read, keystore to be updated
+    isReady = false
+    while (!isReady) {
+      const groups = await p(stranger.tribes.list)()
+      isReady = groups.length
+
+      if (!isReady) await wait(500)
+    }
     const published = await p(stranger.publish)({ type: 'hooray', recps: [groupId] })
     t.true(published, 'stranger can now publish to group')
 
@@ -118,7 +132,14 @@ test('tribes.application.list', async t => {
       { applicationComment: text3 }
     )
 
-    application = await p(stranger.tribes.application.get)(application.id)
+    isReady = false
+    while (!isReady) {
+      application = await p(stranger.tribes.application.get)(application.id)
+      isReady = application && application.history && application.history.length > 3
+
+      if (!isReady) await wait(500)
+    }
+
     t.deepEqual(
       application.history.map(h => {
         const _h = { author: h.author, body: h.body }
@@ -160,6 +181,41 @@ test('tribes.application.list', async t => {
   } catch (err) {
     finish(err)
   }
+})
+
+test('tribes.application.list (v1 application)', t => {
+  const ssb = Server()
+
+  const v1RootNodeT = {
+    type: 'group/application',
+    version: 'v1',
+    groupId: '%EPdhGFkWxLn2k7kzthIddA8yqdX8VwjmhmTes0gMMqE=.cloaked',
+    recps: [
+      '@rHfP8mgPkmWT+KYkNoQMef+dFJLD3wi4gVdU+1LoABI=.ed25519',
+      ssb.id
+    ],
+    text: { append: 'hello' },
+    tangles: { application: { root: null, previous: null } }
+  }
+
+  ssb.publish(v1RootNodeT, (err, m) => {
+    if (err) throw err
+
+    ssb.tribes.application.list({}, (err, results) => {
+      if (err) throw err
+
+      t.deepEqual(results, [], 'v1 applications are excluded (opts: {})')
+
+      ssb.tribes.application.list({ get: true }, (err, results) => {
+        if (err) throw err
+
+        t.deepEqual(results, [], 'v1 applications are excluded (opts: { get: true })')
+
+        ssb.close()
+        t.end()
+      })
+    })
+  })
 })
 
 function wait (time) {

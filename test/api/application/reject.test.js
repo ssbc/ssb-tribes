@@ -12,13 +12,19 @@ test('tribes.application.reject', async t => {
     { q: 'what is your favourate pizza flavour', a: 'hawaiian' }
   ]
 
-  const id = await p(alice.tribes.application.create)(groupId, adminIds, { answers })
-  await p(replicate)({ from: alice, to: kaitiaki })
+  let id, reason, rejectId, val
+  try {
+    id = await p(alice.tribes.application.create)(groupId, adminIds, { answers })
+    await p(replicate)({ from: alice, to: kaitiaki })
 
-  const reason = 'hey this group is no longer accepting new people'
-  const rejectId = await p(kaitiaki.tribes.application.reject)(id, { reason })
+    reason = 'hey this group is no longer accepting new people'
+    rejectId = await p(kaitiaki.tribes.application.reject)(id, { reason })
 
-  const val = await p(kaitiaki.get)({ id: rejectId, private: true })
+    val = await p(kaitiaki.get)({ id: rejectId, private: true })
+  } catch (err) {
+    t.fail(err)
+  }
+
   t.deepEqual(
     val.content,
     {

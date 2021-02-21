@@ -4,6 +4,12 @@ const Keys = require('ssb-keys')
 const { Server, replicate } = require('./helpers')
 
 test('replicate group members', async t => {
+  t.plan(6)
+  // 3 calls to request
+  // 1 successful shutdown
+  // 1 successful restart
+  // 1 collect seeing the previously requested peers requested again
+
   // this checks that if a person is in your group then you will be replicating them
   // required to make sure you have all content
 
@@ -12,7 +18,6 @@ test('replicate group members', async t => {
     'cel',
     'eric'
   ]
-  t.plan(expected.length + 2) // first time, then persisted (which collects results)
 
   const aliceName = 'alice-' + Date.now()
   const aliceKeys = Keys.generate()
@@ -31,6 +36,8 @@ test('replicate group members', async t => {
 
   let i = 0
 
+  replicate({ from: bob, to: alice, name, live: true })
+
   alice.replicate.request.hook((request, args) => {
     const n = name(args[0].id)
 
@@ -42,36 +49,44 @@ test('replicate group members', async t => {
     if (i === expected.length) testPersistence()
   })
 
-  const { groupId: aliceGroup } = await p(alice.tribes.create)({})
-  await p(alice.tribes.invite)(aliceGroup, [bob.id], {})
+  try {
+    const { groupId: aliceGroup } = await p(alice.tribes.create)({})
+    await p(alice.tribes.invite)(aliceGroup, [bob.id], {})
 
-  const { groupId: bobGroup } = await p(bob.tribes.create)({})
-  await p(bob.tribes.invite)(bobGroup, [alice.id, celId, ericId], {})
-
-  replicate({ from: bob, to: alice, name })
+    const { groupId: bobGroup } = await p(bob.tribes.create)({})
+    await p(bob.tribes.invite)(bobGroup, [alice.id, celId, ericId], {})
+  } catch (err) {
+    t.fail(err)
+  }
 
   function testPersistence () {
-    bob.close()
-
     const requested = []
-    alice.close(err => {
-      t.error(err, 'restarting alice')
-      alice = Server({ name: aliceName, keys: aliceKeys, installReplicate: true, startUnclean: true })
-      alice.replicate.request.hook((request, args) => {
-        const n = name(args[0].id)
-        requested.push(n)
-        if (requested.length === expected.length) setTimeout(next, 500)
-        // setTimeout is rough way to call ready to compare results
-        // - we don't want to just run comparison if we have 3 results... what if there were 10!
-        // - leaves space for other requests to sneek in
+    alice.close((err) => {
+      t.error(err, 'shutdown (alice)')
 
-        request(...args)
-      })
+      try {
+        alice = Server({ name: aliceName, keys: aliceKeys, installReplicate: true, startUnclean: true })
+        alice.replicate.request.hook((request, args) => {
+          const n = name(args[0].id)
+          requested.push(n)
+          if (requested.length === expected.length) setTimeout(finish, 500)
+          // setTimeout is rough way to call ready to compare results
+          // - we don't want to just run comparison if we have 3 results... what if there were 10!
+          // - leaves space for other requests to sneek in
+
+          request(...args)
+        })
+        t.pass('restart (alice)')
+      } catch (err) {
+        t.fail(err)
+        finish()
+      }
     })
 
-    function next () {
+    function finish () {
       t.deepEqual(requested.sort(), expected.sort(), 'replication of peers in groups persisted')
       alice.close()
+      bob.close() // leave bob closing here to stop windows closing the tests when we shut alice down?
     }
   }
 })

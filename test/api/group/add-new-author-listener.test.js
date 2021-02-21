@@ -17,31 +17,34 @@ test('addNewAuthorListener', async t => {
   let groupId // eslint-disable-line
 
   admin.tribes.addNewAuthorListener(({ newAuthors, groupId: _groupId }) => {
+    // should hear adding self to newly created group
     t.deepEqual(newAuthors.map(name), ['admin'], 'admin = returns expected newAuthors')
     setTimeout(() => t.equal(_groupId, groupId, 'admin = returns expected groupId'), 500)
   })
 
-  const groupData = await p(admin.tribes.create)({})
-  groupId = groupData.groupId
-  await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
-
-  setTimeout(async () => {
-    await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
-  }, 500)
-  // we want to test that duplicate adds dont fire the addNewAuthorListener multiple times,
-  // unfortunately there are race conditions around calculating the new authors, so
-  // we have added a small delay here
-
   newPerson.tribes.addNewAuthorListener(({ newAuthors, groupId: _groupId }) => {
+    // being added to the new group, this person immediately discovers themself + their inviter in group
     t.deepEqual(newAuthors.map(name), ['admin', 'newPerson'], 'returns expected newAuthors')
     t.equal(_groupId, groupId, 'returns expected groupId')
 
-    setTimeout(() => {
-      admin.close()
-      newPerson.close()
-    }, 500)
-    // servers dont like being closed while rebuilding?
+    admin.close()
+    newPerson.close()
   })
 
-  replicate({ from: admin, to: newPerson, live: true, name })
+  try {
+    const groupData = await p(admin.tribes.create)({})
+    groupId = groupData.groupId
+    await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
+
+    setTimeout(async () => {
+      p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
+    }, 500)
+    // we want to test that duplicate adds dont fire the addNewAuthorListener multiple times,
+    // unfortunately there are race conditions around calculating the new authors, so
+    // we have added a small delay here
+
+    p(replicate)({ from: admin, to: newPerson, name })
+  } catch (err) {
+    t.fail(err)
+  }
 })

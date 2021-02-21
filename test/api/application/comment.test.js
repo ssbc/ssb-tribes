@@ -9,12 +9,17 @@ test('tribes.application.comment', async t => {
   const adminIds = [keys.generate().id]
   const groupId = GroupId()
 
-  const id = await p(alice.tribes.application.create)(groupId, adminIds, {})
+  let id, comment, val
+  try {
+    id = await p(alice.tribes.application.create)(groupId, adminIds, {})
 
-  const comment = 'oh btw my birth name is john'
-  const updateId = await p(alice.tribes.application.update)(id, { comment })
+    comment = 'oh btw my birth name is john'
+    const updateId = await p(alice.tribes.application.update)(id, { comment })
 
-  const val = await p(alice.get)({ id: updateId, private: true })
+    val = await p(alice.get)({ id: updateId, private: true })
+  } catch (err) {
+    t.fail(err)
+  }
   t.deepEqual(
     val.content,
     {

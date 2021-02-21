@@ -115,6 +115,7 @@ function groupApplicationList (server, opts, cb) {
         value: {
           content: {
             type: 'group/application',
+            version: 'v2',
             tangles: {
               application: {
                 root: null
@@ -136,7 +137,16 @@ function groupApplicationList (server, opts, cb) {
 
     // (optionally) convert applicationIds into application records
     (get !== undefined)
-      ? paraMap(get, 4) // 4 = width of parallel querying
+      ? pull(
+          paraMap(
+            (id, cb) => get(id, (err, application) => {
+              if (err) return cb(null, null) // don't choke of failed gets
+              return cb(null, application)
+            })
+            , 4
+          ), // 4 = width of parallel querying
+          pull.filter(Boolean) // filter out failed gets
+        )
       : null,
 
     // (optionally) filter applications by whether accepted
