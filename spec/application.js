@@ -2,6 +2,7 @@ const { msgIdRegex } = require('ssb-ref')
 const Overwrite = require('@tangle/overwrite')
 const LinearAppend = require('@tangle/linear-append')
 const { feedId, cloakedMessageId } = require('ssb-schema-definitions')()
+const edtf = require('edtf')
 
 const answersSchema = {
   type: 'array',
@@ -22,6 +23,22 @@ const decisionSchema = {
   properties: {
     accepted: { type: 'boolean' },
     addMember: { type: 'string', pattern: msgIdRegex }
+  },
+  additionalProperties: false
+}
+const applicantSchema = {
+  type: 'object',
+  required: ['preferredName', 'legalName', 'aliveInterval', 'city', 'country'],
+  properties: {
+    // required fields
+    preferredName: { type: 'string' },
+    legalName: { type: 'string' },
+    aliveInterval: { type: 'string' },
+    city: { type: 'string' },
+    country: { type: 'string' }
+
+    // optional fields
+    // TODO: add optional fields, ensure these fields are nullable
   },
   additionalProperties: false
 }
@@ -47,10 +64,16 @@ module.exports = {
     answers: Overwrite({ valueSchema: answersSchema }),
     comment: Overwrite({ valueSchema: commentSchema }),
     decision: Overwrite({ valueSchema: decisionSchema }),
+    applicant: Overwrite({ valueSchema: applicantSchema }),
 
     history: History()
 
     // tombstone
+  },
+
+  hooks: {
+    isRoot: [AliveIntervalChecker()],
+    isUpdate: [AliveIntervalChecker()]
   },
 
   getTransformation (m, distance) {
@@ -160,4 +183,19 @@ function historyItem (m, field) {
 
 function isRoot (msg) {
   return msg.value.content.tangles.application.root === null
+}
+
+function AliveIntervalChecker () {
+  return function aliveIntervalChecker (content) {
+    if (!content.applicant) return true
+    if (!content.applicant.set) return true
+
+    try {
+      const result = edtf.parse(content.applicant.set.aliveInterval)
+      if (result.type !== 'Interval') return new Error(`application.applicant expected aliveInterval to be an EDTF Interval, but got type ${result.type}`)
+      return true
+    } catch (e) {
+      return new Error(`application.applicant expects aliveInterval to be set to an EDTF compatible interval, got ${content.applicant.set.aliveInterval}`)
+    }
+  }
 }

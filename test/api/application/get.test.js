@@ -2,7 +2,113 @@ const test = require('tape')
 const { promisify: p } = require('util')
 const { Server, GroupId, replicate } = require('../../helpers')
 
-test('tribes.application.get', async t => {
+test('tribes.application.get (v3 application)', async t => {
+  const alice = Server()
+  const kaitiaki = Server()
+
+  const adminIds = [kaitiaki.id]
+  const groupId = GroupId()
+  const answers = [
+    { q: 'what is your favourate pizza flavour', a: 'hawaiian' }
+  ]
+  const comment = "p.s. I'm also into adding chilli to hawaiin!"
+  const applicant = {
+    preferredName: 'Alice',
+    legalName: 'Alice',
+    aliveInterval: '1995-07-24/',
+    city: 'Faraway',
+    country: 'Wonderland'
+  }
+
+  let id, update1, application
+  let t1, t2, t3
+  try {
+    id = await p(alice.tribes.application.create)(groupId, adminIds, { answers, applicant })
+    t1 = (await p(alice.get)(id)).timestamp
+
+    update1 = await p(alice.tribes.application.update)(id, { comment })
+    t2 = (await p(alice.get)(update1)).timestamp
+
+    /* kaitiaki approves */
+    await p(replicate)({ from: alice, to: kaitiaki })
+
+    const tipId = await p(kaitiaki.tribes.application.update)(id, {
+      decision: { accepted: true },
+      comment: 'WELCOME!'
+    })
+    t3 = (await p(kaitiaki.get)(tipId)).timestamp
+
+    await p(replicate)({ from: kaitiaki, to: alice })
+
+    application = await p(alice.tribes.application.get)(id)
+  } catch (err) {
+    t.fail(err)
+  }
+
+  const expected = {
+    id,
+    groupId,
+    applicantId: alice.id,
+    groupAdmins: [kaitiaki.id],
+
+    answers: [
+      {
+        q: 'what is your favourate pizza flavour',
+        a: 'hawaiian'
+      }
+    ],
+    decision: { accepted: true },
+    applicant: {
+      preferredName: 'Alice',
+      legalName: 'Alice',
+      aliveInterval: '1995-07-24/',
+      city: 'Faraway',
+      country: 'Wonderland'
+    },
+
+    // this section was materialised from the other mutable sections
+    // using some getTransformation trickery
+    history: [
+      {
+        type: 'answers',
+        author: alice.id,
+        timestamp: t1,
+        body: [
+          {
+            q: 'what is your favourate pizza flavour',
+            a: 'hawaiian'
+          }
+        ]
+      },
+      {
+        type: 'comment',
+        author: alice.id,
+        timestamp: t2,
+        body: "p.s. I'm also into adding chilli to hawaiin!"
+      },
+      {
+        type: 'comment',
+        author: kaitiaki.id,
+        timestamp: t3,
+        body: 'WELCOME!'
+      },
+      {
+        type: 'decision',
+        author: kaitiaki.id,
+        timestamp: t3,
+        body: { accepted: true }
+      }
+    ]
+  }
+
+  t.deepEqual(application, expected, 'gets application')
+
+  alice.close()
+  kaitiaki.close()
+  t.end()
+})
+
+test('tribes.application.get (v2 application)', async t => {
   const alice = Server()
   const kaitiaki = Server()
 
@@ -51,6 +157,7 @@ test('tribes.application.get', async t => {
       }
     ],
     decision: { accepted: true },
+    applicant: null, // v2 applications did not support applicant field
 
     // this section was materialised from the other mutable sections
     // using some getTransformation trickery

@@ -232,6 +232,24 @@ where:
 - `opts` *Object*:
   - `answers` *Array*: A collection of questions and their answers of form `[{ q: String, a: String }, ...]`
   - `comment` *String*: A text to be viewed by the Kaitiakis of a group
+  - `applicant` *Object*: Details about the applicant, in the form:
+
+    ```js
+    {
+      set: {
+        // required fields
+        preferredName: String,
+        legalName: String,
+        aliveInterval: EdtfIntervalString,
+        city: String,
+        country: String
+
+        // TODO: add optional fields
+      }
+    }
+    ```
+
+    - `EdtfIntervalString` - see [edtf module](https://www.npmjs.com/package/edtf) and [library of congress spec](http://www.loc.gov/standards/datetime/)
 
 ### `ssb.tribes.application.accept(applicationId, opts, cb)`
 
@@ -261,6 +279,15 @@ Returns the current state of a tribe application. e.g.
     '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
     '@qYeVniXyC0/D9GIlGMAiIKg5jGgJTY7ZEgeikRWIJ/Y=.ed25519',
   ],
+  applicant: {
+    preferredName: 'Alice',
+    legalName: 'Alice',
+    aliveInterval: '1995-07-24/',
+    city: 'Faraway',
+    country: 'Wonderland'
+
+    // TODO add optional fields
+  },
   answers: [
     {
       q: 'where are you from?',
