@@ -35,7 +35,12 @@ function addMember (ssb, emit) {
   pull(
     ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
     pull.filter(m => m.sync !== true),
-    pull.filter(m => m.value.author !== ssb.id),
+    // pull.filter(m => m.value.author !== ssb.id),
+    // NOTE we could rely only on ssb.tribes.invite (which has a built in keystore call to
+    // register the author), however this call would not be made on a identity restore,
+    // nor on manually published messages which we might make instead of using that invite helper
+    // Therefor, we DO NOT filter out our own messages here.
+    //
     pull.filter(isValid),
     pull.drain(m => {
       messages.push(m)
