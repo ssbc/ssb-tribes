@@ -12,18 +12,12 @@ test('tribes.application.get (v3 application)', async t => {
     { q: 'what is your favourate pizza flavour', a: 'hawaiian' }
   ]
   const comment = "p.s. I'm also into adding chilli to hawaiin!"
-  const applicant = {
-    preferredName: 'Alice',
-    legalName: 'Alice',
-    aliveInterval: '1995-07-24/',
-    city: 'Faraway',
-    country: 'Wonderland'
-  }
+  const profileId = '%FiR41bB1CrsanZA3VgAzoMmHEOl8ZNXWn+GS5vW3E/8=.sha256'
 
   let id, update1, application
   let t1, t2, t3
   try {
-    id = await p(alice.tribes.application.create)(groupId, adminIds, { answers, applicant })
+    id = await p(alice.tribes.application.create)(groupId, adminIds, { answers, profileId })
     t1 = (await p(alice.get)(id)).timestamp
 
     update1 = await p(alice.tribes.application.update)(id, { comment })
@@ -49,6 +43,7 @@ test('tribes.application.get (v3 application)', async t => {
     id,
     groupId,
     applicantId: alice.id,
+    profileId,
     groupAdmins: [kaitiaki.id],
 
     answers: [
@@ -58,13 +53,6 @@ test('tribes.application.get (v3 application)', async t => {
       }
     ],
     decision: { accepted: true },
-    applicant: {
-      preferredName: 'Alice',
-      legalName: 'Alice',
-      aliveInterval: '1995-07-24/',
-      city: 'Faraway',
-      country: 'Wonderland'
-    },
 
     // this section was materialised from the other mutable sections
     // using some getTransformation trickery
@@ -148,6 +136,7 @@ test('tribes.application.get (v2 application)', async t => {
     id,
     groupId,
     applicantId: alice.id,
+    profileId: null, // v2 applications did not support profileId field
     groupAdmins: [kaitiaki.id],
 
     answers: [
@@ -157,7 +146,6 @@ test('tribes.application.get (v2 application)', async t => {
       }
     ],
     decision: { accepted: true },
-    applicant: null, // v2 applications did not support applicant field
 
     // this section was materialised from the other mutable sections
     // using some getTransformation trickery

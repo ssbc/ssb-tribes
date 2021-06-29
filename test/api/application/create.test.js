@@ -12,17 +12,11 @@ test('tribes.application.create (v3 application)', async t => {
     { q: 'what is your favourate pizza flavour', a: 'hawaiian' }
   ]
 
-  const applicant = {
-    preferredName: 'Alice',
-    legalName: 'Alice',
-    aliveInterval: '1995-07-24/',
-    city: 'Faraway',
-    country: 'Wonderland'
-  }
+  const profileId = '%FiR41bB1CrsanZA3VgAzoMmHEOl8ZNXWn+GS5vW3E/8=.sha256'
 
   let id, val
   try {
-    id = await p(server.tribes.application.create)(groupId, adminIds, { answers, applicant })
+    id = await p(server.tribes.application.create)(groupId, adminIds, { answers, profileId })
     val = await p(server.get)({ id, private: true })
   } catch (err) {
     t.fail(err)
@@ -35,7 +29,7 @@ test('tribes.application.create (v3 application)', async t => {
       version: 'v2',
       answers: { set: answers },
       recps: [...adminIds, server.id],
-      applicant: { set: applicant },
+      profileId: { set: profileId },
       tangles: {
         application: { root: null, previous: null }
       }

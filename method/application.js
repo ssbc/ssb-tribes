@@ -43,7 +43,7 @@ module.exports = function Application (ssb) {
           id: applicationId,
           groupId: application.groupId,
           applicantId: application.originalAuthor,
-          applicant: application.states[0].applicant || null,
+          profileId: application.states[0].profileId || null,
           groupAdmins: application.recps.filter(a => a !== application.originalAuthor),
 
           answers: application.states[0].answers,
