@@ -228,11 +228,13 @@ NOTE: the strange format with states is to leave easy support for multiple edito
 Creates a tribe application message directed to the administrators of a private-group.
 
 where:
+
 - `groupAdmins` *[FeedId]* is an array of the admins you are sending your application to
 - `opts` *Object*:
   - `answers` *Array*: A collection of questions and their answers of form `[{ q: String, a: String }, ...]`
   - `comment` *String*: A text to be viewed by the Kaitiakis of a group
-  - `profileId` *String*: The msgId of the profile holding the applicants information
+  - `profileId` *String*: is the id of a profile containing the applicants details. Note, if this profile is encrypted, it should be encrypted so `groupAdmins` can read it
+  > These are optional and can be left out using: `ssb.tribes.application.create(groupId, groupAdmins, cb)` if no opts are needed
 
 ### `ssb.tribes.application.accept(applicationId, opts, cb)`
 

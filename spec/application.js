@@ -36,6 +36,10 @@ module.exports = {
       pattern: cloakedMessageId.pattern,
       required: true
     },
+    profileId: {
+      type: ['string', 'null'],
+      pattern: messageId.pattern
+    },
     version: {
       type: 'string',
       pattern: '^v2$',
@@ -47,7 +51,6 @@ module.exports = {
     answers: Overwrite({ valueSchema: answersSchema }),
     comment: Overwrite({ valueSchema: commentSchema }),
     decision: Overwrite({ valueSchema: decisionSchema }),
-    profileId: Overwrite({ valueSchema: messageId }),
 
     history: History()
 

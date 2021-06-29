@@ -29,7 +29,7 @@ test('tribes.application.create (v3 application)', async t => {
       version: 'v2',
       answers: { set: answers },
       recps: [...adminIds, server.id],
-      profileId: { set: profileId },
+      profileId,
       tangles: {
         application: { root: null, previous: null }
       }

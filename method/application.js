@@ -17,6 +17,11 @@ module.exports = function Application (ssb) {
 
   return {
     create (groupId, adminIds, input = {}, cb) {
+      if (typeof input === 'function') {
+        cb = input
+        input = {}
+      }
+  
       crut.create({
         groupId,
         version: 'v2',
@@ -42,8 +47,8 @@ module.exports = function Application (ssb) {
         cb(null, {
           id: applicationId,
           groupId: application.groupId,
+          profileId: application.profileId || null,
           applicantId: application.originalAuthor,
-          profileId: application.states[0].profileId || null,
           groupAdmins: application.recps.filter(a => a !== application.originalAuthor),
 
           answers: application.states[0].answers,
