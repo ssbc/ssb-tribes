@@ -42,7 +42,7 @@ module.exports = {
     },
     version: {
       type: 'string',
-      pattern: '^v2$',
+      pattern: '^v(2|2\\.1)$',
       required: true
     }
   },

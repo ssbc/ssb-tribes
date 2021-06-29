@@ -10,7 +10,7 @@ const text1 = 'Hello, can I join?'
 const text2 = 'Welcome!'
 const text3 = 'Welcome for a second time!'
 
-test('tribes.application.list', async t => {
+test('tribes.application.list (v2.1 application)', async t => {
   const strangerOpts = {
     name: 'stranger-test-' + Date.now(),
     keys: keys.generate()
@@ -181,6 +181,53 @@ test('tribes.application.list', async t => {
   } catch (err) {
     finish(err)
   }
+})
+
+test('tribes.application.list (v2 application)', t => {
+  const ssb = Server()
+
+  const v2RootNodeT = {
+    type: 'group/application',
+    version: 'v2',
+    groupId: '%EPdhGFkWxLn2k7kzthIddA8yqdX8VwjmhmTes0gMMqE=.cloaked',
+    recps: [
+      '@rHfP8mgPkmWT+KYkNoQMef+dFJLD3wi4gVdU+1LoABI=.ed25519',
+      ssb.id
+    ],
+    tangles: { application: { root: null, previous: null } }
+  }
+
+  ssb.publish(v2RootNodeT, (err, m) => {
+    if (err) throw err
+
+    ssb.tribes.application.list({}, (err, results) => {
+      if (err) throw err
+
+      t.deepEqual(results, [m.key], 'v2 applications are returned (only applicationId when opts={}')
+
+      ssb.tribes.application.list({ get: true }, (err, results) => {
+        if (err) throw err
+
+        t.deepEqual(
+          results,
+          [{
+            id: m.key,
+            groupId: '%EPdhGFkWxLn2k7kzthIddA8yqdX8VwjmhmTes0gMMqE=.cloaked',
+            profileId: null, // expect this because it didnt exist in v2
+            applicantId: ssb.id,
+            groupAdmins: ['@rHfP8mgPkmWT+KYkNoQMef+dFJLD3wi4gVdU+1LoABI=.ed25519'],
+            answers: null,
+            decision: null,
+            history: []
+          }],
+          'v2 applications are returned when opts={get: true}'
+        )
+
+        ssb.close()
+        t.end()
+      })
+    })
+  })
 })
 
 test('tribes.application.list (v1 application)', t => {
