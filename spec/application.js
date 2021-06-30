@@ -1,7 +1,7 @@
 const { msgIdRegex } = require('ssb-ref')
 const Overwrite = require('@tangle/overwrite')
 const LinearAppend = require('@tangle/linear-append')
-const { feedId, cloakedMessageId } = require('ssb-schema-definitions')()
+const { feedId, cloakedMessageId, messageId } = require('ssb-schema-definitions')()
 
 const answersSchema = {
   type: 'array',
@@ -36,9 +36,13 @@ module.exports = {
       pattern: cloakedMessageId.pattern,
       required: true
     },
+    profileId: {
+      type: ['string', 'null'],
+      pattern: messageId.pattern
+    },
     version: {
       type: 'string',
-      pattern: '^v2$',
+      pattern: '^v(2|2\\.1)$',
       required: true
     }
   },

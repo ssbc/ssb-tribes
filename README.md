@@ -228,10 +228,13 @@ NOTE: the strange format with states is to leave easy support for multiple edito
 Creates a tribe application message directed to the administrators of a private-group.
 
 where:
+
 - `groupAdmins` *[FeedId]* is an array of the admins you are sending your application to
 - `opts` *Object*:
   - `answers` *Array*: A collection of questions and their answers of form `[{ q: String, a: String }, ...]`
   - `comment` *String*: A text to be viewed by the Kaitiakis of a group
+  - `profileId` *String*: is the id of a profile containing the applicants details. Note, if this profile is encrypted, it should be encrypted so `groupAdmins` can read it
+  > These are optional and can be left out using: `ssb.tribes.application.create(groupId, groupAdmins, cb)` if no opts are needed
 
 ### `ssb.tribes.application.accept(applicationId, opts, cb)`
 
@@ -255,12 +258,14 @@ Returns the current state of a tribe application. e.g.
 ```js
 {
   id: '%CXVDe5AoPVf83CoHYBpfplpzTU/YYkN56yge1nBG9wE=.sha256',
-  applicantId: '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519',
   groupId: '%A9OUzXtv7BhaAfSMqBzOO6JC8kvwmZWGVxHDAlM+/so=.cloaked',
+  applicantId: '@35wu1YDBx9NPsUXpe7bYmHb7BQFEfn2ZFh0DZ6OipA0=.ed25519',
+  profileId: '%FiR41bB1CrsanZA3VgAzoMmHEOl8ZNXWn+GS5vW3E/8=.sha256',
   groupAdmins: [
     '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
     '@qYeVniXyC0/D9GIlGMAiIKg5jGgJTY7ZEgeikRWIJ/Y=.ed25519',
   ],
+  
   answers: [
     {
       q: 'where are you from?',

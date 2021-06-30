@@ -1,8 +1,9 @@
 const test = require('tape')
+const keys = require('ssb-keys')
 const { promisify: p } = require('util')
 const { Server, GroupId, replicate } = require('../../helpers')
 
-test('tribes.application.get', async t => {
+test('tribes.application.get (v2.1 application)', async t => {
   const alice = Server()
   const kaitiaki = Server()
 
@@ -12,11 +13,12 @@ test('tribes.application.get', async t => {
     { q: 'what is your favourate pizza flavour', a: 'hawaiian' }
   ]
   const comment = "p.s. I'm also into adding chilli to hawaiin!"
+  const profileId = '%FiR41bB1CrsanZA3VgAzoMmHEOl8ZNXWn+GS5vW3E/8=.sha256'
 
   let id, update1, application
   let t1, t2, t3
   try {
-    id = await p(alice.tribes.application.create)(groupId, adminIds, { answers })
+    id = await p(alice.tribes.application.create)(groupId, adminIds, { answers, profileId })
     t1 = (await p(alice.get)(id)).timestamp
 
     update1 = await p(alice.tribes.application.update)(id, { comment })
@@ -42,6 +44,7 @@ test('tribes.application.get', async t => {
     id,
     groupId,
     applicantId: alice.id,
+    profileId,
     groupAdmins: [kaitiaki.id],
 
     answers: [
@@ -92,6 +95,65 @@ test('tribes.application.get', async t => {
   alice.close()
   kaitiaki.close()
   t.end()
+})
+
+test('tribes.application.get (v2 application)', async t => {
+  const server = Server()
+
+  const groupId = GroupId()
+  const groupAdmins = [keys.generate().id]
+  const answers = [
+    { q: 'what is your favourate pizza flavour', a: 'hawaiian' }
+  ]
+  const comment = "p.s. I'm also into adding chilli to hawaiin!"
+
+  const v2RootNodeT = {
+    type: 'group/application',
+    groupId,
+    version: 'v2', // use old version of applications
+    answers: { set: answers },
+    comment: { set: comment },
+    recps: [...groupAdmins, server.id], // adminIds
+    tangles: { application: { root: null, previous: null } }
+  }
+
+  server.publish(v2RootNodeT, (err, m) => {
+    if (err) throw err
+
+    server.tribes.application.get(m.key, (err, state) => {
+      t.error(err, 'can still get v2 applications')
+
+      t.deepEqual(
+        state,
+        {
+          id: m.key,
+          groupId,
+          profileId: null, // wasnt set in old version
+          applicantId: server.id,
+          groupAdmins,
+          answers,
+          decision: null,
+          history: [
+            {
+              type: 'answers',
+              author: server.id,
+              timestamp: state.history[0].timestamp,
+              body: answers
+            },
+            {
+              type: 'comment',
+              author: server.id,
+              timestamp: state.history[1].timestamp,
+              body: comment
+            }
+          ]
+        },
+        'returns correctly formated application'
+      )
+      server.close()
+      t.end()
+    })
+  })
 })
 
 test('tribes.application.get (v1 application)', t => {

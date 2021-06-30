@@ -4,8 +4,7 @@ const { promisify: p } = require('util')
 const { Server, GroupId } = require('../../helpers')
 
 // const sleep = async (t) => new Promise(resolve => setTimeout(resolve, t))
-
-test('tribes.application.create', async t => {
+test('tribes.application.create (v2.1 application)', async t => {
   const server = Server()
   const adminIds = [keys.generate().id]
   const groupId = GroupId()
@@ -13,9 +12,11 @@ test('tribes.application.create', async t => {
     { q: 'what is your favourate pizza flavour', a: 'hawaiian' }
   ]
 
+  const profileId = '%FiR41bB1CrsanZA3VgAzoMmHEOl8ZNXWn+GS5vW3E/8=.sha256'
+
   let id, val
   try {
-    id = await p(server.tribes.application.create)(groupId, adminIds, { answers })
+    id = await p(server.tribes.application.create)(groupId, adminIds, { answers, profileId })
     val = await p(server.get)({ id, private: true })
   } catch (err) {
     t.fail(err)
@@ -25,9 +26,10 @@ test('tribes.application.create', async t => {
     {
       type: 'group/application',
       groupId,
-      version: 'v2',
+      version: 'v2.1',
       answers: { set: answers },
       recps: [...adminIds, server.id],
+      profileId,
       tangles: {
         application: { root: null, previous: null }
       }

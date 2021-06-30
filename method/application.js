@@ -15,11 +15,18 @@ module.exports = function Application (ssb) {
     return input
   }
 
+  const groupApplicationList = GroupApplicationList(ssb, crut)
+
   return {
     create (groupId, adminIds, input = {}, cb) {
+      if (typeof input === 'function') {
+        cb = input
+        input = {}
+      }
+
       crut.create({
         groupId,
-        version: 'v2',
+        version: 'v2.1',
         ...pruneInput(input),
 
         recps: [...adminIds, ssb.id]
@@ -42,6 +49,7 @@ module.exports = function Application (ssb) {
         cb(null, {
           id: applicationId,
           groupId: application.groupId,
+          profileId: application.profileId || null,
           applicantId: application.originalAuthor,
           groupAdmins: application.recps.filter(a => a !== application.originalAuthor),
 
@@ -94,73 +102,76 @@ module.exports = function Application (ssb) {
     },
 
     list (opts, cb) {
-      if (typeof opts === 'function') return groupApplicationList(ssb, {}, opts)
+      if (typeof opts === 'function') return groupApplicationList({}, opts)
 
-      groupApplicationList(ssb, opts, cb)
+      groupApplicationList(opts, cb)
     }
   }
 }
 
-function groupApplicationList (server, opts, cb) {
-  if (opts.get === true) opts.get = server.tribes.application.get
-  if (opts.accepted !== undefined && !opts.get) opts.get = server.tribes.application.get
+function GroupApplicationList (server, crut) {
+  return function groupApplicationList (opts, cb) {
+    if (opts.get === true) opts.get = server.tribes.application.get
+    if (opts.accepted !== undefined && !opts.get) opts.get = server.tribes.application.get
 
-  const optsError = findOptsError(opts)
-  if (optsError) return cb(optsError)
+    const optsError = findOptsError(opts)
+    if (optsError) return cb(optsError)
 
-  const { groupId, get, accepted } = opts
-  const query = [
-    {
-      $filter: {
-        value: {
-          content: {
-            type: 'group/application',
-            version: 'v2',
-            tangles: {
-              application: {
-                root: null
+    const { groupId, get, accepted } = opts
+    const query = [
+      {
+        $filter: {
+          value: {
+            content: {
+              type: 'group/application',
+              // version: 'v2.1',
+              tangles: {
+                application: {
+                  root: null
+                }
               }
             }
           }
         }
       }
-    }
-  ]
+    ]
 
-  pull(
-    server.query.read({ query }),
-    (groupId)
-      ? pull.filter(m => m.value.content.groupId === groupId)
-      : null,
+    pull(
+      server.query.read({ query }),
+      pull.filter(crut.spec.isRoot),
+      (groupId)
+        ? pull.filter(m => m.value.content.groupId === groupId)
+        : null,
 
-    pull.map(m => m.key),
+      pull.map(m => m.key),
 
-    // (optionally) convert applicationIds into application records
-    (get !== undefined)
-      ? pull(
-          paraMap(
-            (id, cb) => get(id, (err, application) => {
-              if (err) return cb(null, null) // don't choke of failed gets
-              return cb(null, application)
-            })
-            , 4
-          ), // 4 = width of parallel querying
-          pull.filter(Boolean) // filter out failed gets
-        )
-      : null,
+      // (optionally) convert applicationIds into application records
+      (get !== undefined)
+        ? pull(
+            paraMap(
+              (id, cb) => get(id, (err, application) => {
+                if (err) return cb(null, null) // don't choke of failed gets
+                return cb(null, application)
+              })
+              , 4
+            ), // 4 = width of parallel querying
+            pull.filter(Boolean) // filter out failed gets
+          )
+        : null,
 
-    // (optionally) filter applications by whether accepted
-    (accepted !== undefined)
-      ? pull.filter(a => {
-          if (accepted === null) return a.decision === null // no response
-          return a.decision && a.decision.accepted === accepted // boolean
-        })
-      : null,
+      // (optionally) filter applications by whether accepted
+      (accepted !== undefined)
+        ? pull.filter(a => {
+            if (accepted === null) return a.decision === null // no response
+            return a.decision && a.decision.accepted === accepted // boolean
+          })
+        : null,
 
-    pull.collect((err, data) => {
-      cb(err, data)
-    })
-  )
+      pull.collect((err, data) => {
+        cb(err, data)
+      })
+    )
+  }
 }
 
 const VALID_ACCEPTED = [undefined, null, true, false]

@@ -11,7 +11,7 @@ test('tribes.application.comment', async t => {
 
   let id, comment, val
   try {
-    id = await p(alice.tribes.application.create)(groupId, adminIds, {})
+    id = await p(alice.tribes.application.create)(groupId, adminIds)
 
     comment = 'oh btw my birth name is john'
     const updateId = await p(alice.tribes.application.update)(id, { comment })
