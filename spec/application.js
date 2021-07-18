@@ -15,7 +15,6 @@ const answersSchema = {
     additionalProperties: false
   }
 }
-const commentSchema = { type: 'string' }
 const decisionSchema = {
   type: 'object',
   required: ['accepted'],
@@ -49,7 +48,7 @@ module.exports = {
 
   props: {
     answers: Overwrite({ valueSchema: answersSchema }),
-    comment: Overwrite({ valueSchema: commentSchema }),
+    comment: Overwrite({ valueSchema: { type: 'string' } }),
     decision: Overwrite({ valueSchema: decisionSchema }),
 
     history: History()
@@ -143,7 +142,7 @@ function decorateHistory (T, m, distance) {
   }
 
   if (Object.keys(T.history).length === 0) delete T.history
-  
+
   return T
 }
 
