@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@tangle/linear-append": "^1.0.0",
-    "@tangle/overwrite": "^2.0.1",
+    "@tangle/overwrite": "^2.0.2",
     "@tangle/reduce": "^3.1.0",
     "@tangle/strategy": "^2.0.1",
     "charwise": "^3.0.1",
@@ -33,17 +33,17 @@
     "pull-paramap": "^1.2.2",
     "pull-stream": "^3.6.14",
     "sodium-native": "^3.2.0",
-    "ssb-crut": "^2.1.2",
-    "ssb-keys": "^8.0.2",
+    "ssb-crut": "^3.0.4",
+    "ssb-keys": "^8.1.0",
     "ssb-ref": "^2.14.3",
     "ssb-schema-definitions": "^3.1.0"
   },
   "devDependencies": {
     "is-canonical-base64": "^1.1.1",
-    "scuttle-testbot": "^1.5.2",
+    "scuttle-testbot": "^1.6.0",
     "ssb-backlinks": "^2.1.1",
     "ssb-query": "^2.4.5",
-    "ssb-replicate": "^1.3.2",
+    "ssb-replicate": "^1.3.3",
     "standard": "^16.0.3",
     "tap-spec": "^5.0.0",
     "tape": "^4.13.3"

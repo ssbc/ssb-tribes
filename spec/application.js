@@ -60,15 +60,13 @@ module.exports = {
   getTransformation (m, distance) {
     const T = m.value.content
 
-    decorateHistory(T, m, distance)
+    return decorateHistory({ ...T }, m, distance)
     // history is not a field that people will mutate generally
     // instead, it's a field we push values into from other fields into (with additional data)
     // so that we can have a nice linear and easy to render record
 
     // challenge is that answers/ comment/ decision fields must pass their own validations
     // AND the history validation (when they are mapped in decorated form into history mutations)
-
-    return T
   },
 
   isValidNextStep (context, msg) {
@@ -145,6 +143,8 @@ function decorateHistory (T, m, distance) {
   }
 
   if (Object.keys(T.history).length === 0) delete T.history
+  
+  return T
 }
 
 function uniqueKey (distance, m, count) {
