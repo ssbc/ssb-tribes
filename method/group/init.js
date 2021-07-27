@@ -1,14 +1,14 @@
 const { box } = require('envelope-js')
 const { keySchemes } = require('private-group-spec')
 
-const { MsgId } = require('../../lib/cipherlinks')
-const Secret = require('../../lib/secret-key')
+const { SecretKey } = require('ssb-box2')
 const groupId = require('../../lib/group-id')
 const { isValid } = require('../../spec/group/init')
+const bfe = require('ssb-bfe')
 
 module.exports = function GroupCreate (ssb, keystore, state) {
   return function groupCreate (cb) {
-    const groupKey = new Secret()
+    const groupKey = new SecretKey()
     const content = {
       type: 'group/init',
       tangles: {
@@ -22,7 +22,7 @@ module.exports = function GroupCreate (ssb, keystore, state) {
     // but the groupId is derived from the messageId of this message (which does not exist yet
     const plain = Buffer.from(JSON.stringify(content), 'utf8')
 
-    const msgKey = new Secret().toBuffer()
+    const msgKey = new SecretKey().toBuffer()
     const recipientKeys = [
       { key: groupKey.toBuffer(), scheme: keySchemes.private_group }
     ]
@@ -35,7 +35,7 @@ module.exports = function GroupCreate (ssb, keystore, state) {
     ssb.getFeedState(ssb.id, (err, previousFeedState) => {
       if (err) return cb(err)
 
-      const previousMessageId = new MsgId(previousFeedState.id).toTFK()
+      const previousMessageId = bfe.encode(previousFeedState.id)
 
       const envelope = box(plain, state.feedId, previousMessageId, msgKey, recipientKeys)
       const ciphertext = envelope.toString('base64') + '.box2'

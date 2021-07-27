@@ -1,8 +1,7 @@
 const test = require('tape')
 const { promisify: p } = require('util')
 // const pull = require('pull-stream')
-const { Server, GroupId, replicate } = require('./helpers')
-const { FeedId } = require('../lib/cipherlinks')
+const { Server, GroupId, replicate, FeedId } = require('./helpers')
 
 test('publish (to groupId)', t => {
   const server = Server()
@@ -55,7 +54,7 @@ test('publish (group + feedId)', t => {
     t.error(err)
 
     const { groupId } = data
-    const feedId = new FeedId().mock().toSSB()
+    const feedId = FeedId()
 
     const content = {
       type: 'announce',

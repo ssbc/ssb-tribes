@@ -1,8 +1,7 @@
 const { generate } = require('ssb-keys')
 
-const { FeedId } = require('../../lib/cipherlinks')
-const DHKeys = require('../../lib/dh-keys')
-const FeedKeys = require('../../lib/feed-keys')
+const { FeedId } = require('./cipherlinks')
+const { DHKeys, FeedKeys } = require('ssb-box2')
 
 module.exports = function DHFeedKeys (keys) {
   const ssbKeys = keys || generate()

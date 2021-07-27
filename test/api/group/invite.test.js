@@ -1,7 +1,6 @@
 const test = require('tape')
 const { promisify: p } = require('util')
-const { Server, replicate } = require('../../helpers')
-const { FeedId } = require('../../../lib/cipherlinks')
+const { Server, replicate, FeedId } = require('../../helpers')
 
 test('tribes.invite', async t => {
   const kaitiaki = Server()
@@ -17,7 +16,7 @@ test('tribes.invite', async t => {
 
     const authorIds = [
       newPerson.id,
-      new FeedId().mock().toSSB()
+      FeedId()
     ]
 
     let invite = await p(kaitiaki.tribes.invite)(

@@ -3,8 +3,8 @@
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const { box, unboxKey, unboxBody } = require('envelope-js')
 
-const SecretKey = require('./lib/secret-key')
-const { FeedId, MsgId } = require('./lib/cipherlinks')
+const { SecretKey } = require('ssb-box2')
+const bfe = require('ssb-bfe')
 
 function isEnvelope (ciphertext) {
   return ciphertext.endsWith('.box2')
@@ -43,7 +43,7 @@ module.exports = function Envelope (keystore, state) {
     const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
     const msgKey = new SecretKey().toBuffer()
 
-    const previousMessageId = new MsgId(previousFeedState.id).toTFK()
+    const previousMessageId = bfe.encode(previousFeedState.id)
 
     const envelope = box(plaintext, state.feedId, previousMessageId, msgKey, recipentKeys)
     return envelope.toString('base64') + '.box2'
@@ -54,8 +54,8 @@ module.exports = function Envelope (keystore, state) {
     if (!isEnvelope(ciphertext)) return null
 
     const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
-    const feed_id = new FeedId(author).toTFK()
-    const prev_msg_id = new MsgId(previous).toTFK()
+    const feed_id = bfe.encode(author)
+    const prev_msg_id = bfe.encode(previous)
 
     const trial_group_keys = keystore.author.groupKeys(author)
     const readKeyFromGroup = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
@@ -78,8 +78,8 @@ module.exports = function Envelope (keystore, state) {
     // TODO change unboxer signature to allow us to optionally pass variables
     // from key() down here to save computation
     const envelope = Buffer.from(ciphertext.replace('.box2', ''), 'base64')
-    const feed_id = new FeedId(author).toTFK()
-    const prev_msg_id = new MsgId(previous).toTFK()
+    const feed_id = bfe.encode(author)
+    const prev_msg_id = bfe.encode(previous)
 
     const plaintext = unboxBody(envelope, feed_id, prev_msg_id, read_key)
     if (!plaintext) return

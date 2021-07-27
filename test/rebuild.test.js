@@ -1,8 +1,7 @@
 const test = require('tape')
 const pull = require('pull-stream')
 
-const { Server, replicate } = require('./helpers')
-const { FeedId } = require('../lib/cipherlinks')
+const { Server, replicate, FeedId } = require('./helpers')
 
 function nMessages (n, { type = 'post', recps } = {}) {
   return new Array(20).fill(type).map((val, i) => {
@@ -176,7 +175,7 @@ test('rebuild (not called when I invite another member)', t => {
     t.error(err, 'I create a group')
 
     const { groupId } = data
-    const feedId = new FeedId().mock().toSSB()
+    const feedId = FeedId()
 
     server.tribes.invite(groupId, [feedId], {}, (err) => {
       t.error(err, 'I add someone to the group')

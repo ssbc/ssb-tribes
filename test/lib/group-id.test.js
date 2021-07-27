@@ -8,9 +8,9 @@ const { keySchemes } = require('private-group-spec')
 const { unboxKey, DeriveSecret } = require('envelope-js')
 const LABELS = require('envelope-spec/derive_secret/constants.json')
 
-const { FeedId, MsgId } = require('../../lib/cipherlinks')
-const Secret = require('../../lib/secret-key')
+const { SecretKey } = require('ssb-box2')
 const { decodeLeaves, Server } = require('../helpers')
+const { FeedId, MsgId } = require('../helpers/cipherlinks')
 const GroupId = require('../../lib/group-id')
 
 test('GroupId', t => {
@@ -18,7 +18,7 @@ test('GroupId', t => {
   const feed_id = new FeedId().mock()
   const prev_msg_id = new MsgId().mock()
   // const prev_msg_id = new MsgId(null) // also works
-  const msg_key = new Secret() // top-level encryption key
+  const msg_key = new SecretKey() // top-level encryption key
 
   const groupInitMsg = {
     key: new MsgId().mock().toSSB(),

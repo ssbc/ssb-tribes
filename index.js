@@ -7,9 +7,9 @@ const Obz = require('obz')
 const KeyStore = require('./key-store')
 const Envelope = require('./envelope')
 const listen = require('./listen')
-const { FeedId } = require('./lib/cipherlinks')
 const GroupId = require('./lib/group-id')
 const GetGroupTangle = require('./lib/get-group-tangle')
+const bfe = require('ssb-bfe')
 
 const Method = require('./method')
 
@@ -46,7 +46,7 @@ function init (ssb, config) {
   const state = {
     keys: ssb.keys,
 
-    feedId: new FeedId(ssb.id).toTFK(),
+    feedId: bfe.encode(ssb.id),
 
     loading: {
       keystore: Obz()
