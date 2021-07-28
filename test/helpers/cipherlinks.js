@@ -1,6 +1,5 @@
 const { Cipherlink } = require('envelope-js')
-// FIXME: missing tfd.json in ssb-bfe
-const TYPES = require('envelope-spec/encoding/tfk.json')
+const TYPES = require('ssb-binary-field-encodings-spec/bfe.json')
 const { isBuffer } = Buffer
 const { isFeedId, isMsg } = require('ssb-ref')
 const { generate } = require('ssb-keys')
