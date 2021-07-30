@@ -1,5 +1,5 @@
 const { Cipherlink } = require('envelope-js')
-const TYPES = require('ssb-binary-field-encodings-spec/bfe.json')
+const { bfeTypes } = require('ssb-bfe')
 const { isBuffer } = Buffer
 const { isFeedId, isMsg } = require('ssb-ref')
 const { generate } = require('ssb-keys')
@@ -17,7 +17,7 @@ class Scuttlelink extends Cipherlink {
     // NOTE This is a funny edge case for representing "previous: null"
     // perhaps this should not be here
 
-    const { sigil, suffix } = TYPES[this.type].formats[this.format]
+    const { sigil, suffix } = bfeTypes[this.type].formats[this.format]
     return sigil + this.key.toString('base64') + suffix
   }
 }
