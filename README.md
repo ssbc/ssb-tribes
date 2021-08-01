@@ -40,7 +40,7 @@ ssb.tribes.create({}, (err, info) => {
     const cookie = '@YXkE3TikkY4GFMX3lzXUllRkNTbj5E+604AkaO1xbz8=.ed25519'
     const staltz = '@QlCTpvY7p9ty2yOFrv1WU1AE88aoQc4Y7wYal7PFc+w=.ed25519'
 
-    ssb.tribes.invite(groupId, [cookie, statlz], {}, (err, invite) => {
+    ssb.tribes.invite(groupId, [cookie, staltz], {}, (err, invite) => {
       // two friends have been sent an invite which includes the decryption key for the group
       // they can now read the message I just published, and publish their own messages to the group
 
