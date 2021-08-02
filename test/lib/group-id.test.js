@@ -8,7 +8,7 @@ const { keySchemes } = require('private-group-spec')
 const { unboxKey, DeriveSecret } = require('envelope-js')
 const LABELS = require('envelope-spec/derive_secret/constants.json')
 
-const { SecretKey } = require('ssb-box2')
+const { SecretKey } = require('ssb-private-group-keys')
 const { decodeLeaves, Server } = require('../helpers')
 const { FeedId, MsgId } = require('../helpers/cipherlinks')
 const GroupId = require('../../lib/group-id')

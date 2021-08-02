@@ -7,7 +7,7 @@ const KEY_LENGTH = require('sodium-native').crypto_secretbox_KEYBYTES
 const { keySchemes } = require('private-group-spec')
 const { isFeed, isMsg, isCloakedMsg: isGroup } = require('ssb-ref')
 
-const { directMessageKey, SecretKey } = require('ssb-box2')
+const { directMessageKey, SecretKey } = require('ssb-private-group-keys')
 
 const GROUP = 'group'
 const MEMBER = 'member'

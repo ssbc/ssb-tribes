@@ -1,5 +1,5 @@
 const { DHFeedKeys, print } = require('../helpers')
-const { directMessageKey } = require('ssb-box2')
+const { directMessageKey } = require('ssb-private-group-keys')
 
 const generators = [
   (i) => {

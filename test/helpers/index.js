@@ -1,6 +1,6 @@
 const { replicate } = require('scuttle-testbot')
 
-const { SecretKey } = require('ssb-box2')
+const { SecretKey } = require('ssb-private-group-keys')
 const { FeedId, MsgId } = require('./cipherlinks')
 
 const decodeLeaves = require('./decode-leaves')

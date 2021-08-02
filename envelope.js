@@ -3,7 +3,7 @@
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const { box, unboxKey, unboxBody } = require('envelope-js')
 
-const { SecretKey } = require('ssb-box2')
+const { SecretKey } = require('ssb-private-group-keys')
 const bfe = require('ssb-bfe')
 
 function isEnvelope (ciphertext) {

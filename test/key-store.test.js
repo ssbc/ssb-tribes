@@ -6,7 +6,7 @@ const { generate } = require('ssb-keys')
 
 const KeyStore = require('../key-store')
 const { GroupKey, GroupId, FeedId, MsgId } = require('./helpers')
-const { directMessageKey } = require('ssb-box2')
+const { directMessageKey } = require('ssb-private-group-keys')
 
 let i = 0
 function TmpPath () {
