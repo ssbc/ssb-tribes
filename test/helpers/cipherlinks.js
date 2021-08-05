@@ -3,6 +3,8 @@ const { bfeTypes } = require('ssb-bfe')
 const { isBuffer } = Buffer
 const { isFeedId, isMsg } = require('ssb-ref')
 const { generate } = require('ssb-keys')
+const { SecretKey } = require('ssb-private-group-keys')
+const na = require('sodium-native')
 
 const zeros = Buffer.alloc(32)
 
@@ -18,6 +20,7 @@ class Scuttlelink extends Cipherlink {
     // perhaps this should not be here
 
     const { sigil, suffix } = bfeTypes[this.type].formats[this.format]
+    if (sigil && suffix) // WIP - started looking into using ssb-bfe.decode
     return sigil + this.key.toString('base64') + suffix
   }
 }
@@ -41,6 +44,28 @@ class FeedId extends Scuttlelink {
   }
 }
 
+class POBoxId extends Scuttlelink {
+  constructor (id) {
+    let key
+    if (isBuffer(id)) key = id
+    // else if (typeof id === 'string') {
+    //   if (isPOBoxId(id)) key = Buffer.from(id.replace('@', '').replace('.ed25519', ''), 'base64')
+    //   else throw new Error(`expected PO BoxId, got ${id}`)
+    // }
+
+    super({ type: 3, format: 0, key })
+  }
+
+  mock () {
+    this.key = new SecretKey(na.crypto_scalarmult_BYTES).toBuffer()
+    return this
+  }
+
+  // toSSB () {
+  //   return `ssb://diffie-hellman/curve25519/${this.key.toString('base64')}`
+  // }
+}
+
 /* NOTE this assumes for ssb/classic message type */
 class MsgId extends Scuttlelink {
   constructor (id) {
@@ -59,5 +84,6 @@ class MsgId extends Scuttlelink {
 
 module.exports = {
   FeedId,
+  POBoxId,
   MsgId
 }

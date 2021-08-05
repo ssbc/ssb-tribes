@@ -33,12 +33,16 @@ module.exports = function Envelope (keystore, state) {
 
         return [...acc, keyInfo]
       }
-      // use a special key for your own feedId
-      if (recp === state.keys.id) {
-        return [...acc, keystore.ownKeys(recp)[0]]
+      if (isFeed(recp)) {
+        // use a special key for your own feedId
+        if (recp === state.keys.id) return [...acc, keystore.ownKeys(recp)[0]]
+        else return [...acc, keystore.author.sharedDMKey(recp)]
       }
 
-      return [...acc, keystore.author.sharedDMKey(recp)]
+      if (isDHKey(recp)) {
+      }
+
+        
     }, [])
     const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
     const msgKey = new SecretKey().toBuffer()
