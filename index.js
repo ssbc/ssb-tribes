@@ -10,6 +10,7 @@ const listen = require('./listen')
 const { GetGroupTangle, groupId: buildGroupId } = require('./lib')
 
 const Method = require('./method')
+const create = require('./method/link/create')
 
 module.exports = {
   name: 'tribes',
@@ -161,6 +162,8 @@ function init (ssb, config) {
     })
   })
 
+
+
   /* API */
   const scuttle = Method(ssb, keystore, state) // ssb db methods
 
@@ -234,7 +237,6 @@ function init (ssb, config) {
     poBox: scuttle.poBox,
     subtribe: {
       create (groupId, opts, cb) {
-        // create a new group
         tribeCreate(opts, (err, data) => {
           if (err) return cb(err)
 
@@ -245,7 +247,7 @@ function init (ssb, config) {
           //   const { poBoxId } = data
           // })
           //
-          // consider changing createGroup API to be like 
+          // consider changing createGroup API to be like
           // scuttle.group.create({ addPOBox: true }, cb)
 
           // link the subgroup to the group
@@ -255,7 +257,7 @@ function init (ssb, config) {
             cb(null, {
               groupId: subgroupId,
               groupKey,
-              dmKey: 'secret string WOOO', // WIP
+              dmKey: null, // TODO: add code to create the dmKey
               groupInitMsg
             })
           })

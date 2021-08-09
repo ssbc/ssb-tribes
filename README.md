@@ -143,13 +143,11 @@ Lists all the authors (feedIds) who you know are part of the group with id `grou
 ### `ssb.tribes.subtribe.create(groupId, opts, cb)`
 
 A convenience method which:
-
 - mints a group
 - publishes a `link` in the parent group which advertises the existence of the subgroup
 - mints a `dmKey` for that group so that the parent group member can send messages to the subgroup
 
 where:
-
 - `groupId` *String* - the id of the _parent_ group this subgroup will be linked to
 - `opts` *Object* (currently no opts you can pass in but empty object still required)
 - `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
