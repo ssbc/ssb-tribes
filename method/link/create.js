@@ -1,7 +1,8 @@
 const { isCloakedMsgId: isGroupId } = require('ssb-ref')
-const { isRoot: isValid } = require('../../spec/link/feed-group')
+const { isRoot: isValidFeedGroupLink } = require('../../spec/link/feed-group')
+const { isRoot: isValidGroupSubgroupLink } = require('../../spec/link/group-group')
 
-module.exports = function CreateFeedGroupLink (server) {
+function CreateFeedGroupLink (server) {
   return function createFeedGroupLink ({ group, name }, cb) {
     if (!isGroupId(group)) return cb(new Error('expects a valid groupId'))
 
@@ -19,10 +20,37 @@ module.exports = function CreateFeedGroupLink (server) {
 
     if (!name) delete content.name
 
-    if (!isValid(content)) return cb(isValid.errors)
+    if (!isValidFeedGroupLink(content)) return cb(isValidFeedGroupLink.errors)
 
     server.publish(content, cb)
     // NOTE we *could* check the group is for a group we know about
     // but if it's not, encryption based on recps will fail
   }
+}
+
+function CreateGroupSubgroupLink (server) {
+  return function createGroupSubgroupLink ({ group, subgroup }, cb) {
+    if (!isGroupId(group)) return cb(new Error('link.create expects a valid groupId for the group'))
+    if (!isGroupId(subgroup)) return cb(new Error('link.create expects a valid groupId for the subgroup'))
+
+    const content = {
+      type: 'link/group-group',
+      parent: group,
+      child: subgroup,
+      subgroup: { set: true },
+      tangles: {
+        link: { root: null, previous: null }
+      },
+      recps: [group]
+    }
+
+    if (!isValidGroupSubgroupLink(content)) return cb(isValidGroupSubgroupLink.errors)
+
+    server.publish(content, cb)
+  }
+}
+
+module.exports = {
+  CreateFeedGroupLink,
+  CreateGroupSubgroupLink
 }

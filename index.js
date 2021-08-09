@@ -228,18 +228,16 @@ function init (ssb, config) {
 
     application: scuttle.application,
     poBox: scuttle.poBox,
-    subtribes: {
+    subtribe: {
       create (groupId, opts, cb) {
         // create a new group
         createGroup({}, (data) => {
-          const { groupId, groupKey, groupInitMsg } = data
+          const { groupId: subgroupId } = data
 
-          cb(null, {
-            groupId,
-            groupKey,
-            dmKey: null, // TODO: add code to create the dmKey
-            groupInitMsg
-          })
+          // TODO: generate a dmKey and attach to returned data
+
+          // link the subgroup to the group
+          scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId })
         })
       }
     }
