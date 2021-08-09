@@ -177,10 +177,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       cache.authors[authorId] = buildDMKey(authorId)
     }
 
-    return {
-      key: cache.authors[authorId],
-      scheme: keySchemes.feed_id_dm
-    }
+    return cache.authors[authorId]
   }
 
   function processAddMember ({ groupId, groupKey, root, authors }, cb) {

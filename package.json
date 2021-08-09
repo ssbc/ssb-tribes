@@ -34,9 +34,9 @@
     "pull-stream": "^3.6.14",
     "sodium-native": "^3.2.0",
     "ssb-bfe": "^1.0.0",
-    "ssb-private-group-keys": "github:ssbc/ssb-private-group-keys",
     "ssb-crut": "^3.0.4",
     "ssb-keys": "^8.1.0",
+    "ssb-private-group-keys": "^0.1.0",
     "ssb-ref": "^2.14.3",
     "ssb-schema-definitions": "^3.1.0"
   },

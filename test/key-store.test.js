@@ -274,10 +274,7 @@ test('key-store', t => {
 
       t.deepEqual(
         keyStore.author.sharedDMKey(otherKeys.id),
-        {
-          key: expectedDMKey,
-          scheme: keySchemes.feed_id_dm
-        },
+        expectedDMKey,
         DESCRIPTION
       )
       keyStore.close()
