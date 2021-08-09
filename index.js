@@ -12,7 +12,6 @@ const GetGroupTangle = require('./lib/get-group-tangle')
 const bfe = require('ssb-bfe')
 
 const Method = require('./method')
-const create = require('./method/link/create')
 
 module.exports = {
   name: 'tribes',
@@ -232,17 +231,21 @@ function init (ssb, config) {
 
     application: scuttle.application,
 
-    subtribes: {
+    subtribe: {
       create (groupId, opts, cb) {
         // create a new group
         createGroup({}, (data) => {
-          const { groupId, groupKey, groupInitMsg } = data
+          const { groupId: subgroupId, groupKey, groupInitMsg } = data
 
+          // TODO: generate a dmKey and attach to returned data
+
+          // link the subgroup to the group
+          scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId })
 
           cb(null, {
-            groupId,
+            groupId: subgroupId,
             groupKey,
-            dmKey: null, // TODO: add code to create the dmKey
+            dmKey: 'secret string WOOO', // TODO
             groupInitMsg
           })
         })

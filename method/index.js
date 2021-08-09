@@ -1,6 +1,6 @@
 const Init = require('./group/init')
 const AddMember = require('./group/add-member')
-const CreateLink = require('./link/create')
+const { CreateFeedGroupLink, CreateGroupSubgroupLink } = require('./link/create')
 const FindByGroupByFeedId = require('./link/find-group-by-feedid')
 const Application = require('./application')
 
@@ -13,7 +13,8 @@ module.exports = function Method (ssb, keystore, state) {
       addMember: patient(AddMember(ssb, keystore, state))
     },
     link: {
-      create: patient(CreateLink(ssb)),
+      create: patient(CreateFeedGroupLink(ssb)),
+      createSubgroupLink: patient(CreateGroupSubgroupLink(ssb)),
       findGroupByFeedId: FindByGroupByFeedId(ssb)
     },
     // TODO - rm patient from these?

@@ -142,7 +142,12 @@ Lists all the authors (feedIds) who you know are part of the group with id `grou
 
 ### `ssb.tribes.subtribe.create(groupId, opts, cb)`
 
-Mint a new private subgroup within a group.
+A convenience method which:
+
+- mints a group
+- publishes a `link` in the parent group which advertises the existence of the subgroup
+- mints a `dmKey` for that group so that the parent group member can send messages to the subgroup
+- then creates a `link` inside an existing group
 
 where:
 
@@ -167,6 +172,8 @@ These endpoints give you access to additional features, such as:
 - **binding groups to feeds**
     - `ssb.tribes.link.create({ group, name }, cb)`
     - `ssb.tribes.findByFeedId(feedId, cb)`
+- **binding subgroups to groups**
+    - `ssb.tribes.link.createSubgroupLink({ group, subgroup }, cb)`
 - **managing people applying to join to a group**
     - `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
     - `ssb.tribes.application.get(applicationId, cb)`
@@ -215,6 +222,18 @@ Arguments:
 Note:
 - this link will be encrypted to the group you're linking to (i.e. link will have `recps: [groupId]`)
 
+### `ssb.tribes.link.createSubgroupLink({ group, subgroup }, cb)`
+
+Creates a message of tyoe `link/group-group` which links a group to a subgroup
+
+Arguments:
+
+- `group` *GroupId* - the id of the parent private group
+- `subgroup` *GroupId* - the id of the subgroup you're linking to `group`
+- `cb` - *Function* - call with signature `(err, link)` where `link` is the link message
+Note:
+- this link will be encrypted to the group you're linking to (i.e. link will have `recos: [groupId]`)
+
 ### `ssb.tribes.findByFeedId(feedId, cb)`
 
 Find groups which have linked with a feedId (see `ssb.tribes.link.create`).
@@ -237,6 +256,7 @@ Find groups which have linked with a feedId (see `ssb.tribes.link.create`).
   ```
 
 NOTE: the strange format with states is to leave easy support for multiple editors (of a link to a group) in the future
+
 
 ### `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
 
