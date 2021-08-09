@@ -10,7 +10,6 @@ const listen = require('./listen')
 const { GetGroupTangle, groupId: buildGroupId } = require('./lib')
 
 const Method = require('./method')
-const create = require('./method/link/create')
 
 module.exports = {
   name: 'tribes',

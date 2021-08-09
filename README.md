@@ -146,6 +146,7 @@ A convenience method which:
 - mints a group
 - publishes a `link` in the parent group which advertises the existence of the subgroup
 - mints a `dmKey` for that group so that the parent group member can send messages to the subgroup
+- then creates a `link` inside the existing group (linking group + subgroup)
 
 where:
 - `groupId` *String* - the id of the _parent_ group this subgroup will be linked to
