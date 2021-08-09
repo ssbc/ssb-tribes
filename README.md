@@ -140,6 +140,21 @@ Returns group metadata for a given group:
 
 Lists all the authors (feedIds) who you know are part of the group with id `groupId`
 
+### `ssb.tribes.subtribe.create(groupId, opts, cb)`
+
+Mint a new private subgroup within a group.
+
+where:
+
+- `groupId` *String* - the id of the _parent_ group this subgroup will be linked to
+- `opts` *Object* (currently no opts you can pass in but empty object still required)
+- `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
+  - `groupId` *String* - a cipherlink that's safe to use publicly to name the subgroup, and is used in `recps` to trigger enveloping messages to that group
+  - `groupKey` *Buffer*  - the symmetric key used for encryption by the subgroup
+  - `dmKey` *Buffer* - the asymetric key used to encrypt messages sent from outside of the subgroup
+  - `groupInitMsg` *Object* - a copy of the  (enveloped) message used to initialise the subgroup
+
+_This method calls `ssb.tribes.create`_
 
 ---
 
