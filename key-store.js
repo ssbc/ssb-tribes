@@ -7,8 +7,7 @@ const KEY_LENGTH = require('sodium-native').crypto_secretbox_KEYBYTES
 const { keySchemes } = require('private-group-spec')
 const { isFeed, isMsg, isCloakedMsg: isGroup } = require('ssb-ref')
 
-const directMessageKey = require('./lib/direct-message-key')
-const SecretKey = require('./lib/secret-key')
+const { directMessageKey, SecretKey } = require('ssb-private-group-keys')
 
 const GROUP = 'group'
 const MEMBER = 'member'
@@ -178,10 +177,7 @@ module.exports = function Keychain (path, ssbKeys, onReady = noop, opts = {}) {
       cache.authors[authorId] = buildDMKey(authorId)
     }
 
-    return {
-      key: cache.authors[authorId],
-      scheme: keySchemes.feed_id_dm
-    }
+    return cache.authors[authorId]
   }
 
   function processAddMember ({ groupId, groupKey, root, authors }, cb) {

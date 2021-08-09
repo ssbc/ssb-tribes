@@ -5,17 +5,8 @@ const { keySchemes } = require('private-group-spec')
 const { generate } = require('ssb-keys')
 
 const KeyStore = require('../key-store')
-const { GroupKey, GroupId } = require('./helpers')
-const directMessageKey = require('../lib/direct-message-key')
-const { MsgId, FeedId: _FeedId } = require('../lib/cipherlinks')
-
-function MessageId () {
-  return new MsgId().mock().toSSB()
-}
-
-function FeedId () {
-  return new _FeedId().mock().toSSB()
-}
+const { GroupKey, GroupId, FeedId, MsgId } = require('./helpers')
+const { directMessageKey } = require('ssb-private-group-keys')
 
 let i = 0
 function TmpPath () {
@@ -31,7 +22,7 @@ test('key-store', t => {
 
       const keyStore = KeyStore(TmpPath(), myKeys)
 
-      keyStore.group.register('junk', { key: GroupKey(), root: MessageId() }, (err) => {
+      keyStore.group.register('junk', { key: GroupKey(), root: MsgId() }, (err) => {
         t.match(err && err.message, /expected a groupId/, DESCRIPTION)
         keyStore.close()
       })
@@ -42,7 +33,7 @@ test('key-store', t => {
 
       const keyStore = KeyStore(TmpPath(), myKeys)
 
-      keyStore.group.register(GroupId(), { key: 'junk', root: MessageId() }, (err) => {
+      keyStore.group.register(GroupId(), { key: 'junk', root: MsgId() }, (err) => {
         t.match(err && err.message, /invalid groupKey/, DESCRIPTION)
         keyStore.close()
       })
@@ -65,7 +56,7 @@ test('key-store', t => {
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId = GroupId()
       const key = GroupKey()
-      const root = MessageId()
+      const root = MsgId()
 
       keyStore.group.register(groupId, { key, root }, (_, data) => {
         keyStore.group.register(groupId, { key, root }, (err) => {
@@ -81,7 +72,7 @@ test('key-store', t => {
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId = GroupId()
       const key = GroupKey()
-      const root = MessageId()
+      const root = MsgId()
 
       keyStore.group.register(groupId, { key, root }, (_, data) => {
         const info = keyStore.group.get(groupId)
@@ -97,7 +88,7 @@ test('key-store', t => {
       const keyStore = KeyStore(TmpPath(), myKeys, null, { loadState: false })
       const groupId = GroupId()
       const key = GroupKey()
-      const root = MessageId()
+      const root = MsgId()
 
       keyStore.group.register(groupId, { key, root }, (err, data) => {
         if (err) throw err
@@ -123,8 +114,8 @@ test('key-store', t => {
       const groupId_B = GroupId()
       const keyA = GroupKey()
       const keyB = GroupKey()
-      const root_A = MessageId()
-      const root_B = MessageId()
+      const root_A = MsgId()
+      const root_B = MsgId()
 
       keyStore.group.registerAuthor(groupId_A, { key: keyA, root: root_A }, (_, __) => {
         keyStore.group.registerAuthor(groupId_B, { key: keyB, root: root_B }, (_, __) => {
@@ -145,8 +136,8 @@ test('key-store', t => {
       const groupId_B = GroupId()
       const keyA = GroupKey()
       const keyB = GroupKey()
-      const root_A = MessageId()
-      const root_B = MessageId()
+      const root_A = MsgId()
+      const root_B = MsgId()
 
       const authorId = generate().id
 
@@ -172,8 +163,8 @@ test('key-store', t => {
       const groupId_B = GroupId()
       const keyA = GroupKey()
       const keyB = GroupKey()
-      const root_A = MessageId()
-      const root_B = MessageId()
+      const root_A = MsgId()
+      const root_B = MsgId()
 
       const authorId = generate().id
 
@@ -205,8 +196,8 @@ test('key-store', t => {
       const groupId_B = GroupId()
       const keyA = GroupKey()
       const keyB = GroupKey()
-      const root_A = MessageId()
-      const root_B = MessageId()
+      const root_A = MsgId()
+      const root_B = MsgId()
 
       const authorId = generate().id
       const otherAuthorId = generate().id
@@ -237,8 +228,8 @@ test('key-store', t => {
       const groupId_B = GroupId()
       const keyA = GroupKey()
       const keyB = GroupKey()
-      const root_A = MessageId()
-      const root_B = MessageId()
+      const root_A = MsgId()
+      const root_B = MsgId()
 
       const authorId = generate().id
 
@@ -283,10 +274,7 @@ test('key-store', t => {
 
       t.deepEqual(
         keyStore.author.sharedDMKey(otherKeys.id),
-        {
-          key: expectedDMKey,
-          scheme: keySchemes.feed_id_dm
-        },
+        expectedDMKey,
         DESCRIPTION
       )
       keyStore.close()
@@ -338,7 +326,7 @@ test('key-store', t => {
       const args = {
         groupId: GroupId(),
         groupKey: GroupKey(),
-        root: MessageId(),
+        root: MsgId(),
         authors
       }
 
@@ -357,7 +345,7 @@ test('key-store', t => {
       const args = {
         groupId: GroupId(),
         groupKey: GroupKey(),
-        root: MessageId(),
+        root: MsgId(),
         authors: [FeedId()]
       }
       const newAuthor = FeedId()
@@ -382,7 +370,7 @@ test('key-store', t => {
       const args = {
         groupId: GroupId(),
         groupKey: GroupKey(),
-        root: MessageId(),
+        root: MsgId(),
         authors: [FeedId()]
       }
 
@@ -412,7 +400,7 @@ test('key-store', t => {
       const args = {
         groupId: GroupId(),
         groupKey: GroupKey(),
-        root: MessageId(),
+        root: MsgId(),
         authors: [FeedId()]
       }
 
@@ -439,14 +427,14 @@ test('key-store', t => {
       const args = {
         groupId: GroupId(),
         groupKey: GroupKey(),
-        root: MessageId(),
+        root: MsgId(),
         authors: [FeedId()]
       }
 
       keyStore.processAddMember(args, (err) => {
         if (err) throw err
         // simulate malicious add
-        args.root = MessageId()
+        args.root = MsgId()
         keyStore.processAddMember(args, (err) => {
           t.match(
             err.message,

@@ -1,7 +1,6 @@
 const { keySchemes } = require('private-group-spec')
 
-const { GroupId, GroupKey, Server, print } = require('../helpers')
-const { MsgId } = require('../../lib/cipherlinks')
+const { GroupId, GroupKey, Server, print, MsgId } = require('../helpers')
 // const FeedKeys = require('../../lib/feed-keys')
 // const directMessageKey = require('../../lib/direct-message-key')
 
@@ -12,7 +11,7 @@ const generators = [
 
     const groupId = GroupId()
     const groupKey = GroupKey()
-    const root = new MsgId().mock().toSSB()
+    const root = MsgId()
 
     server.tribes.register(groupId, { key: groupKey, root }, (_, success) => {
       const content = {
@@ -54,7 +53,7 @@ const generators = [
     server.publish(content1, (_, firstMsg) => {
       const groupId = GroupId()
       const groupKey = GroupKey()
-      const root = new MsgId().mock().toSSB()
+      const root = MsgId()
 
       server.tribes.register(groupId, { key: groupKey, root }, (_, success) => {
         const content2 = {
@@ -103,7 +102,7 @@ const generators = [
     server.publish(content1, (_, firstMsg) => {
       const groupId = GroupId()
       const groupKey = GroupKey()
-      const root = new MsgId().mock().toSSB()
+      const root = MsgId()
 
       server.tribes.register(groupId, { key: groupKey, root }, (_, success) => {
         const friendId = new FeedId().mock()

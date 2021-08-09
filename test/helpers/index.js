@@ -1,7 +1,7 @@
 const { replicate } = require('scuttle-testbot')
 
-const Secret = require('../../lib/secret-key')
-const { FeedId, MsgId } = require('../../lib/cipherlinks')
+const { SecretKey } = require('ssb-private-group-keys')
+const { FeedId, MsgId } = require('./cipherlinks')
 
 const decodeLeaves = require('./decode-leaves')
 const encodeLeaves = require('./encode-leaves')
@@ -10,10 +10,10 @@ const print = require('./print')
 const Server = require('./test-bot')
 
 module.exports = {
-  GroupId: () => `%${new Secret().toString()}.cloaked`,
-  GroupKey: () => new Secret().toBuffer(),
-  FeedId: () => new FeedId().mock().toTFK(),
-  PrevMsgId: () => new MsgId().mock().toTFK(),
+  GroupId: () => `%${new SecretKey().toString()}.cloaked`,
+  GroupKey: () => new SecretKey().toBuffer(),
+  FeedId: () => new FeedId().mock().toSSB(),
+  MsgId: () => new MsgId().mock().toSSB(),
   DHFeedKeys,
 
   decodeLeaves,
