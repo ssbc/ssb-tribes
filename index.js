@@ -23,7 +23,8 @@ module.exports = {
     list: 'async',
     listAuthors: 'async',
     link: {
-      create: 'async'
+      create: 'async',
+      createSubgroupLink: 'async'
     },
     findByFeedId: 'async',
 
@@ -36,7 +37,11 @@ module.exports = {
       update: 'async',
       list: 'async,'
     },
+<<<<<<< HEAD
     poBox: {
+=======
+    subtribe: {
+>>>>>>> subtribes.create tests
       create: 'async'
     }
   },
@@ -160,7 +165,7 @@ function init (ssb, config) {
   /* API */
   const scuttle = Method(ssb, keystore, state) // ssb db methods
 
-  const createGroup = function create (opts, cb) {
+  const createGroup = (opts, cb) => {
     scuttle.group.init((err, data) => {
       if (err) return cb(err)
 
@@ -231,13 +236,24 @@ function init (ssb, config) {
     subtribe: {
       create (groupId, opts, cb) {
         // create a new group
-        createGroup({}, (data) => {
-          const { groupId: subgroupId } = data
+        createGroup(opts, (err, data) => {
+          if (err) return cb(err)
+
+          const { groupId: subgroupId, groupKey, groupInitMsg } = data
 
           // TODO: generate a dmKey and attach to returned data
 
           // link the subgroup to the group
-          scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId })
+          scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId }, (err) => {
+            if (err) return cb(err)
+
+            cb(null, {
+              groupId: subgroupId,
+              groupKey,
+              dmKey: 'secret string WOOO', // TODO
+              groupInitMsg
+            })
+          })
         })
       }
     }

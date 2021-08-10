@@ -235,7 +235,7 @@ Note:
 
 ### `ssb.tribes.link.createSubgroupLink({ group, subgroup }, cb)`
 
-Creates a message of tyoe `link/group-group` which links a group to a subgroup
+Creates a message of tyoe `link/group-subgroup` which links a group to a subgroup
 
 Arguments:
 
@@ -243,7 +243,7 @@ Arguments:
 - `subgroup` *GroupId* - the id of the subgroup you're linking to `group`
 - `cb` - *Function* - call with signature `(err, link)` where `link` is the link message
 Note:
-- this link will be encrypted to the group you're linking to (i.e. link will have `recos: [groupId]`)
+- this link will be encrypted to the group you're linking to (i.e. link will have `recps: [groupId]`)
 
 ### `ssb.tribes.findByFeedId(feedId, cb)`
 
