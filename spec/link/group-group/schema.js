@@ -7,19 +7,10 @@ const schema = {
   properties: {
     type: {
       type: 'string',
-      pattern: '^link/group-group'
+      pattern: '^link/group-subgroup'
     },
     parent: { $ref: '#/definitions/cloakedMessageId' },
     child: { $ref: '#/definitions/cloakedMessageId' },
-
-    subgroup: {
-      type: 'object',
-      required: ['set'],
-      properties: {
-        set: { type: 'boolean' }
-      },
-      additionalProperties: false
-    },
 
     recps: {
       type: 'array',
