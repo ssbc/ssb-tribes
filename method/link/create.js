@@ -34,10 +34,9 @@ function CreateGroupSubgroupLink (server) {
     if (!isGroupId(subgroup)) return cb(new Error('link.create expects a valid groupId for the subgroup'))
 
     const content = {
-      type: 'link/group-group',
+      type: 'link/group-subgroup',
       parent: group,
       child: subgroup,
-      subgroup: { set: true },
       tangles: {
         link: { root: null, previous: null }
       },
