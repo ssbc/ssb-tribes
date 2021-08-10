@@ -7,15 +7,17 @@ function run (next) {
   next({ server })
 }
 
-test('link/create', t => {
+test('link/feed-group (create)', t => {
   // /////////
-  t.plan(4)
+  t.plan(5)
   // /////////
 
   // linking to a valid tribe
   run(({ server }) => {
     server.tribes.create({}, (_, tribe) => {
-      server.tribes.link.create({ group: tribe.groupId }, (_, link) => {
+      server.tribes.link.create({ group: tribe.groupId }, (err, link) => {
+        t.error(err, 'creates link')
+
         server.get({ id: link.key, private: true, meta: true }, (_, link) => {
           const { parent: _feedId, child: _groupId, recps } = link.value.content
           t.equal(_feedId, server.id, 'encodes current feedId')
@@ -31,7 +33,7 @@ test('link/create', t => {
   // trying to link to some junk
   run(({ server }) => {
     server.tribes.link.create({ group: '%cat.cloaked' }, (err) => {
-      t.match(err.message, /expects a valid groupId/, 'errors when linking to some non-groupId')
+      t.match(err.message, /data.child referenced schema does not match/, 'errors when linking to some non-groupId')
 
       server.close()
     })
