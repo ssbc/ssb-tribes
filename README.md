@@ -147,7 +147,6 @@ A convenience method which:
 - mints a group
 - publishes a `link` in the parent group which advertises the existence of the subgroup
 - mints a `dmKey` for that group so that the parent group member can send messages to the subgroup
-- then creates a `link` inside an existing group
 
 where:
 
@@ -232,7 +231,7 @@ Arguments:
 - `subgroup` *GroupId* - the id of the subgroup you're linking to `group`
 - `cb` - *Function* - call with signature `(err, link)` where `link` is the link message
 Note:
-- this link will be encrypted to the group you're linking to (i.e. link will have `recps: [groupId]`)
+- this link will be encrypted to the parent group (i.e. link will have `recps: [group]`)
 
 ### `ssb.tribes.findByFeedId(feedId, cb)`
 

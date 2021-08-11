@@ -160,7 +160,7 @@ function init (ssb, config) {
   /* API */
   const scuttle = Method(ssb, keystore, state) // ssb db methods
 
-  const createGroup = (opts, cb) => {
+  const tribeCreate = (opts, cb) => {
     scuttle.group.init((err, data) => {
       if (err) return cb(err)
 
@@ -199,7 +199,7 @@ function init (ssb, config) {
         })
       )
     },
-    create: createGroup,
+    create: tribeCreate,
     invite (groupId, authorIds, opts = {}, cb) {
       scuttle.group.addMember(groupId, authorIds, opts, (err, data) => {
         if (err) return cb(err)
@@ -236,7 +236,7 @@ function init (ssb, config) {
     subtribe: {
       create (groupId, opts, cb) {
         // create a new group
-        createGroup(opts, (err, data) => {
+        tribeCreate(opts, (err, data) => {
           if (err) return cb(err)
 
           const { groupId: subgroupId, groupKey, groupInitMsg } = data
