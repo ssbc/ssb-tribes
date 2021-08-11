@@ -2,7 +2,7 @@ const { box } = require('envelope-js')
 const { keySchemes } = require('private-group-spec')
 
 const { SecretKey } = require('ssb-private-group-keys')
-const groupId = require('../../lib/group-id')
+const { groupId } = require('../../lib')
 const { isValid } = require('../../spec/group/init')
 const bfe = require('ssb-bfe')
 

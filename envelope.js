@@ -6,25 +6,15 @@ const { box, unboxKey, unboxBody } = require('envelope-js')
 const { SecretKey } = require('ssb-private-group-keys')
 const bfe = require('ssb-bfe')
 
+const { isValidRecps } = require('./lib')
+
 function isEnvelope (ciphertext) {
   return ciphertext.endsWith('.box2')
 }
 
 module.exports = function Envelope (keystore, state) {
   function boxer (content, previousFeedState) {
-    if (content.recps.length > 16) {
-      throw new Error(`private-group spec allows maximum 16 slots, but you've tried to use ${content.recps.length}`)
-    }
-    // groupId can only be in first "slot"
-    if (!isGroup(content.recps[0]) && !isFeed(content.recps[0])) return null
-
-    // any subsequent slots are only for feedId
-    if (content.recps.length > 1 && !content.recps.slice(1).every(isFeed)) {
-      if (content.recps.slice(1).find(isGroup)) {
-        throw new Error('private-group spec only allows groupId in the first slot')
-      }
-      return null
-    }
+    if (!isValidRecps(content.recps)) throw isValidRecps.error
 
     const recipentKeys = content.recps.reduce((acc, recp) => {
       if (isGroup(recp)) {

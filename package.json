@@ -23,6 +23,7 @@
     "envelope-js": "^1.1.0",
     "envelope-spec": "^1.1.0",
     "futoin-hkdf": "^1.4.2",
+    "is-my-json-valid": "^2.20.5",
     "is-my-ssb-valid": "^1.1.0",
     "level": "^6.0.1",
     "lodash.set": "^4.3.2",
