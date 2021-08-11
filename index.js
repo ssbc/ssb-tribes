@@ -164,11 +164,7 @@ function init (ssb, config) {
   /* API */
   const scuttle = Method(ssb, keystore, state) // ssb db methods
 
-<<<<<<< HEAD
   const tribeCreate = (opts, cb) => {
-=======
-  const createGroup = (opts, cb) => {
->>>>>>> 099e6b6... subtribes.create tests
     scuttle.group.init((err, data) => {
       if (err) return cb(err)
 
@@ -238,12 +234,7 @@ function init (ssb, config) {
     poBox: scuttle.poBox,
     subtribe: {
       create (groupId, opts, cb) {
-<<<<<<< HEAD
         tribeCreate(opts, (err, data) => {
-=======
-        // create a new group
-        createGroup(opts, (err, data) => {
->>>>>>> 099e6b6... subtribes.create tests
           if (err) return cb(err)
 
           const { groupId: subgroupId, groupKey, groupInitMsg } = data
@@ -263,11 +254,7 @@ function init (ssb, config) {
             cb(null, {
               groupId: subgroupId,
               groupKey,
-<<<<<<< HEAD
               dmKey: null, // TODO: add code to create the dmKey
-=======
-              dmKey: 'secret string WOOO', // TODO
->>>>>>> 099e6b6... subtribes.create tests
               groupInitMsg
             })
           })
