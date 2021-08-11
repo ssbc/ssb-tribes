@@ -37,11 +37,10 @@ module.exports = {
       update: 'async',
       list: 'async,'
     },
-<<<<<<< HEAD
     poBox: {
-=======
+      create: 'async'
+    },
     subtribe: {
->>>>>>> subtribes.create tests
       create: 'async'
     }
   },
@@ -165,7 +164,7 @@ function init (ssb, config) {
   /* API */
   const scuttle = Method(ssb, keystore, state) // ssb db methods
 
-  const createGroup = (opts, cb) => {
+  const tribeCreate = (opts, cb) => {
     scuttle.group.init((err, data) => {
       if (err) return cb(err)
 
@@ -174,7 +173,7 @@ function init (ssb, config) {
       keystore.group.register(groupId, { key: groupKey, root: root.key }, (err) => {
         if (err) return cb(err)
 
-        keystore.group.registerAuthor(groupId, ssb.id, (err) => {
+        keystore.group.registerAuthors(groupId, [ssb.id], (err) => {
           if (err) return cb(err)
 
           const readKey = unboxer.key(root.value.content, root.value)
@@ -199,7 +198,7 @@ function init (ssb, config) {
     registerAuthors (groupId, authors, cb) {
       keystore.group.registerAuthors(groupId, authors, (err) => err ? cb(err) : cb(null, true))
     },
-    create: createGroup,
+    create: tribeCreate,
     invite (groupId, authorIds, opts = {}, cb) {
       scuttle.group.addMember(groupId, authorIds, opts, (err, data) => {
         if (err) return cb(err)
@@ -236,12 +235,18 @@ function init (ssb, config) {
     subtribe: {
       create (groupId, opts, cb) {
         // create a new group
-        createGroup(opts, (err, data) => {
+        tribeCreate(opts, (err, data) => {
           if (err) return cb(err)
 
           const { groupId: subgroupId, groupKey, groupInitMsg } = data
 
-          // TODO: generate a dmKey and attach to returned data
+          // WIP: generate a dmKey and attach to returned data
+          // scuttle.poBox.create({}, (err, data) => {
+          //   const { poBoxId } = data
+          // })
+          //
+          // consider changing createGroup API to be like 
+          // scuttle.group.create({ addPOBox: true }, cb)
 
           // link the subgroup to the group
           scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId }, (err) => {
@@ -250,7 +255,7 @@ function init (ssb, config) {
             cb(null, {
               groupId: subgroupId,
               groupKey,
-              dmKey: 'secret string WOOO', // TODO
+              dmKey: 'secret string WOOO', // WIP
               groupInitMsg
             })
           })
