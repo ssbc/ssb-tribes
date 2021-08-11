@@ -1,5 +1,6 @@
 const Init = require('./group/init')
 const AddMember = require('./group/add-member')
+const AddPoBox = require('./group/add-pobox')
 const Application = require('./application')
 const Link = require('./link')
 
@@ -10,7 +11,8 @@ module.exports = function Method (ssb, keystore, state) {
   return {
     group: {
       init: patient(Init(ssb, keystore, state)),
-      addMember: patient(AddMember(ssb, keystore, state))
+      addMember: patient(AddMember(ssb, keystore, state)),
+      addPoBox: patient(AddPoBox(ssb, keystore, state))
     },
     link: {
       create: patient(link.create),

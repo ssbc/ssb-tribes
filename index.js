@@ -13,6 +13,9 @@ const bfe = require('ssb-bfe')
 
 const Method = require('./method')
 
+// TODO: remove when real keys are plugged in
+const crypto = require('crypto')
+
 module.exports = {
   name: 'tribes',
   version: require('./package.json').version,
@@ -241,17 +244,26 @@ function init (ssb, config) {
 
           const { groupId: subgroupId, groupKey, groupInitMsg } = data
 
-          // TODO: generate a dmKey and attach to returned data
+          // TODO: remove this and add real code that generates the keys
+          const keys = {
+            publicKey: 'ssb://woooo_a_public_key',
+            secretKey: crypto.randomBytes(8).toString('base64')
+          }
 
-          // link the subgroup to the group
-          scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId }, (err) => {
+          // save the dm/poBox key to the subgroup
+          scuttle.group.addPoBox(subgroupId, keys, groupInitMsg.key, (err) => {
             if (err) return cb(err)
 
-            cb(null, {
-              groupId: subgroupId,
-              groupKey,
-              dmKey: 'secret string WOOO', // TODO
-              groupInitMsg
+            // link the subgroup to the group
+            scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId }, (err) => {
+              if (err) return cb(err)
+
+              cb(null, {
+                groupId: subgroupId,
+                groupKey,
+                dmKey: 'secret string WOOO', // TODO
+                groupInitMsg
+              })
             })
           })
         })
