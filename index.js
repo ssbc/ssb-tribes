@@ -11,9 +11,6 @@ const { GetGroupTangle, groupId: buildGroupId } = require('./lib')
 
 const Method = require('./method')
 
-// TODO: remove when real keys are plugged in
-const crypto = require('crypto')
-
 module.exports = {
   name: 'tribes',
   version: require('./package.json').version,
@@ -251,11 +248,11 @@ function init (ssb, config) {
           // scuttle.group.create({ addPOBox: true }, cb)
           const keys = {
             publicKey: 'ssb://woooo_a_public_key',
-            secretKey: crypto.randomBytes(8).toString('base64')
+            secretKey: 'asdasdasd' // WIP
           }
 
           // save the dm/poBox key to the subgroup
-          scuttle.group.addPoBox(subgroupId, keys, groupInitMsg.key, (err) => {
+          scuttle.group.addPoBox(subgroupId, keys, (err) => {
             if (err) return cb(err)
 
             // link the subgroup to the group
@@ -265,7 +262,7 @@ function init (ssb, config) {
               cb(null, {
                 groupId: subgroupId,
                 groupKey,
-                dmKey: 'secret string WOOO', // TODO
+                dmKey: keys.publicKey, // WIP
                 groupInitMsg
               })
             })
