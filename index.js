@@ -251,7 +251,7 @@ function init (ssb, config) {
           }
 
           // save the dm/poBox key to the subgroup
-          scuttle.group.addPoBox(subgroupId, keys, groupInitMsg.key, (err) => {
+          scuttle.group.addPoBox(subgroupId, keys, (err) => {
             if (err) return cb(err)
 
             // link the subgroup to the group
@@ -261,7 +261,7 @@ function init (ssb, config) {
               cb(null, {
                 groupId: subgroupId,
                 groupKey,
-                dmKey: 'secret string WOOO', // TODO
+                dmKey: keys.publicKey,
                 groupInitMsg
               })
             })

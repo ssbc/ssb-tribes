@@ -6,17 +6,18 @@ const overwrite = (schema, opts = {}) => Overwrite({ valueSchema: schema, ...opt
 module.exports = {
   string: overwrite({ type: ['string', 'null'] }),
   poBox: overwrite({
-    type: 'object',
+    type: ['object', 'null'],
     required: ['publicKey', 'secretKey'],
     properties: {
       publicKey: {
-        type: ['string', 'null'],
+        type: ['string'],
         pattern: '^ssb://'
       },
-      privateKey: {
-        type: ['string', 'null'],
-        pattern: isBase64
-      }
+      secretKey: {
+        type: ['string'],
+        pattern: isBase64.toString().slice(1, -1)
+      },
+      additionalProperties: false
     }
   })
 }
