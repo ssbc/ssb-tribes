@@ -43,7 +43,8 @@ module.exports = {
       list: 'async,'
     },
     subtribe: {
-      create: 'async'
+      create: 'async',
+      findByGroupId: 'async'
     }
   },
   init
@@ -267,7 +268,8 @@ function init (ssb, config) {
             })
           })
         })
-      }
+      },
+      findByGroupId: scuttle.link.findSubgroupByGroupId
     }
   }
 }
