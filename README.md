@@ -173,6 +173,7 @@ These endpoints give you access to additional features, such as:
     - `ssb.tribes.findByFeedId(feedId, cb)`
 - **binding subgroups to groups**
     - `ssb.tribes.link.createSubgroupLink({ group, subgroup }, cb)`
+    - `ssb.tribes.link.findSubgroupByGroupId(groupId, cb)`
 - **managing people applying to join to a group**
     - `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
     - `ssb.tribes.application.get(applicationId, cb)`
@@ -256,6 +257,30 @@ Find groups which have linked with a feedId (see `ssb.tribes.link.create`).
 
 NOTE: the strange format with states is to leave easy support for multiple editors (of a link to a group) in the future
 
+### `ssb.tribes.subtribe.findByGroupId(groupId, cb)`
+
+Find subgroups which have linked with a groupId (see `ssb.tribes.link.createSubgroupLink`).
+
+- `groupId` *GroupId* is a string representing the `groupId` of the parent group
+- `cb` *function* is a callback with signature `cb(err, data)` where `data` is an Array of items of form:
+  ```js
+  [{
+    linkId: MsgId,
+    groupId: GroupId,
+    subgroupId: GroupId,
+    recps: Recps, // an array of recipients who know about this link (should just be the group)
+    states: [
+      {
+        head: MsgId,
+        state: {
+          // currently empty
+        }
+      }
+    ]
+  }]
+  ```
+
+NOTE: the strange format with states is to leave easy support for multiple editors (of a link to a group) in the future
 
 ### `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
 

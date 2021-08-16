@@ -1,5 +1,5 @@
 const Crut = require('ssb-crut')
-const { isFeed } = require('ssb-ref')
+const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const pull = require('pull-stream')
 const FeedGroupLink = require('../spec/link/feed-group')
 const GroupSubgroupLink = require('../spec/link/group-subgroup')
@@ -43,6 +43,7 @@ module.exports = function Link (ssb) {
 
       const query = [{
         $filter: {
+          dest: feedId,
           value: {
             author: feedId, // link published by this person
             content: {
@@ -57,7 +58,7 @@ module.exports = function Link (ssb) {
       }]
 
       pull(
-        ssb.query.read({ query }),
+        ssb.backlinks.read({ query }),
         pull.filter(feedGroupLink.spec.isRoot),
         pull.filter(link => {
           return link.value.content.child === link.value.content.recps[0]
@@ -78,6 +79,51 @@ module.exports = function Link (ssb) {
               head: link.key,
               state: {
                 name: (name && name.set) || null
+              }
+            }]
+          }
+        }),
+        pull.collect(cb)
+      )
+    },
+    findSubgroupByGroupId (groupId, cb) {
+      if (!isGroup(groupId)) return cb(new Error(`findSubgroupByGroupId expected a groupId, got ${groupId} instead.`))
+
+      const query = [{
+        $filter: {
+          dest: groupId,
+          value: {
+            content: {
+              type: 'link/group-subgroup',
+              parent: groupId,
+              tangles: {
+                link: { root: null, previous: null }
+              }
+            }
+          }
+        }
+      }]
+
+      pull(
+        ssb.backlinks.read({ query }),
+        pull.unique(link => link.value.content.child),
+        pull.filter(groupSubgroupLink.spec.isRoot),
+        pull.filter(link => {
+          return link.value.content.parent === link.value.content.recps[0]
+          // it would be very strange for a link to be created like this
+          // but we should consider it unsafe and ignore it I think
+        }),
+        pull.map(link => {
+          const { child, recps } = link.value.content
+
+          return {
+            linkId: link.key,
+            groupId,
+            subgroupId: child,
+            recps,
+            states: [{
+              head: link.key,
+              state: {
               }
             }]
           }
