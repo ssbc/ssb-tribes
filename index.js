@@ -191,6 +191,15 @@ function init (ssb, config) {
     })
   }
 
+  const tribeGet = (id, cb) => {
+    onKeystoreReady(() => {
+      const data = keystore.group.get(id)
+      if (!data) return cb(new Error(`unknown groupId ${id})`))
+
+      cb(null, data)
+    })
+  }
+
   return {
     register: keystore.group.register,
     registerAuthors (groupId, authorIds, cb) {
@@ -216,14 +225,7 @@ function init (ssb, config) {
     list (cb) {
       onKeystoreReady(() => cb(null, keystore.group.list()))
     },
-    get (id, cb) {
-      onKeystoreReady(() => {
-        const data = keystore.group.get(id)
-        if (!data) return cb(new Error(`unknown groupId ${id})`))
-
-        cb(null, data)
-      })
-    },
+    get: tribeGet,
     listAuthors (groupId, cb) {
       onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
     },
@@ -269,6 +271,18 @@ function init (ssb, config) {
           })
         })
       },
+      get: tribeGet,
+      // get (id, cb) {
+      // tribeGet(id, (err, data) => {
+      //   if (err) return cb(err)
+
+      //   scuttle.group.getPoBox(id, (err, pobox) => {
+      //     if (err) return cb(err)
+
+      //     cb(null, { ...data, pobox })
+      //   })
+      // })
+      // },
       findByGroupId: scuttle.link.findSubgroupByGroupId
     }
   }

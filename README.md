@@ -128,7 +128,7 @@ Listens for when new authors are added to a tribe, and fires a given function
 
 Returns a list of all known group IDs.
 
-### `ssb.tribes.get(groupID, cb)`
+### `ssb.tribes.get(groupId, cb)`
 
 Returns group metadata for a given group:
 
@@ -159,6 +159,16 @@ where:
   - `groupInitMsg` *Object* - a copy of the  (enveloped) message used to initialise the subgroup
 
 _This method calls `ssb.tribes.create`_
+
+### `ssb.tribes.subtribe.get(groupId, cb)`
+
+Returns group metadata for a given group:
+
+- `key` - the decryption key for the subgroup
+- `scheme` - the scheme the key is associated with (e.g. DM, group)
+- `root` - the initial message which started the subgroup
+
+_This method calls `ssb.tribes.get`_
 
 ---
 
