@@ -7,8 +7,7 @@ const Obz = require('obz')
 const KeyStore = require('./key-store')
 const Envelope = require('./envelope')
 const listen = require('./listen')
-const GroupId = require('./lib/group-id')
-const GetGroupTangle = require('./lib/get-group-tangle')
+const { GetGroupTangle, groupId: _groupId } = require('./lib')
 const bfe = require('ssb-bfe')
 
 const Method = require('./method')
@@ -83,7 +82,7 @@ function init (ssb, config) {
     ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
       if (err) throw err
 
-      const groupId = GroupId({ groupInitMsg, groupKey })
+      const groupId = _groupId({ groupInitMsg, groupKey })
       const authors = [
         m.value.author,
         ...m.value.content.recps.filter(isFeed)

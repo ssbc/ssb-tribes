@@ -17,13 +17,14 @@ module.exports = function Envelope (keystore, state) {
   const easyPoBoxKey = poBoxKey.easy(state.keys)
 
   function boxer (content, previousFeedState) {
-    if (!isValidRecps(content.recps)) throw isValidRecps.error
-
     const recps = content.recps
     if (process.env.NODE_ENV !== 'test') {
       if (recps.length < 16) recps.push(state.keys.id)
       // slip my own_key into a slot if there's space
+      // we disable in tests because it makes checking unboxing really hard!
     }
+
+    if (!isValidRecps(recps)) throw isValidRecps.error
 
     const recipentKeys = recps.map(recp => {
       if (isGroup(recp)) {
