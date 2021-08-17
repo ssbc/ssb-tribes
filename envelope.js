@@ -2,48 +2,46 @@
 
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const { box, unboxKey, unboxBody } = require('envelope-js')
-
-const { SecretKey } = require('ssb-private-group-keys')
+const { SecretKey, poBoxKey } = require('ssb-private-group-keys')
+const isPOBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
 const bfe = require('ssb-bfe')
+
+const { isValidRecps } = require('./lib')
 
 function isEnvelope (ciphertext) {
   return ciphertext.endsWith('.box2')
+  // && base64?
 }
 
 module.exports = function Envelope (keystore, state) {
+  const easyPoBoxKey = poBoxKey.easy(state.keys)
+
   function boxer (content, previousFeedState) {
-    if (content.recps.length > 16) {
-      throw new Error(`private-group spec allows maximum 16 slots, but you've tried to use ${content.recps.length}`)
-    }
-    // groupId can only be in first "slot"
-    if (!isGroup(content.recps[0]) && !isFeed(content.recps[0])) return null
+    if (!isValidRecps(content.recps)) throw isValidRecps.error
 
-    // any subsequent slots are only for feedId
-    if (content.recps.length > 1 && !content.recps.slice(1).every(isFeed)) {
-      if (content.recps.slice(1).find(isGroup)) {
-        throw new Error('private-group spec only allows groupId in the first slot')
-      }
-      return null
+    const recps = content.recps
+    if (process.env.NODE_ENV !== 'test') {
+      if (recps.length < 16) recps.push(state.keys.id)
+      // slip my own_key into a slot if there's space
     }
 
-    const recipentKeys = content.recps.reduce((acc, recp) => {
+    const recipentKeys = recps.map(recp => {
       if (isGroup(recp)) {
         const keyInfo = keystore.group.get(recp)
         if (!keyInfo) throw new Error(`unknown groupId ${recp}, cannot encrypt message`)
-
-        return [...acc, keyInfo]
+        return keyInfo
       }
       if (isFeed(recp)) {
-        // use a special key for your own feedId
-        if (recp === state.keys.id) return [...acc, keystore.ownKeys(recp)[0]]
-        else return [...acc, keystore.author.sharedDMKey(recp)]
+        return (recp === state.keys.id)
+          ? keystore.ownKeys(recp)[0] // use a special key for your own feedId
+          : keystore.author.sharedDMKey(recp)
       }
+      if (isPOBox(recp)) return easyPoBoxKey(recp)
 
-      if (isDHKey(recp)) {
-      }
+      // isValidRecps should guard against hitting this
+      throw new Error('did now how to map recp > keyInfo')
+    })
 
-        
-    }, [])
     const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
     const msgKey = new SecretKey().toBuffer()
 

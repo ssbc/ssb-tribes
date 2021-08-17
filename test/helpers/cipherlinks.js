@@ -1,27 +1,33 @@
+const bfe = require('ssb-bfe')
+const na = require('sodium-native')
 const { Cipherlink } = require('envelope-js')
-const { bfeTypes } = require('ssb-bfe')
 const { isBuffer } = Buffer
 const { isFeedId, isMsg } = require('ssb-ref')
-const { generate } = require('ssb-keys')
 const { SecretKey } = require('ssb-private-group-keys')
-const na = require('sodium-native')
+const isPOBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
 
 const zeros = Buffer.alloc(32)
 
 class Scuttlelink extends Cipherlink {
   // inherited methods
   // - toBuffer()
-  // - toTFK()
+  // - toTFK() // TODO go upstream and change this
   // - mock()
+
+  toBFE () {
+    return this.toTFK()
+  }
 
   toSSB () {
     if (zeros.compare(this.key) === 0) return null
     // NOTE This is a funny edge case for representing "previous: null"
     // perhaps this should not be here
 
-    const { sigil, suffix } = bfeTypes[this.type].formats[this.format]
-    if (sigil && suffix) // WIP - started looking into using ssb-bfe.decode
-    return sigil + this.key.toString('base64') + suffix
+    const buf = Buffer.concat([
+      Buffer.from([this.type, this.format]),
+      this.key
+    ])
+    return bfe.decode(buf)
   }
 }
 
@@ -39,31 +45,10 @@ class FeedId extends Scuttlelink {
   }
 
   mock () {
-    this.key = Buffer.from(generate().public.replace('.ed25519', ''), 'base64')
+    this.key = Buffer.alloc(32)
+    na.randombytes_buf(this.key)
     return this
   }
-}
-
-class POBoxId extends Scuttlelink {
-  constructor (id) {
-    let key
-    if (isBuffer(id)) key = id
-    // else if (typeof id === 'string') {
-    //   if (isPOBoxId(id)) key = Buffer.from(id.replace('@', '').replace('.ed25519', ''), 'base64')
-    //   else throw new Error(`expected PO BoxId, got ${id}`)
-    // }
-
-    super({ type: 3, format: 0, key })
-  }
-
-  mock () {
-    this.key = new SecretKey(na.crypto_scalarmult_BYTES).toBuffer()
-    return this
-  }
-
-  // toSSB () {
-  //   return `ssb://diffie-hellman/curve25519/${this.key.toString('base64')}`
-  // }
 }
 
 /* NOTE this assumes for ssb/classic message type */
@@ -79,6 +64,21 @@ class MsgId extends Scuttlelink {
     }
 
     super({ type: 1, format: 0, key })
+  }
+}
+
+class POBoxId extends Scuttlelink {
+  constructor (id) {
+    let key
+    if (isBuffer(id)) key = id
+    else if (typeof id === 'string') key = bfe.encode(id).slice(2) // just the data part
+
+    super({ type: 7, format: 0, key })
+  }
+
+  mock () {
+    this.key = new SecretKey(na.crypto_scalarmult_BYTES).toBuffer()
+    return this
   }
 }
 
