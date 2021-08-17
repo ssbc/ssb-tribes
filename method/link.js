@@ -43,6 +43,7 @@ module.exports = function Link (ssb) {
 
       const query = [{
         $filter: {
+          dest: feedId,
           value: {
             author: feedId, // link published by this person
             content: {
@@ -57,7 +58,7 @@ module.exports = function Link (ssb) {
       }]
 
       pull(
-        ssb.query.read({ query }),
+        ssb.backlinks.read({ query }),
         pull.filter(feedGroupLink.spec.isRoot),
         pull.filter(link => {
           return link.value.content.child === link.value.content.recps[0]
@@ -90,6 +91,7 @@ module.exports = function Link (ssb) {
 
       const query = [{
         $filter: {
+          dest: groupId,
           value: {
             content: {
               type: 'link/group-subgroup',
@@ -103,14 +105,14 @@ module.exports = function Link (ssb) {
       }]
 
       pull(
-        ssb.query.read({ query }),
+        ssb.backlinks.read({ query }),
+        pull.unique(link => link.value.content.child),
         pull.filter(groupSubgroupLink.spec.isRoot),
-        // commented this out as its making it fail!
-        // pull.filter(link => {
-        //   // return link.value.content.child === link.value.content.recps[0]
-        //   // it would be very strange for a link to be created like this
-        //   // but we should consider it unsafe and ignore it I think
-        // }),
+        pull.filter(link => {
+          return link.value.content.parent === link.value.content.recps[0]
+          // it would be very strange for a link to be created like this
+          // but we should consider it unsafe and ignore it I think
+        }),
         pull.map(link => {
           const { child, recps } = link.value.content
 

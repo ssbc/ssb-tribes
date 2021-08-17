@@ -271,10 +271,10 @@ NOTE: the strange format with states is to leave easy support for multiple edito
 
 Find subgroups which have linked with a groupId (see `ssb.tribes.link.createSubgroupLink`).
 
-- `groupId` *GroupId* is a string
+- `groupId` *GroupId* is a string representing the `groupId` of the parent group
 - `cb` *function* is a callback with signature `cb(err, data)` where `data` is an Array of items of form:
   ```js
-  {
+  [{
     linkId: MsgId,
     groupId: GroupId,
     subgroupId: GroupId,
@@ -287,7 +287,7 @@ Find subgroups which have linked with a groupId (see `ssb.tribes.link.createSubg
         }
       }
     ]
-  }
+  }]
   ```
 
 NOTE: the strange format with states is to leave easy support for multiple editors (of a link to a group) in the future
