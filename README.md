@@ -162,13 +162,7 @@ _This method calls `ssb.tribes.create`_
 
 ### `ssb.tribes.subtribe.get(groupId, cb)`
 
-Returns group metadata for a given group:
-
-- `key` - the decryption key for the subgroup
-- `scheme` - the scheme the key is associated with (e.g. DM, group)
-- `root` - the initial message which started the subgroup
-
-_This method calls `ssb.tribes.get`_
+_alias of `ssb.tribes.get`_
 
 ---
 
