@@ -2,7 +2,7 @@
 
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const { box, unboxKey, unboxBody } = require('envelope-js')
-const { SecretKey, poBoxKey } = require('ssb-private-group-keys')
+const { SecretKey, poBoxKey, DiffieHellmanKeys } = require('ssb-private-group-keys')
 const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
 const bfe = require('ssb-bfe')
 
@@ -61,41 +61,51 @@ module.exports = function Envelope (keystore, state) {
     const feed_id = bfe.encode(author)
     const prev_msg_id = bfe.encode(previous)
 
-    // TODO change this to new algorithm
-    // - check ownKeys
-    // - check groups
-    // - check DMs / poBox
+    let readKey
 
+    /* check my DM keys (self, other) */
+    if (author === state.keys.id) {
+      const trial_own_keys = keystore.ownKeys()
+      readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_own_keys, { maxAttempts: 16 })
+      if (readKey) return readKey
+    } else {
+      const trial_dm_keys = [keystore.author.sharedDMKey(author)]
+      readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_dm_keys, { maxAttempts: 16 })
+      if (readKey) return readKey
+    }
+
+    /* check my group keys */
     const trial_group_keys = keystore.author.groupKeys(author)
-    const readKeyFromGroup = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
+    readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
     // NOTE the group recp is only allowed in the first slot,
     // so we only test group keys in that slot (maxAttempts: 1)
-    if (readKeyFromGroup) return readKeyFromGroup
+    if (readKey) return readKey
 
-    const trial_misc_keys = [
-      ...(
-        author === state.keys.id
-          ? keystore.ownKeys()
-          : [keystore.author.sharedDMKey(author)]
-      ),
-      ...keystore.poBox.list()
-        .map(poBoxId => {
-          const data = keystore.poBox.get(poBoxId)
-          WIP >>
-            Either A) write keystore.author.sharedPOBoxKeys(author) ??
-            OR B)  store data: { scheme, id, secret, public } so it's easier to calculate keys
-          
-          uses poBoxKey(x_dh_secret, x_dh_public, x_id, y_dh_public, y_id)
-          // x = poBox
-          // y = author
-        })
-        })
-    ]
+    /* check my poBox keys */
+    // TODO - consider how to reduce redundent computation + memory use here
+    const trial_poBox_keys = keystore.poBox.list()
+      .map(poBoxId => {
+        const data = keystore.poBox.get(poBoxId)
 
-    console.log('poBoxKeys', keystore.poBox.list().map(keystore.poBox.get))
+        const poBox_dh_secret = Buffer.concat([
+          bfe.toTF('encryption-key', 'box2-pobox-dh'),
+          data.key
+        ])
 
-    return unboxKey(envelope, feed_id, prev_msg_id, trial_misc_keys, { maxAttempts: 16 })
-    // we then test all dm keys in up to 16 slots (maxAttempts: 16)
+        const poBox_id = bfe.encode(poBoxId)
+        const poBox_dh_public = Buffer.concat([
+          bfe.toTF('encryption-key', 'box2-pobox-dh'),
+          poBox_id.slice(2)
+        ])
+
+        const author_id = bfe.encode(author)
+        const author_dh_public = new DiffieHellmanKeys({ public: author }, { fromEd25519: true })
+          .toBFE().public
+
+        return poBoxKey(poBox_dh_secret, poBox_dh_public, poBox_id, author_dh_public, author_id)
+      })
+
+    return unboxKey(envelope, feed_id, prev_msg_id, trial_poBox_keys, { maxAttempts: 16 })
   }
 
   function value (ciphertext, { author, previous }, read_key) {

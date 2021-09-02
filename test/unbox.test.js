@@ -12,7 +12,7 @@ const vectors = [
   require('private-group-spec/vectors/unbox2.json')
 ].map(decodeLeaves)
 
-test.only('unbox', async t => {
+test('unbox', async t => {
   const ssb = Server()
   const { groupId, groupInitMsg } = await p(ssb.tribes.create)({})
   const { poBoxId } = await p(ssb.tribes.poBox.create)({}) // WIP <<<
@@ -75,7 +75,8 @@ test.only('unbox', async t => {
 
     const mockKeyStore = {
       author: {
-        groupKeys: () => trial_keys
+        groupKeys: () => trial_keys,
+        sharedDMKey: () => ({ key: Buffer.alloc(32), scheme: 'junk' }) // just here to stop code choking
       }
     }
     const mockState = {
@@ -91,7 +92,4 @@ test.only('unbox', async t => {
 
   ssb.close()
   t.end()
-})
-
-test('unbox (indexes can access)', t => {
 })
