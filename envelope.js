@@ -19,11 +19,9 @@ module.exports = function Envelope (keystore, state) {
   function boxer (content, previousFeedState) {
     const recps = content.recps
     if (process.env.NODE_ENV !== 'test') {
-      if (recps.length < 16) recps.push(state.keys.id)
       // slip my own_key into a slot if there's space
       // we disable in tests because it makes checking unboxing really hard!
-
-      // TODO check if I'm already in recps
+      if (recps.indexOf(state.keys.id) < 0) recps.push(state.keys.id)
     }
 
     if (!isValidRecps(recps)) throw isValidRecps.error

@@ -7,7 +7,7 @@ const Obz = require('obz')
 
 const Envelope = require('./envelope')
 const listen = require('./listen')
-const { GetGroupTangle, groupId: _groupId } = require('./lib')
+const { GetGroupTangle, groupId: buildGroupId } = require('./lib')
 
 const Method = require('./method')
 
@@ -86,7 +86,7 @@ function init (ssb, config) {
     ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
       if (err) throw err
 
-      const groupId = _groupId({ groupInitMsg, groupKey })
+      const groupId = buildGroupId({ groupInitMsg, groupKey })
       const authors = [
         m.value.author,
         ...m.value.content.recps.filter(isFeed)

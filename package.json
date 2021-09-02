@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=test tape 'test/**/*.test.js' | tap-bail | tap-spec",
-    "test:windows": "tape test/**/*.test.js | tap-spec | tap-spec",
+    "test:windows": "cross-env NODE_ENV=test tape test/**/*.test.js | tap-bail | tap-spec",
     "lint": "standard --fix",
     "generate": "rm test/generate/*/* && node test/generate/index.js"
   },
@@ -36,13 +36,14 @@
     "sodium-native": "^3.2.0",
     "ssb-bfe": "^3.1.1",
     "ssb-crut": "^3.0.4",
-    "ssb-keyring": "^0.1.1",
+    "ssb-keyring": "^0.1.2",
     "ssb-keys": "^8.2.0",
     "ssb-private-group-keys": "^0.3.0",
     "ssb-ref": "^2.14.3",
     "ssb-schema-definitions": "^3.1.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "is-canonical-base64": "^1.1.1",
     "scuttle-testbot": "^1.6.0",
     "ssb-backlinks": "^2.1.1",
