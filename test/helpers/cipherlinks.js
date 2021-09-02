@@ -1,12 +1,15 @@
 const bfe = require('ssb-bfe')
 const na = require('sodium-native')
 const { Cipherlink } = require('envelope-js')
-const { isBuffer } = Buffer
 const { isFeedId, isMsg } = require('ssb-ref')
 const { SecretKey } = require('ssb-private-group-keys')
-const isPOBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
+const keys = require('ssb-keys')
+
+const { isBuffer } = Buffer
 
 const zeros = Buffer.alloc(32)
+
+// TODO 2021-09-02 replace all this with ssb-bfe methods
 
 class Scuttlelink extends Cipherlink {
   // inherited methods
@@ -45,8 +48,7 @@ class FeedId extends Scuttlelink {
   }
 
   mock () {
-    this.key = Buffer.alloc(32)
-    na.randombytes_buf(this.key)
+    this.key = Buffer.from(keys.generate().public, 'base64')
     return this
   }
 }

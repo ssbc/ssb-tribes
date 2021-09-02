@@ -3,7 +3,7 @@
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const { box, unboxKey, unboxBody } = require('envelope-js')
 const { SecretKey, poBoxKey } = require('ssb-private-group-keys')
-const isPOBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
+const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
 const bfe = require('ssb-bfe')
 
 const { isValidRecps } = require('./lib')
@@ -22,6 +22,8 @@ module.exports = function Envelope (keystore, state) {
       if (recps.length < 16) recps.push(state.keys.id)
       // slip my own_key into a slot if there's space
       // we disable in tests because it makes checking unboxing really hard!
+
+      // TODO check if I'm already in recps
     }
 
     if (!isValidRecps(recps)) throw isValidRecps.error
@@ -33,11 +35,10 @@ module.exports = function Envelope (keystore, state) {
         return keyInfo
       }
       if (isFeed(recp)) {
-        return (recp === state.keys.id)
-          ? keystore.ownKeys(recp)[0] // use a special key for your own feedId
-          : keystore.author.sharedDMKey(recp)
+        if (recp === state.keys.id) return keystore.ownKeys(recp)[0] // use a special key for your own feedId
+        else return keystore.author.sharedDMKey(recp)
       }
-      if (isPOBox(recp)) return easyPoBoxKey(recp)
+      if (isPoBox(recp)) return easyPoBoxKey(recp)
 
       // isValidRecps should guard against hitting this
       throw new Error('did now how to map recp > keyInfo')
@@ -60,18 +61,40 @@ module.exports = function Envelope (keystore, state) {
     const feed_id = bfe.encode(author)
     const prev_msg_id = bfe.encode(previous)
 
+    // TODO change this to new algorithm
+    // - check ownKeys
+    // - check groups
+    // - check DMs / poBox
+
     const trial_group_keys = keystore.author.groupKeys(author)
     const readKeyFromGroup = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
     // NOTE the group recp is only allowed in the first slot,
     // so we only test group keys in that slot (maxAttempts: 1)
     if (readKeyFromGroup) return readKeyFromGroup
 
-    const trial_dm_keys = [
-      keystore.author.sharedDMKey(author),
-      ...keystore.ownKeys()
+    const trial_misc_keys = [
+      ...(
+        author === state.keys.id
+          ? keystore.ownKeys()
+          : [keystore.author.sharedDMKey(author)]
+      ),
+      ...keystore.poBox.list()
+        .map(poBoxId => {
+          const data = keystore.poBox.get(poBoxId)
+          WIP >>
+            Either A) write keystore.author.sharedPOBoxKeys(author) ??
+            OR B)  store data: { scheme, id, secret, public } so it's easier to calculate keys
+          
+          uses poBoxKey(x_dh_secret, x_dh_public, x_id, y_dh_public, y_id)
+          // x = poBox
+          // y = author
+        })
+        })
     ]
 
-    return unboxKey(envelope, feed_id, prev_msg_id, trial_dm_keys, { maxAttempts: 16 })
+    console.log('poBoxKeys', keystore.poBox.list().map(keystore.poBox.get))
+
+    return unboxKey(envelope, feed_id, prev_msg_id, trial_misc_keys, { maxAttempts: 16 })
     // we then test all dm keys in up to 16 slots (maxAttempts: 16)
   }
 

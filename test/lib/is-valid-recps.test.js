@@ -10,10 +10,22 @@ test('is-valid-recps', t => {
       recps: new Array(16).fill(0).map(i => FeedId()),
       msg: 'up to 16 feedId only'
     },
-    { recps: [GroupId()], msg: 'groupId only' },
-    { recps: [GroupId(), FeedId()], msg: 'groupId + feedId' },
-    { recps: [POBoxId()], msg: 'poBox' },
-    { recps: [POBoxId(), FeedId()], msg: 'poBox + feedId' }
+    {
+      recps: [GroupId()],
+      msg: 'groupId only'
+    },
+    {
+      recps: [GroupId(), FeedId()],
+      msg: 'groupId + feedId'
+    },
+    {
+      recps: [POBoxId()],
+      msg: 'poBox'
+    },
+    {
+      recps: [POBoxId(), FeedId()],
+      msg: 'poBox + feedId'
+    }
   ]
   validExamples.forEach(({ recps, msg }) => {
     const result = isValidRecps(recps)
@@ -23,7 +35,7 @@ test('is-valid-recps', t => {
     )
     if (!result) {
       console.log(recps)
-      console.log('JSON Schema error:', isValidRecps.error)
+      console.log('JSON Schema error:', isValidRecps.error) // WIP here
     }
   })
 

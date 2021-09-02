@@ -1,14 +1,13 @@
 const { join } = require('path')
-const pull = require('pull-stream')
 const set = require('lodash.set')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
+const KeyRing = require('ssb-keyring')
+const bfe = require('ssb-bfe')
 const Obz = require('obz')
 
-const KeyStore = require('./key-store')
 const Envelope = require('./envelope')
 const listen = require('./listen')
 const { GetGroupTangle, groupId: _groupId } = require('./lib')
-const bfe = require('ssb-bfe')
 
 const Method = require('./method')
 
@@ -36,6 +35,9 @@ module.exports = {
       reject: 'async',
       update: 'async',
       list: 'async,'
+    },
+    poBox: {
+      create: 'async'
     }
   },
   init
@@ -44,7 +46,6 @@ module.exports = {
 function init (ssb, config) {
   const state = {
     keys: ssb.keys,
-
     feedId: bfe.encode(ssb.id),
 
     loading: {
@@ -56,7 +57,10 @@ function init (ssb, config) {
   }
 
   /* secret keys store / helper */
-  const keystore = KeyStore(join(config.path, 'tribes/keystore'), ssb.keys, () => {
+  const keystore = {} // HACK we create an Object so we have a reference to merge into
+  KeyRing(join(config.path, 'tribes/keystore'), ssb.keys, (err, api) => {
+    if (err) throw err
+    Object.assign(keystore, api) // merging into existing reference
     state.loading.keystore.set(false)
   })
   ssb.close.hook(function (fn, args) {
@@ -131,40 +135,36 @@ function init (ssb, config) {
    * (because they can't post messages to the group before then)
    */
 
-  /* auto-add group tangle info to all private-group messages */
+  /* Tangle: auto-add tangles.group info to all private-group messages */
   const getGroupTangle = GetGroupTangle(ssb, keystore)
   ssb.publish.hook(function (fn, args) {
     const [content, cb] = args
     if (!content.recps) return fn.apply(this, args)
+
+    // NOTE there are two ways an err can occur in getGroupTangle
+    // 1. recps is not a groupId
+    // 2. unknown groupId,
+    // Rather than cb(err) here we we pass it on to boxers to see if an err is needed
+
     if (!isGroup(content.recps[0])) return fn.apply(this, args)
 
-    getGroupTangle(content.recps[0], (err, tangle) => {
-      if (err) {
-        // NOTE there are two ways an err can occur in getGroupTangle
-        // 1. recps is not a groupId
-        // 2. unknown groupId,
-        //
-        // Rather than cb(err) here we we pass it on to boxers to see if an err is needed
-        return fn.apply(this, args)
-      }
+    onKeystoreReady(() => {
+      getGroupTangle(content.recps[0], (err, tangle) => {
+        if (err) return fn.apply(this, args)
 
-      fn.apply(this, [set(content, 'tangles.group', tangle), cb])
+        fn.apply(this, [set(content, 'tangles.group', tangle), cb])
+      })
     })
   })
 
   /* API */
   const scuttle = Method(ssb, keystore, state) // ssb db methods
   return {
-    register: keystore.group.register,
-    registerAuthors (groupId, authorIds, cb) {
-      pull(
-        pull.values(authorIds),
-        pull.asyncMap((authorId, cb) => keystore.group.registerAuthor(groupId, authorId, cb)),
-        pull.collect((err) => {
-          if (err) cb(err)
-          else cb(null, true)
-        })
-      )
+    register (groupId, info, cb) {
+      keystore.group.register(groupId, info, cb)
+    },
+    registerAuthors (groupId, authors, cb) {
+      keystore.group.registerAuthors(groupId, authors, (err) => err ? cb(err) : cb(null, true))
     },
     create (opts, cb) {
       scuttle.group.init((err, data) => {
@@ -175,7 +175,7 @@ function init (ssb, config) {
         keystore.group.register(groupId, { key: groupKey, root: root.key }, (err) => {
           if (err) return cb(err)
 
-          keystore.group.registerAuthor(groupId, ssb.id, (err) => {
+          keystore.group.registerAuthors(groupId, [ssb.id], (err) => {
             if (err) return cb(err)
 
             const readKey = unboxer.key(root.value.content, root.value)
@@ -186,6 +186,7 @@ function init (ssb, config) {
             // message is pushed into the queue, making our enveloping invalid.
 
             state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [ssb.id] }))
+            // TODO replace with Obz?
 
             cb(null, data)
           })
@@ -223,6 +224,7 @@ function init (ssb, config) {
       state.newAuthorListeners.push(fn)
     },
 
-    application: scuttle.application
+    application: scuttle.application,
+    poBox: scuttle.poBox
   }
 }

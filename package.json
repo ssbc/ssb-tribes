@@ -34,10 +34,11 @@
     "pull-paramap": "^1.2.2",
     "pull-stream": "^3.6.14",
     "sodium-native": "^3.2.0",
-    "ssb-bfe": "^1.1.0",
+    "ssb-bfe": "^3.1.1",
     "ssb-crut": "^3.0.4",
+    "ssb-keyring": "^0.1.1",
     "ssb-keys": "^8.2.0",
-    "ssb-private-group-keys": "^0.2.0",
+    "ssb-private-group-keys": "^0.3.0",
     "ssb-ref": "^2.14.3",
     "ssb-schema-definitions": "^3.1.0"
   },

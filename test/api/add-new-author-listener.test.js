@@ -1,7 +1,7 @@
 const test = require('tape')
 const { promisify: p } = require('util')
-const { Server, replicate } = require('../../helpers')
 const { setTimeout } = require('timers')
+const { Server, replicate } = require('../helpers')
 
 test('addNewAuthorListener', async t => {
   t.plan(4)

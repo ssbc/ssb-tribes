@@ -5,7 +5,7 @@ const pull = require('pull-stream')
 const { promisify: p } = require('util')
 
 const envelope = require('../envelope')
-const { decodeLeaves, Server, POBoxId } = require('./helpers')
+const { decodeLeaves, Server } = require('./helpers')
 
 const vectors = [
   require('private-group-spec/vectors/unbox1.json'),
@@ -15,6 +15,7 @@ const vectors = [
 test.only('unbox', async t => {
   const ssb = Server()
   const { groupId, groupInitMsg } = await p(ssb.tribes.create)({})
+  const { poBoxId } = await p(ssb.tribes.poBox.create)({}) // WIP <<<
 
   async function testRecps (recps) {
     const content = {
@@ -37,7 +38,7 @@ test.only('unbox', async t => {
   const RECPS = [
     ssb.id,
     groupId,
-    POBoxId()
+    poBoxId
   ]
 
   for (const recps of RECPS) {
@@ -65,7 +66,7 @@ test.only('unbox', async t => {
       return []
     })
   t.equal(backlinks.length, 3, 'backlinks indexed all messages (unboxed!)')
-  console.log(backlinks.map(m => m.value.content))
+  // console.log(backlinks.map(m => m.value.content))
 
   /* Vectors */
   console.log('test vectors:', vectors.length)
