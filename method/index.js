@@ -3,9 +3,11 @@ const AddMember = require('./group/add-member')
 const CreateLink = require('./link/create')
 const FindByGroupByFeedId = require('./link/find-group-by-feedid')
 const Application = require('./application')
+const POBox = require('./po-box')
 
 module.exports = function Method (ssb, keystore, state) {
   const application = Application(ssb)
+  const poBox = POBox(ssb, keystore)
 
   return {
     group: {
@@ -25,12 +27,15 @@ module.exports = function Method (ssb, keystore, state) {
       accept: patient(application.accept),
       reject: patient(application.reject),
       list: patient(application.list)
+    },
+    poBox: {
+      create: patient(poBox.create)
     }
   }
 
   function patient (fn) {
     return function (...args) {
-      if (state.loading.keystore.value === true) return fn(...args)
+      if (state.loading.keystore.value === false) return fn(...args)
 
       state.loading.keystore.once(() => fn(...args))
     }
