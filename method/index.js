@@ -14,7 +14,7 @@ module.exports = function Method (ssb, keystore, state) {
     group: {
       init: patient(Init(ssb, keystore, state)),
       addMember: patient(AddMember(ssb, keystore, state)),
-      addPoBox: patient(AddPoBox(ssb, keystore, state))
+      addPoBox: patient(AddPoBox(ssb, keystore, poBox))
     },
     link: {
       create: patient(link.create),

@@ -239,20 +239,8 @@ function init (ssb, config) {
 
           const { groupId: subgroupId, groupKey, groupInitMsg } = data
 
-          // WIP: generate a dmKey and attach to returned data
-          // scuttle.poBox.create({}, (err, data) => {
-          //   const { poBoxId } = data
-          // })
-          //
-          // consider changing createGroup API to be like
-          // scuttle.group.create({ addPOBox: true }, cb)
-          const keys = {
-            publicKey: 'ssb://woooo_a_public_key',
-            secretKey: 'asdasdasd' // WIP
-          }
-
-          // save the dm/poBox key to the subgroup
-          scuttle.group.addPoBox(subgroupId, keys, (err) => {
+          // share the poBox key to the subgroup
+          scuttle.group.addPoBox(subgroupId, (err, poBoxId) => {
             if (err) return cb(err)
 
             // link the subgroup to the group
@@ -262,8 +250,8 @@ function init (ssb, config) {
               cb(null, {
                 groupId: subgroupId,
                 groupKey,
-                dmKey: keys.publicKey, // WIP
-                groupInitMsg
+                groupInitMsg,
+                poBoxId
               })
             })
           })
