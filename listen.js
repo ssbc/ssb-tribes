@@ -7,63 +7,23 @@ module.exports = {
 }
 
 function addMember (ssb, emit) {
-  let messages = []
-
-  const isSync = () => {
-    return ssb.status().sync.since === ssb.status().sync.plugins.links
-    // we only care if links is up to date, as this is what
-    // messagesByType is based on
-  }
-  const interval = setInterval(
-    () => {
-      if (!isSync()) return
-      // actually only care if links (messagesByType) index is up to date
-
-      const _messages = messages
-      messages = []
-
-      _messages.forEach(emit)
-      _messages.forEach(msg => ssb.emit('group/add-member', msg))
-    },
-    1e3
-  )
-  ssb.close.hook((close, args) => {
-    clearInterval(interval)
-    close(...args)
-  })
+  // const isIndexing = () => {
+  //   const status = ssb.status()
+  //   if (status.progress.indexes.target < 0) return true
+  //   return status.progress.indexes.target !== status.sync.plugins.links
+  //   // we only care if links is up to date, as this is what
+  //   // messagesByType is based on
+  // }
 
   pull(
     ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
+    // NOTE this will run through all messages on each startup, which will help guarentee
+    // all messages have been emitted AND processed
+    // (same not true if we used a dummy flume-view)
     pull.filter(m => m.sync !== true),
-    // pull.filter(m => m.value.author !== ssb.id),
-    // NOTE we could rely only on ssb.tribes.invite (which has a built in keystore call to
-    // register the author), however this call would not be made on a identity restore,
-    // nor on manually published messages which we might make instead of using that invite helper
-    // Therefor, we DO NOT filter out our own messages here.
-    //
     pull.filter(isValid),
-    pull.drain(m => {
-      messages.push(m)
-    })
+    // NOTE we DO NOT filter our own messages out
+    // this is important for rebuilding indexes and keystore state if we have to restore our feed
+    pull.drain(emit)
   )
-
-  /* HACK: leveraging flume to access stream of newest messages */
-  /* NOTE: the disadvantage of this approach is it will call rebuild again part way through
-   * rebuilding, not sure impact. I think the above approach (wait till all indexed) is a better idea
-   */
-
-  // const VERSION = 1
-  // ssb._flumeUse('add-member-dummy-index', flumeView(
-  //   VERSION,
-  //   (_, msg) => {
-  //     if (msg.value.author === ssb.id) return _ // ignore messages I write
-  //     if (!isValid(msg)) return _
-
-  //     // HACK: using this ssb.emit to be able to test this listener
-  //     // TODO: change to only use ssb.emit when testing?
-  //     ssb.emit('group/add-member', msg)
-  //     emit(msg)
-  //     return _
-  //   }
-  // ))
 }

@@ -117,6 +117,13 @@ function init (ssb, config) {
     })
   })
 
+  // listen for group/poBox
+  //
+  // keystore.poBox.register(poBoxId, { key }, (err, data) => {
+  //
+  //   ssb.rebuild(() => console.log('rebuild finished'))
+  // })
+
   setImmediate(() => {
     if (ssb.replicate) {
       state.newAuthorListeners.push(({ newAuthors }) => {

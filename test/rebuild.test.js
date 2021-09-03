@@ -23,6 +23,7 @@ test('rebuild (I am added to a group)', t => {
 
   replicate({ from: admin, to: me, name, live: true })
 
+  /* set up listener */
   me.rebuild.hook(function (rebuild, [cb]) {
     t.pass('I automatically call a rebuild')
 
@@ -48,6 +49,7 @@ test('rebuild (I am added to a group)', t => {
     t.false(me.status().sync.sync, 'all indexes updating') // 1
   })
 
+  /* kick off the process */
   admin.tribes.create({}, (err, data) => {
     if (err) throw err
 
@@ -58,10 +60,11 @@ test('rebuild (I am added to a group)', t => {
   })
 })
 
-test('rebuild (I am added to a group)', t => {
+test('rebuild (I am added to a group, then add someone else)', t => {
   const admin = Server()
-  const alice = Server()
-  const bob = Server()
+  const alice = Server() // me
+  const bob = Server() // someone else
+  const zelfId = FeedId()
   const name = (id) => {
     switch (id) {
       case admin.id: return 'admin'
@@ -74,6 +77,7 @@ test('rebuild (I am added to a group)', t => {
   replicate({ from: admin, to: alice, name, live: true })
   replicate({ from: admin, to: bob, name, live: true })
 
+  /* after alice has been added, she adds bob */
   alice.rebuild.hook(function (rebuild, [cb]) {
     rebuild(() => {
       t.pass('alice is in the group')
@@ -109,16 +113,17 @@ test('rebuild (I am added to a group)', t => {
         t.pass('bob calls rebuild (added to group)')
         break
       case 2:
-        t.pass('bob calls rebuild (realises alice is in group)')
+        t.pass('bob calls rebuild (realises alice + zelf are in group)')
         break
       default:
-        t.fail(`rebuild called to many times: ${_count}`)
+        t.fail(`rebuild called too many times: ${_count}`)
     }
 
     rebuild(() => {
       cb()
       if (_count !== 2) return
 
+      /* check can see all of alices group messages */
       let seenAlices = 0
       pull(
         bob.createLogStream({ private: true }),
@@ -150,13 +155,20 @@ test('rebuild (I am added to a group)', t => {
     })
   })
 
+  /* admin adds alice + zelf to a group */
   admin.tribes.create({}, (err, data) => {
     if (err) throw err
 
     groupId = data.groupId
     admin.tribes.invite(groupId, [alice.id], { text: 'ahoy' }, (err) => {
       t.error(err, 'admin adds alice to group')
-      if (err) throw err
+
+      // we do this seperately to test if rebuild gets called 2 or 3 times
+      // should wait till indexing done before rebuilding again
+      admin.tribes.invite(groupId, [zelfId], { text: 'ahoy' }, (err) => {
+        t.error(err, 'admin adds zelf to group')
+        if (err) throw err
+      })
     })
   })
 })

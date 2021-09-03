@@ -1,7 +1,38 @@
 const test = require('tape')
 const pull = require('pull-stream')
+const { promisify: p } = require('util')
 
-const { Server } = require('./helpers')
+const { Server, replicate } = require('./helpers')
+const listen = require('../listen')
+
+// TODO this is... not listen any more
+// we may need to rename this
+
+test('listen.addMember', async t => {
+  const me = Server()
+  const friend = Server()
+
+  let iHeard = 0
+  let friendHeard = 0
+
+  listen.addMember(me, m => iHeard++)
+  listen.addMember(friend, m => friendHeard++)
+
+  const { groupId } = await p(me.tribes.create)({})
+  await p(me.tribes.invite)(groupId, [friend.id], {})
+
+  await p(replicate)({ from: me, to: friend })
+
+  setTimeout(() => {
+    t.equal(iHeard, 1, 'I heard my own add-member')
+    t.equal(friendHeard, 2, 'friend heard add-member 2 times')
+    me.close()
+    friend.close()
+    t.end()
+  }, 500)
+})
+
+/* YUCK, this is kinda an integration test */
 
 test('listen.addMember', t => {
   const A = Server() // me
