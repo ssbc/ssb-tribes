@@ -41,7 +41,8 @@ module.exports = {
       create: 'async'
     },
     subtribe: {
-      create: 'async'
+      create: 'async',
+      findByGroupId: 'async'
     }
   },
   init
@@ -239,7 +240,7 @@ function init (ssb, config) {
 
           const { groupId: subgroupId, groupKey, groupInitMsg } = data
 
-          // share the poBox key to the subgroup
+          // create + share the poBox key to the subgroup
           scuttle.group.addPoBox(subgroupId, (err, poBoxId) => {
             if (err) return cb(err)
 
@@ -256,7 +257,8 @@ function init (ssb, config) {
             })
           })
         })
-      }
+      },
+      findByGroupId: scuttle.link.findSubgroupByGroupId
     }
   }
 }

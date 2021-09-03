@@ -13,13 +13,14 @@ module.exports = function Method (ssb, keystore, state) {
   return {
     group: {
       init: patient(Init(ssb, keystore, state)),
-      addMember: patient(AddMember(ssb, keystore, state)),
+      addMember: patient(AddMember(ssb, keystore)),
       addPoBox: patient(AddPoBox(ssb, keystore, poBox))
     },
     link: {
       create: patient(link.create),
       createSubgroupLink: patient(link.createSubgroupLink),
-      findGroupByFeedId: patient(link.findGroupByFeedId)
+      findGroupByFeedId: patient(link.findGroupByFeedId),
+      findSubgroupByGroupId: patient(link.findSubgroupByGroupId)
     },
     // TODO - rm patient from these?
     application: {
