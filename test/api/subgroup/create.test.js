@@ -1,9 +1,11 @@
 const test = require('tape')
-const { Server } = require('../../helpers')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
+const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
+
+const { Server } = require('../../helpers')
 
 test('tribes.subtribe.create', t => {
-  t.plan(6)
+  t.plan(7)
   const server = Server()
 
   // this is more of an integration test over the api
@@ -17,12 +19,11 @@ test('tribes.subtribe.create', t => {
     server.tribes.subtribe.create(groupId, null, (err, data) => {
       t.error(err, 'create subtribe')
 
-      const { groupId: subgroupId, groupKey: subgroupKey } = data
+      const { groupId: subgroupId, groupKey: subgroupKey, poBoxId } = data
 
-      t.true(isGroup(subgroupId), 'returns subgroup identifier - groupId')
-      t.true(Buffer.isBuffer(subgroupKey) && subgroupKey.length === 32, 'returns subgroup symmetric key - groupKey')
-
-      // t.fail('TODO: update test for dmKey')
+      t.true(isGroup(subgroupId), 'subgroupId')
+      t.true(Buffer.isBuffer(subgroupKey) && subgroupKey.length === 32, 'subgroupKey')
+      t.true(isPoBox(poBoxId), 'data.poBoxId')
 
       server.close()
     })

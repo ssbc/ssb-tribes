@@ -234,29 +234,25 @@ function init (ssb, config) {
     poBox: scuttle.poBox,
     subtribe: {
       create (groupId, opts, cb) {
-        // create a new group
         tribeCreate(opts, (err, data) => {
           if (err) return cb(err)
 
           const { groupId: subgroupId, groupKey, groupInitMsg } = data
 
-          // WIP: generate a dmKey and attach to returned data
-          // scuttle.poBox.create({}, (err, data) => {
-          //   const { poBoxId } = data
-          // })
-          //
-          // consider changing createGroup API to be like 
-          // scuttle.group.create({ addPOBox: true }, cb)
-
-          // link the subgroup to the group
-          scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId }, (err) => {
+          // share the poBox key to the subgroup
+          scuttle.group.addPoBox(subgroupId, (err, poBoxId) => {
             if (err) return cb(err)
 
-            cb(null, {
-              groupId: subgroupId,
-              groupKey,
-              dmKey: 'secret string WOOO', // WIP
-              groupInitMsg
+            // link the subgroup to the group
+            scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId }, (err) => {
+              if (err) return cb(err)
+
+              cb(null, {
+                groupId: subgroupId,
+                groupKey,
+                groupInitMsg,
+                poBoxId
+              })
             })
           })
         })

@@ -35,7 +35,7 @@ test('is-valid-recps', t => {
     )
     if (!result) {
       console.log(recps)
-      console.log('JSON Schema error:', isValidRecps.error) // WIP here
+      console.log('JSON Schema error:', isValidRecps.error)
     }
   })
 

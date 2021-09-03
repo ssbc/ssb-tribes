@@ -15,7 +15,7 @@ const vectors = [
 test('unbox', async t => {
   const ssb = Server()
   const { groupId, groupInitMsg } = await p(ssb.tribes.create)({})
-  const { poBoxId } = await p(ssb.tribes.poBox.create)({}) // WIP <<<
+  const { poBoxId } = await p(ssb.tribes.poBox.create)({})
 
   async function testRecps (recps) {
     const content = {
