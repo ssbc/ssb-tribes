@@ -25,6 +25,7 @@ module.exports = function Link (ssb) {
         feedGroupLink.read(linkId, cb)
       })
     },
+
     createSubgroupLink ({ group, subgroup }, cb) {
       const input = {
         parent: group,
@@ -38,6 +39,7 @@ module.exports = function Link (ssb) {
         groupSubgroupLink.read(linkId, cb)
       })
     },
+
     findGroupByFeedId (feedId, cb) {
       if (!isFeed(feedId)) return cb(new Error('requires a valid feedId'))
 
@@ -88,6 +90,7 @@ module.exports = function Link (ssb) {
         pull.collect(cb)
       )
     },
+
     findSubgroupByGroupId (groupId, cb) {
       if (!isGroup(groupId)) return cb(new Error(`findSubgroupByGroupId expected a groupId, got ${groupId} instead.`))
 

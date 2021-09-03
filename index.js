@@ -1,20 +1,15 @@
 const { join } = require('path')
-const pull = require('pull-stream')
 const set = require('lodash.set')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
+const KeyRing = require('ssb-keyring')
+const bfe = require('ssb-bfe')
 const Obz = require('obz')
 
-const KeyStore = require('./key-store')
 const Envelope = require('./envelope')
 const listen = require('./listen')
-const GroupId = require('./lib/group-id')
-const GetGroupTangle = require('./lib/get-group-tangle')
-const bfe = require('ssb-bfe')
+const { GetGroupTangle, groupId: buildGroupId } = require('./lib')
 
 const Method = require('./method')
-
-// TODO: remove when real keys are plugged in
-const crypto = require('crypto')
 
 module.exports = {
   name: 'tribes',
@@ -42,6 +37,9 @@ module.exports = {
       update: 'async',
       list: 'async,'
     },
+    poBox: {
+      create: 'async'
+    },
     subtribe: {
       create: 'async',
       findByGroupId: 'async'
@@ -53,7 +51,6 @@ module.exports = {
 function init (ssb, config) {
   const state = {
     keys: ssb.keys,
-
     feedId: bfe.encode(ssb.id),
 
     loading: {
@@ -65,7 +62,10 @@ function init (ssb, config) {
   }
 
   /* secret keys store / helper */
-  const keystore = KeyStore(join(config.path, 'tribes/keystore'), ssb.keys, () => {
+  const keystore = {} // HACK we create an Object so we have a reference to merge into
+  KeyRing(join(config.path, 'tribes/keystore'), ssb.keys, (err, api) => {
+    if (err) throw err
+    Object.assign(keystore, api) // merging into existing reference
     state.loading.keystore.set(false)
   })
   ssb.close.hook(function (fn, args) {
@@ -91,7 +91,7 @@ function init (ssb, config) {
     ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
       if (err) throw err
 
-      const groupId = GroupId({ groupInitMsg, groupKey })
+      const groupId = buildGroupId({ groupInitMsg, groupKey })
       const authors = [
         m.value.author,
         ...m.value.content.recps.filter(isFeed)
@@ -140,24 +140,25 @@ function init (ssb, config) {
    * (because they can't post messages to the group before then)
    */
 
-  /* auto-add group tangle info to all private-group messages */
+  /* Tangle: auto-add tangles.group info to all private-group messages */
   const getGroupTangle = GetGroupTangle(ssb, keystore)
   ssb.publish.hook(function (fn, args) {
     const [content, cb] = args
     if (!content.recps) return fn.apply(this, args)
+
+    // NOTE there are two ways an err can occur in getGroupTangle
+    // 1. recps is not a groupId
+    // 2. unknown groupId,
+    // Rather than cb(err) here we we pass it on to boxers to see if an err is needed
+
     if (!isGroup(content.recps[0])) return fn.apply(this, args)
 
-    getGroupTangle(content.recps[0], (err, tangle) => {
-      if (err) {
-        // NOTE there are two ways an err can occur in getGroupTangle
-        // 1. recps is not a groupId
-        // 2. unknown groupId,
-        //
-        // Rather than cb(err) here we we pass it on to boxers to see if an err is needed
-        return fn.apply(this, args)
-      }
+    onKeystoreReady(() => {
+      getGroupTangle(content.recps[0], (err, tangle) => {
+        if (err) return fn.apply(this, args)
 
-      fn.apply(this, [set(content, 'tangles.group', tangle), cb])
+        fn.apply(this, [set(content, 'tangles.group', tangle), cb])
+      })
     })
   })
 
@@ -173,7 +174,7 @@ function init (ssb, config) {
       keystore.group.register(groupId, { key: groupKey, root: root.key }, (err) => {
         if (err) return cb(err)
 
-        keystore.group.registerAuthor(groupId, ssb.id, (err) => {
+        keystore.group.registerAuthors(groupId, [ssb.id], (err) => {
           if (err) return cb(err)
 
           const readKey = unboxer.key(root.value.content, root.value)
@@ -192,16 +193,11 @@ function init (ssb, config) {
   }
 
   return {
-    register: keystore.group.register,
-    registerAuthors (groupId, authorIds, cb) {
-      pull(
-        pull.values(authorIds),
-        pull.asyncMap((authorId, cb) => keystore.group.registerAuthor(groupId, authorId, cb)),
-        pull.collect((err) => {
-          if (err) cb(err)
-          else cb(null, true)
-        })
-      )
+    register (groupId, info, cb) {
+      keystore.group.register(groupId, info, cb)
+    },
+    registerAuthors (groupId, authors, cb) {
+      keystore.group.registerAuthors(groupId, authors, (err) => err ? cb(err) : cb(null, true))
     },
     create: tribeCreate,
     invite (groupId, authorIds, opts = {}, cb) {
@@ -236,23 +232,16 @@ function init (ssb, config) {
     },
 
     application: scuttle.application,
-
+    poBox: scuttle.poBox,
     subtribe: {
       create (groupId, opts, cb) {
-        // create a new group
         tribeCreate(opts, (err, data) => {
           if (err) return cb(err)
 
           const { groupId: subgroupId, groupKey, groupInitMsg } = data
 
-          // TODO: remove this and add real code that generates the keys
-          const keys = {
-            publicKey: 'ssb://woooo_a_public_key',
-            secretKey: crypto.randomBytes(8).toString('base64')
-          }
-
-          // save the dm/poBox key to the subgroup
-          scuttle.group.addPoBox(subgroupId, keys, (err) => {
+          // create + share the poBox key to the subgroup
+          scuttle.group.addPoBox(subgroupId, (err, poBoxId) => {
             if (err) return cb(err)
 
             // link the subgroup to the group
@@ -262,8 +251,8 @@ function init (ssb, config) {
               cb(null, {
                 groupId: subgroupId,
                 groupKey,
-                dmKey: keys.publicKey,
-                groupInitMsg
+                groupInitMsg,
+                poBoxId
               })
             })
           })

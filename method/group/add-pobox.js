@@ -1,32 +1,45 @@
 const Crut = require('ssb-crut')
 const PoBox = require('../../spec/group/add-pobox')
 
-module.exports = function GroupPobox (ssb, keystore, state) {
-  const poBox = new Crut(ssb, PoBox)
+module.exports = function GroupAddPoBox (ssb, keystore, scuttlePoBox) {
+  const {
+    spec: { isUpdate }
+  } = new Crut(ssb, PoBox)
 
-  return function groupPobox (groupId, { publicKey, secretKey }, cb) {
+  return function groupAddPoBox (groupId, cb) {
     const info = keystore.group.get(groupId)
-
     if (!info) return cb(new Error('unknown groupId: ' + groupId))
 
-    const { root } = info
+    scuttlePoBox.create({}, (err, data) => {
+      if (err) return cb(err)
 
-    const content = {
-      type: 'group/poBox',
-      keys: {
-        set: { publicKey, secretKey }
-      },
-      tangles: {
-        poBox: { root, previous: [root] }, // TODO calculate previous for poBox tangle
-        group: { root, previous: [root] } // TODO: need a way to validate this root
-        // NOTE: this is a dummy entry which is over-written in publish hook
-        // it's needed to pass isValid
-      },
-      recps: [groupId]
-    }
+      const { poBoxId, poBoxKey } = data
+      const { root } = info
 
-    if (!poBox.spec.isUpdate(content)) return cb(new Error(poBox.spec.isUpdate.errorsString))
+      const content = {
+        type: 'group/poBox',
+        keys: {
+          set: {
+            poBoxId,
+            key: poBoxKey.toString('base64')
+          }
+        },
+        tangles: {
+          poBox: { root, previous: [root] },
+          // TODO 2021-09-03 (mix)
+          // tangles.poBox isn't a real tangle yes
+          // teach Crut to be relaxed about the root node being a different type, then use crut.update(groupId, props, cb)
+          group: { root, previous: [root] } // dummy - get's replaced by publish hook
+        },
+        recps: [groupId]
+      }
 
-    ssb.publish(content, cb)
+      if (!isUpdate(content)) return cb(new Error(isUpdate.errorsString))
+
+      ssb.publish(content, (err, msg) => {
+        if (err) return cb(err)
+        cb(null, poBoxId)
+      })
+    })
   }
 }
