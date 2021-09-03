@@ -140,6 +140,25 @@ Returns group metadata for a given group:
 
 Lists all the authors (feedIds) who you know are part of the group with id `groupId`
 
+### `ssb.tribes.subtribe.create(groupId, opts, cb)`
+
+A convenience method which:
+
+- mints a group
+- publishes a `link` in the parent group which advertises the existence of the subgroup
+- mints a `dmKey` for that group so that the parent group member can send messages to the subgroup
+
+where:
+
+- `groupId` *String* - the id of the _parent_ group this subgroup will be linked to
+- `opts` *Object* (currently no opts you can pass in but empty object still required)
+- `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
+  - `groupId` *String* - a cipherlink that's safe to use publicly to name the subgroup, and is used in `recps` to trigger enveloping messages to that group
+  - `groupKey` *Buffer*  - the symmetric key used for encryption by the subgroup
+  - `dmKey` *Buffer* - the asymetric key used to encrypt messages sent from outside of the subgroup
+  - `groupInitMsg` *Object* - a copy of the  (enveloped) message used to initialise the subgroup
+
+_This method calls `ssb.tribes.create`_
 
 ---
 
@@ -154,6 +173,8 @@ These endpoints give you access to additional features, such as:
 - **binding groups to feeds**
     - `ssb.tribes.link.create({ group, name }, cb)`
     - `ssb.tribes.findByFeedId(feedId, cb)`
+- **binding subgroups to groups**
+    - `ssb.tribes.link.createSubgroupLink({ group, subgroup }, cb)`
 - **managing people applying to join to a group**
     - `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
     - `ssb.tribes.application.get(applicationId, cb)`
@@ -211,6 +232,18 @@ Arguments:
 Note:
 - this link will be encrypted to the group you're linking to (i.e. link will have `recps: [groupId]`)
 
+### `ssb.tribes.link.createSubgroupLink({ group, subgroup }, cb)`
+
+Creates a message of tyoe `link/group-subgroup` which links a group to a subgroup
+
+Arguments:
+
+- `group` *GroupId* - the id of the parent private group
+- `subgroup` *GroupId* - the id of the subgroup you're linking to `group`
+- `cb` - *Function* - call with signature `(err, link)` where `link` is the link message
+Note:
+- this link will be encrypted to the parent group (i.e. link will have `recps: [group]`)
+
 ### `ssb.tribes.findByFeedId(feedId, cb)`
 
 Find groups which have linked with a feedId (see `ssb.tribes.link.create`).
@@ -233,6 +266,7 @@ Find groups which have linked with a feedId (see `ssb.tribes.link.create`).
   ```
 
 NOTE: the strange format with states is to leave easy support for multiple editors (of a link to a group) in the future
+
 
 ### `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
 

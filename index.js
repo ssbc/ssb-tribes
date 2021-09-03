@@ -23,7 +23,8 @@ module.exports = {
     list: 'async',
     listAuthors: 'async',
     link: {
-      create: 'async'
+      create: 'async',
+      createSubgroupLink: 'async'
     },
     findByFeedId: 'async',
 
@@ -37,6 +38,9 @@ module.exports = {
       list: 'async,'
     },
     poBox: {
+      create: 'async'
+    },
+    subtribe: {
       create: 'async'
     }
   },
@@ -159,6 +163,34 @@ function init (ssb, config) {
 
   /* API */
   const scuttle = Method(ssb, keystore, state) // ssb db methods
+
+  const tribeCreate = (opts, cb) => {
+    scuttle.group.init((err, data) => {
+      if (err) return cb(err)
+
+      const { groupId, groupKey, groupInitMsg: root } = data
+
+      keystore.group.register(groupId, { key: groupKey, root: root.key }, (err) => {
+        if (err) return cb(err)
+
+        keystore.group.registerAuthors(groupId, [ssb.id], (err) => {
+          if (err) return cb(err)
+
+          const readKey = unboxer.key(root.value.content, root.value)
+          if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
+          // NOTE this checks out group/init message was encrypted with the right `previous`.
+          // There is a potential race condition where the init method calls `ssb.getFeedState` to
+          // access `previous` but while encrypting the `group/init` message content another
+          // message is pushed into the queue, making our enveloping invalid.
+
+          state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [ssb.id] }))
+
+          cb(null, data)
+        })
+      })
+    })
+  }
+
   return {
     register (groupId, info, cb) {
       keystore.group.register(groupId, info, cb)
@@ -166,33 +198,7 @@ function init (ssb, config) {
     registerAuthors (groupId, authors, cb) {
       keystore.group.registerAuthors(groupId, authors, (err) => err ? cb(err) : cb(null, true))
     },
-    create (opts, cb) {
-      scuttle.group.init((err, data) => {
-        if (err) return cb(err)
-
-        const { groupId, groupKey, groupInitMsg: root } = data
-
-        keystore.group.register(groupId, { key: groupKey, root: root.key }, (err) => {
-          if (err) return cb(err)
-
-          keystore.group.registerAuthors(groupId, [ssb.id], (err) => {
-            if (err) return cb(err)
-
-            const readKey = unboxer.key(root.value.content, root.value)
-            if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
-            // NOTE this checks out group/init message was encrypted with the right `previous`.
-            // There is a potential race condition where the init method calls `ssb.getFeedState` to
-            // access `previous` but while encrypting the `group/init` message content another
-            // message is pushed into the queue, making our enveloping invalid.
-
-            state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [ssb.id] }))
-            // TODO replace with Obz?
-
-            cb(null, data)
-          })
-        })
-      })
-    },
+    create: tribeCreate,
     invite (groupId, authorIds, opts = {}, cb) {
       scuttle.group.addMember(groupId, authorIds, opts, (err, data) => {
         if (err) return cb(err)
@@ -225,6 +231,36 @@ function init (ssb, config) {
     },
 
     application: scuttle.application,
-    poBox: scuttle.poBox
+    poBox: scuttle.poBox,
+    subtribe: {
+      create (groupId, opts, cb) {
+        // create a new group
+        tribeCreate(opts, (err, data) => {
+          if (err) return cb(err)
+
+          const { groupId: subgroupId, groupKey, groupInitMsg } = data
+
+          // WIP: generate a dmKey and attach to returned data
+          // scuttle.poBox.create({}, (err, data) => {
+          //   const { poBoxId } = data
+          // })
+          //
+          // consider changing createGroup API to be like 
+          // scuttle.group.create({ addPOBox: true }, cb)
+
+          // link the subgroup to the group
+          scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId }, (err) => {
+            if (err) return cb(err)
+
+            cb(null, {
+              groupId: subgroupId,
+              groupKey,
+              dmKey: 'secret string WOOO', // WIP
+              groupInitMsg
+            })
+          })
+        })
+      }
+    }
   }
 }
