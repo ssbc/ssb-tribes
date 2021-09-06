@@ -3,7 +3,7 @@ const { Server } = require('../../helpers')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
 
 test('tribes.subtribe.findByGroupId', t => {
-  t.plan(8)
+  t.plan(10)
   const server = Server()
 
   // this is more of an integration test over the api
@@ -21,6 +21,9 @@ test('tribes.subtribe.findByGroupId', t => {
 
       t.true(isGroup(subgroupId), 'returns subgroup identifier - groupId')
       t.true(Buffer.isBuffer(subgroupKey) && subgroupKey.length === 32, 'returns subgroup symmetric key - groupKey')
+
+      t.notEqual(groupId, subgroupId, 'different subgroup,group ids')
+      t.notDeepEqual(groupKey, subgroupKey, 'different subgroup,group keys')
 
       server.tribes.subtribe.findByGroupId(groupId, (err, data) => {
         t.error(err, 'finds subgroup by groupId')

@@ -1,10 +1,11 @@
 const test = require('tape')
 const { promisify: p } = require('util')
-const { Server, replicate, FeedId } = require('../../helpers')
+const { Server, replicate, FeedId } = require('../helpers')
 
 test('tribes.invite', async t => {
   const kaitiaki = Server()
   const newPerson = Server()
+
   const name = id => {
     if (id === kaitiaki.id) return 'kaitiaki '
     if (id === newPerson.id) return 'new person'

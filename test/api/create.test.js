@@ -1,6 +1,6 @@
 const test = require('tape')
-const { Server } = require('../../helpers')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
+const { Server } = require('../helpers')
 
 test('tribes.create', t => {
   t.plan(2)

@@ -1,9 +1,8 @@
 const test = require('tape')
 const Crut = require('ssb-crut')
-const crypto = require('crypto')
 
 const poboxSpec = require('../../../../spec/group/add-pobox')
-const { GroupId, Server } = require('../../../helpers')
+const { GroupId } = require('../../../helpers')
 
 const Mock = (keys) => {
   return {
@@ -34,13 +33,13 @@ const Mock = (keys) => {
 }
 
 test('is-group-add-pobox', t => {
-  const server = Server()
+  const server = { backlinks: true } // fake a server
   const { isUpdate: isValid } = new Crut(server, poboxSpec).spec
-  const secretKey = crypto.randomBytes(8).toString('base64')
+  const key = 'KcYQQHA3x7KJ160+20vtc5+RyMLnzj5Jmd7t5iiINfA='
 
   const validKeys = [
     null,
-    { publicKey: 'ssb://random_public_key', secretKey }
+    { poBoxId: 'ssb:identity/po-box/random_public_key', key }
   ]
 
   validKeys.forEach(keys => {
@@ -53,8 +52,8 @@ test('is-group-add-pobox', t => {
   const invalidKeys = [
     undefined,
     {},
-    { publicKey: 'dog', secretKey },
-    { publicKey: 'ssb://random_public_key', secretKey: 'dog' }
+    { poBoxId: 'dog', key },
+    { poBoxId: 'ssb:identity/po-box/random_public_key', key: 'dog' }
   ]
 
   invalidKeys.forEach((keys) => {
@@ -65,7 +64,5 @@ test('is-group-add-pobox', t => {
   })
 
   // NOTE: ssb-crut errorsString not helpful for nested props
-
-  server.close()
   t.end()
 })

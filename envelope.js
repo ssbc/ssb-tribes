@@ -2,44 +2,46 @@
 
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const { box, unboxKey, unboxBody } = require('envelope-js')
-
-const { SecretKey } = require('ssb-private-group-keys')
+const { SecretKey, poBoxKey, DiffieHellmanKeys } = require('ssb-private-group-keys')
+const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
 const bfe = require('ssb-bfe')
+
+const { isValidRecps } = require('./lib')
 
 function isEnvelope (ciphertext) {
   return ciphertext.endsWith('.box2')
+  // && base64?
 }
 
 module.exports = function Envelope (keystore, state) {
+  const easyPoBoxKey = poBoxKey.easy(state.keys)
+
   function boxer (content, previousFeedState) {
-    if (content.recps.length > 16) {
-      throw new Error(`private-group spec allows maximum 16 slots, but you've tried to use ${content.recps.length}`)
-    }
-    // groupId can only be in first "slot"
-    if (!isGroup(content.recps[0]) && !isFeed(content.recps[0])) return null
-
-    // any subsequent slots are only for feedId
-    if (content.recps.length > 1 && !content.recps.slice(1).every(isFeed)) {
-      if (content.recps.slice(1).find(isGroup)) {
-        throw new Error('private-group spec only allows groupId in the first slot')
-      }
-      return null
+    const recps = content.recps
+    if (process.env.NODE_ENV !== 'test') {
+      // slip my own_key into a slot if there's space
+      // we disable in tests because it makes checking unboxing really hard!
+      if (recps.indexOf(state.keys.id) < 0) recps.push(state.keys.id)
     }
 
-    const recipentKeys = content.recps.reduce((acc, recp) => {
+    if (!isValidRecps(recps)) throw isValidRecps.error
+
+    const recipentKeys = recps.map(recp => {
       if (isGroup(recp)) {
         const keyInfo = keystore.group.get(recp)
         if (!keyInfo) throw new Error(`unknown groupId ${recp}, cannot encrypt message`)
-
-        return [...acc, keyInfo]
+        return keyInfo
       }
-      // use a special key for your own feedId
-      if (recp === state.keys.id) {
-        return [...acc, keystore.ownKeys(recp)[0]]
+      if (isFeed(recp)) {
+        if (recp === state.keys.id) return keystore.ownKeys(recp)[0] // use a special key for your own feedId
+        else return keystore.author.sharedDMKey(recp)
       }
+      if (isPoBox(recp)) return easyPoBoxKey(recp)
 
-      return [...acc, keystore.author.sharedDMKey(recp)]
-    }, [])
+      // isValidRecps should guard against hitting this
+      throw new Error('did now how to map recp > keyInfo')
+    })
+
     const plaintext = Buffer.from(JSON.stringify(content), 'utf8')
     const msgKey = new SecretKey().toBuffer()
 
@@ -57,19 +59,51 @@ module.exports = function Envelope (keystore, state) {
     const feed_id = bfe.encode(author)
     const prev_msg_id = bfe.encode(previous)
 
+    let readKey
+
+    /* check my DM keys (self, other) */
+    if (author === state.keys.id) {
+      const trial_own_keys = keystore.ownKeys()
+      readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_own_keys, { maxAttempts: 16 })
+      if (readKey) return readKey
+    } else {
+      const trial_dm_keys = [keystore.author.sharedDMKey(author)]
+      readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_dm_keys, { maxAttempts: 16 })
+      if (readKey) return readKey
+    }
+
+    /* check my group keys */
     const trial_group_keys = keystore.author.groupKeys(author)
-    const readKeyFromGroup = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
+    readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
     // NOTE the group recp is only allowed in the first slot,
     // so we only test group keys in that slot (maxAttempts: 1)
-    if (readKeyFromGroup) return readKeyFromGroup
+    if (readKey) return readKey
 
-    const trial_dm_keys = [
-      keystore.author.sharedDMKey(author),
-      ...keystore.ownKeys()
-    ]
+    /* check my poBox keys */
+    // TODO - consider how to reduce redundent computation + memory use here
+    const trial_poBox_keys = keystore.poBox.list()
+      .map(poBoxId => {
+        const data = keystore.poBox.get(poBoxId)
 
-    return unboxKey(envelope, feed_id, prev_msg_id, trial_dm_keys, { maxAttempts: 16 })
-    // we then test all dm keys in up to 16 slots (maxAttempts: 16)
+        const poBox_dh_secret = Buffer.concat([
+          bfe.toTF('encryption-key', 'box2-pobox-dh'),
+          data.key
+        ])
+
+        const poBox_id = bfe.encode(poBoxId)
+        const poBox_dh_public = Buffer.concat([
+          bfe.toTF('encryption-key', 'box2-pobox-dh'),
+          poBox_id.slice(2)
+        ])
+
+        const author_id = bfe.encode(author)
+        const author_dh_public = new DiffieHellmanKeys({ public: author }, { fromEd25519: true })
+          .toBFE().public
+
+        return poBoxKey(poBox_dh_secret, poBox_dh_public, poBox_id, author_dh_public, author_id)
+      })
+
+    return unboxKey(envelope, feed_id, prev_msg_id, trial_poBox_keys, { maxAttempts: 16 })
   }
 
   function value (ciphertext, { author, previous }, read_key) {

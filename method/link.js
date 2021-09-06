@@ -43,7 +43,6 @@ module.exports = function Link (ssb) {
 
       const query = [{
         $filter: {
-          dest: feedId,
           value: {
             author: feedId, // link published by this person
             content: {
@@ -58,7 +57,10 @@ module.exports = function Link (ssb) {
       }]
 
       pull(
-        ssb.backlinks.read({ query }),
+        // NOTE: using ssb-query instead of ssb-backlinks
+        // because the backlinks query will get EVERY message which contains the groupId in it, which will be a LOT for a group
+        // then filters that massive amount down to the ones which have the dest in the right place
+        ssb.query.read({ query }),
         pull.filter(feedGroupLink.spec.isRoot),
         pull.filter(link => {
           return link.value.content.child === link.value.content.recps[0]
@@ -91,7 +93,6 @@ module.exports = function Link (ssb) {
 
       const query = [{
         $filter: {
-          dest: groupId,
           value: {
             content: {
               type: 'link/group-subgroup',
@@ -105,7 +106,10 @@ module.exports = function Link (ssb) {
       }]
 
       pull(
-        ssb.backlinks.read({ query }),
+        // NOTE: using ssb-query instead of ssb-backlinks
+        // because the backlinks query will get EVERY message which contains the groupId in it, which will be a LOT for a group
+        // then filters that massive amount down to the ones which have the dest in the right place
+        ssb.query.read({ query }),
         pull.unique(link => link.value.content.child),
         pull.filter(groupSubgroupLink.spec.isRoot),
         pull.filter(link => {

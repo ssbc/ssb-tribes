@@ -2,7 +2,7 @@ const test = require('tape')
 const { Server, replicate } = require('../helpers')
 const pull = require('pull-stream')
 const paraMap = require('pull-paramap')
-const GetGroupTangle = require('../../lib/get-group-tangle')
+const { GetGroupTangle } = require('../../lib')
 
 test('get-group-tangle unit test', t => {
   const name = `get-group-tangle-${Date.now()}`

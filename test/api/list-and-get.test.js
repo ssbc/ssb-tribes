@@ -1,5 +1,5 @@
 const test = require('tape')
-const { Server } = require('../../helpers')
+const { Server } = require('../helpers')
 
 test('list + get groups', (t) => {
   const name = `list-and-get-groups-${Date.now()}`

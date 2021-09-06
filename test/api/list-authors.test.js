@@ -1,6 +1,6 @@
 const test = require('tape')
 const keys = require('ssb-keys')
-const { Server } = require('../../helpers')
+const { Server } = require('../helpers')
 
 test('listAuthors', (t) => {
   const server = Server()

@@ -143,13 +143,12 @@ Lists all the authors (feedIds) who you know are part of the group with id `grou
 ### `ssb.tribes.subtribe.create(groupId, opts, cb)`
 
 A convenience method which:
-
 - mints a group
 - publishes a `link` in the parent group which advertises the existence of the subgroup
 - mints a `dmKey` for that group so that the parent group member can send messages to the subgroup
+- then creates a `link` inside the existing group (linking group + subgroup)
 
 where:
-
 - `groupId` *String* - the id of the _parent_ group this subgroup will be linked to
 - `opts` *Object* (currently no opts you can pass in but empty object still required)
 - `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
@@ -169,9 +168,11 @@ _alias of `ssb.tribes.get`_
 ## API (Extras)
 
 These endpoints give you access to additional features, such as:
-- **manually registering groups or authors**:
+- **registering groups or group-authors**:
     - `ssb.tribes.register(groupId, info, cb)`
     - `ssb.tribes.registerAuthors(groupId, [authorId], cb)`
+- **P.O. Box tools**
+    - `ssb.tribes.poBox.create(opts, cb)`
 - **binding groups to feeds**
     - `ssb.tribes.link.create({ group, name }, cb)`
     - `ssb.tribes.findByFeedId(feedId, cb)`
@@ -200,7 +201,6 @@ where:
 - `cb`[ *Function* - a callback with signature `cb(err: Error, success: Boolean)`
 
 
-
 ### `ssb.tribes.registerAuthors(groupId, [authorId], cb)`
 
 Makes an off-log note that some author(s) are part of a group.
@@ -210,8 +210,18 @@ _NOTE: mainly used internally_
 
 where:
 - `groupId` *String* - is a the id for the group you want to not these users are part of
-- `[authorId]` - *Array* is a connection of feedIds
+- `[authorId]` *Array* - is a connection of feedIds
 - `cb` *Function* - has signature `cb(err, success)`
+
+### `ssb.tribes.poBox.create(opts, cb)`
+
+Creates a P.O. Box key-pair, which is like a one-way group messaging setup with a public and private curve25519 keypair.
+
+- `opts` *Object* - currently unused but still required
+- `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
+  - `poBoxId` *String* - a cipherlink that can be used in `recps` by anyone, to send messages only those with the secret key can open
+  - `public` *Buffer*  - the public part of the keypair
+  - `secret` *Buffer*  - the secret part of the keypair
 
 
 ### `ssb.tribes.link.create({ group, name }, cb)`
@@ -390,7 +400,6 @@ where `opts` *Object* with properties:
     - `accepted: false` gets you applications which have been rejected
     - `accepted: null` gets you applications which haven't had a decision made on them yet
     - If you set this, you get full application records back
-
 
 
 ## TODO
