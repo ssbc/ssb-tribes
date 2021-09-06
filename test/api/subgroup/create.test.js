@@ -25,32 +25,35 @@ test('tribes.subtribe.create', t => {
       t.true(Buffer.isBuffer(subgroupKey) && subgroupKey.length === 32, 'subgroupKey')
       t.true(isPoBox(poBoxId), 'data.poBoxId')
 
-      /* check that a link got created correctly */
-      const query = [{
-        $filter: {
-          value: {
-            content: {
-              type: 'link/group-subgroup'
-            }
-          }
-        }
-      }]
+      getLink((err, link) => {
+        if (err) throw err
 
-      pull(
-        server.query.read({ query }),
-        pull.collect((err, msgs) => {
-          if (err) throw err
+        const { parent, child, recps } = link.value.content
 
-          const { parent, child, recps } = msgs[0].value.content
+        t.equal(parent, groupId, 'link/group-subgroup parent')
+        t.equal(child, subgroupId, 'link/group-subgroup child')
+        t.deepEqual(recps, [groupId], 'link/group-subgroup recps')
 
-          t.equal(parent, groupId, 'link/group-subgroup parent')
-          t.equal(child, subgroupId, 'link/group-subgroup child')
-          t.deepEqual(recps, [groupId], 'link/group-subgroup recps')
-
-          server.close()
-          t.end()
-        })
-      )
+        server.close()
+        t.end()
+      })
     })
   })
+
+  function getLink (cb) {
+    const query = [{
+      $filter: {
+        value: {
+          content: {
+            type: 'link/group-subgroup'
+          }
+        }
+      }
+    }]
+
+    pull(
+      server.query.read({ query }),
+      pull.collect((err, msgs) => err ? cb(err) : cb(null, msgs[0]))
+    )
+  }
 })

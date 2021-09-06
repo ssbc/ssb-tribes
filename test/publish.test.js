@@ -5,6 +5,7 @@ const { Server, GroupId, replicate, FeedId } = require('./helpers')
 
 test('publish (to groupId)', t => {
   const server = Server()
+  console.log(process.env.NODE_ENV)
 
   server.tribes.create(null, (err, data) => {
     t.error(err)
@@ -16,6 +17,9 @@ test('publish (to groupId)', t => {
       text: 'summer has arrived in wellington!',
       recps: [groupId]
     }
+    /* NOTE with this we confirm that content.recps isn't mutated while sneakin our own_key in! */
+    process.env.NODE_ENV = 'production'
+    Object.freeze(content.recps)
 
     server.publish(content, (err, msg) => {
       t.error(err)
@@ -25,6 +29,8 @@ test('publish (to groupId)', t => {
         t.error(err)
         t.deepEqual(msg.value.content, content, 'can open envelope!')
 
+        /* return ENV to testing */
+        process.env.NODE_ENV = 'test'
         server.close(t.end)
       })
     })
