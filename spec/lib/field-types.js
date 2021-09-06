@@ -5,7 +5,8 @@ const overwrite = (schema, opts = {}) => Overwrite({ valueSchema: schema, ...opt
 
 module.exports = {
   string: overwrite({ type: ['string', 'null'] }),
-  poBox: overwrite({
+
+  poBoxInfo: overwrite({
     type: ['object', 'null'],
     required: ['poBoxId', 'key'],
     properties: {

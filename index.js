@@ -241,7 +241,7 @@ function init (ssb, config) {
           const { groupId: subgroupId, groupKey, groupInitMsg } = data
 
           // create + share the poBox key to the subgroup
-          scuttle.group.addPoBox(subgroupId, (err, poBoxId) => {
+          scuttle.group.addPOBox(subgroupId, (err, poBoxId) => {
             if (err) return cb(err)
 
             // link the subgroup to the group

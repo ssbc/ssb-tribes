@@ -20,7 +20,6 @@ module.exports = function Envelope (keystore, state) {
     const recps = [...content.recps]
     // NOTE avoid mutating the original recps
     if (process.env.NODE_ENV !== 'test') {
-      console.log('HERE')
       // slip my own_key into a slot if there's space
       // we disable in tests because it makes checking unboxing really hard!
       if (recps.indexOf(state.keys.id) < 0) recps.push(state.keys.id)
