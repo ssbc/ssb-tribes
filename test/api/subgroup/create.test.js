@@ -1,11 +1,11 @@
 const test = require('tape')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
 const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
+const pull = require('pull-stream')
 
 const { Server } = require('../../helpers')
 
 test('tribes.subtribe.create', t => {
-  t.plan(7)
   const server = Server()
 
   // this is more of an integration test over the api
@@ -25,7 +25,32 @@ test('tribes.subtribe.create', t => {
       t.true(Buffer.isBuffer(subgroupKey) && subgroupKey.length === 32, 'subgroupKey')
       t.true(isPoBox(poBoxId), 'data.poBoxId')
 
-      server.close()
+      /* check that a link got created correctly */
+      const query = [{
+        $filter: {
+          value: {
+            content: {
+              type: 'link/group-subgroup'
+            }
+          }
+        }
+      }]
+
+      pull(
+        server.query.read({ query }),
+        pull.collect((err, msgs) => {
+          if (err) throw err
+
+          const { parent, child, recps } = msgs[0].value.content
+
+          t.equal(parent, groupId, 'link/group-subgroup parent')
+          t.equal(child, subgroupId, 'link/group-subgroup child')
+          t.deepEqual(recps, [groupId], 'link/group-subgroup recps')
+
+          server.close()
+          t.end()
+        })
+      )
     })
   })
 })
