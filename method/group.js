@@ -34,12 +34,12 @@ module.exports = function GroupMethods (ssb, keystore, state, scuttlePOBox) {
 
       const msgKey = new SecretKey().toBuffer()
       const recipientKeys = [
-        { key: groupKey.toBuffer(), scheme: keySchemes.private_group }
+        { key: groupKey.toBuffer(), scheme: keySchemes.private_group },
+        keystore.ownKeys()[0] // sneak this in so can decrypt it ourselves without rebuild!
       ]
+
       // TODO
       // consider making sure creator can always open the group (even if lose keystore)
-      // would require adding them as a recipeint
-      //   - need to check if it's safe to make a sharedDM with oneself
       // would also require adding groupKey to this message
 
       ssb.getFeedState(ssb.id, (err, previousFeedState) => {
