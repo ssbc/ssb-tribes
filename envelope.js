@@ -17,7 +17,8 @@ module.exports = function Envelope (keystore, state) {
   const easyPoBoxKey = poBoxKey.easy(state.keys)
 
   function boxer (content, previousFeedState) {
-    const recps = content.recps
+    const recps = [...content.recps]
+    // NOTE avoid mutating the original recps
     if (process.env.NODE_ENV !== 'test') {
       // slip my own_key into a slot if there's space
       // we disable in tests because it makes checking unboxing really hard!
