@@ -4,6 +4,7 @@ const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const KeyRing = require('ssb-keyring')
 const bfe = require('ssb-bfe')
 const Obz = require('obz')
+const pull = require('pull-stream')
 
 const Envelope = require('./envelope')
 const listen = require('./listen')
@@ -214,6 +215,24 @@ function init (ssb, config) {
     })
   }
 
+  const tribeList = (cb) => {
+    onKeystoreReady(() => {
+      pull(
+        pull.values(keystore.group.list()),
+        pull.asyncMap((groupId, cb) => {
+          tribeGet(groupId, (err, tribe) => {
+            if (err) return cb(err)
+
+            cb(null, { ...tribe, groupId })
+          })
+        }),
+        pull.filter(tribe => tribe.parentGroupId === undefined),
+        pull.map(tribe => tribe.groupId),
+        pull.collect(cb)
+      )
+    })
+  }
+
   return {
     register (groupId, info, cb) {
       keystore.group.register(groupId, info, cb)
@@ -231,9 +250,7 @@ function init (ssb, config) {
         })
       })
     },
-    list (cb) {
-      onKeystoreReady(() => cb(null, keystore.group.list()))
-    },
+    list: tribeList,
     get: tribeGet,
     listAuthors (groupId, cb) {
       onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
