@@ -19,7 +19,7 @@ test('tribes.subtribe.create', t => {
     server.tribes.subtribe.create(groupId, null, (err, data) => {
       t.error(err, 'create subtribe')
 
-      const { groupId: subgroupId, groupKey: subgroupKey, poBoxId, groupInitMsg } = data
+      const { subgroupId, groupKey: subgroupKey, poBoxId, groupInitMsg } = data
 
       t.true(isGroup(subgroupId), 'subgroupId')
       t.true(Buffer.isBuffer(subgroupKey) && subgroupKey.length === 32, 'subgroupKey')
@@ -43,7 +43,8 @@ test('tribes.subtribe.create', t => {
               key: subgroupKey,
               root: groupInitMsg.key,
               scheme: 'envelope-large-symmetric-group',
-              parentGroupId: groupId
+              subgroupId,
+              groupId
             },
             'returns subgroup with parentGroupId'
           )

@@ -200,14 +200,16 @@ function init (ssb, config) {
       if (!data) return cb(new Error(`unknown groupId ${id})`))
 
       // find if this group has any parent links
-      scuttle.link.findGroupBySubgroupId(id, (err, links) => {
+      scuttle.link.findParentGroupLinks(id, (err, parentGroupLinks) => {
         if (err) return cb(err)
 
-        if (!links || !links.length) return cb(null, data) // not a subgroup
+        if (!parentGroupLinks || !parentGroupLinks.length) return cb(null, data) // not a subgroup
 
+        console.log(data)
         const groupData = {
           ...data,
-          parentGroupId: links[0].parentGroupId // NOTE: here we assume that there can only be one parent group
+          subgroupId: id,
+          groupId: parentGroupLinks[0].groupId // NOTE: here we assume that there can only be one parent group
         }
 
         cb(null, groupData)
@@ -265,7 +267,7 @@ function init (ssb, config) {
 
     application: scuttle.application,
     poBox: scuttle.poBox,
-    findBySubgroupId: scuttle.link.findGroupBySubgroupId,
+    findBySubgroupId: scuttle.link.findParentGroupLinks,
     subtribe: {
       create (groupId, opts, cb) {
         tribeCreate(opts, (err, data) => {
@@ -282,7 +284,8 @@ function init (ssb, config) {
               if (err) return cb(err)
 
               cb(null, {
-                groupId: subgroupId,
+                groupId,
+                subgroupId,
                 groupKey,
                 groupInitMsg,
                 poBoxId
@@ -292,7 +295,7 @@ function init (ssb, config) {
         })
       },
       get: tribeGet,
-      findByGroupId: scuttle.link.findSubgroupByGroupId
+      findByGroupId: scuttle.link.findSubGroupLinks
     }
   }
 }

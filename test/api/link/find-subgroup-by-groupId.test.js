@@ -17,7 +17,7 @@ test('tribes.subtribe.findByGroupId', t => {
     server.tribes.subtribe.create(groupId, null, (err, data) => {
       t.error(err, 'create subtribe')
 
-      const { groupId: subgroupId, groupKey: subgroupKey } = data
+      const { subgroupId, groupKey: subgroupKey } = data
 
       t.true(isGroup(subgroupId), 'returns subgroup identifier - groupId')
       t.true(Buffer.isBuffer(subgroupKey) && subgroupKey.length === 32, 'returns subgroup symmetric key - groupKey')
