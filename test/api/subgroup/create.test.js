@@ -19,7 +19,7 @@ test('tribes.subtribe.create', t => {
     server.tribes.subtribe.create(groupId, null, (err, data) => {
       t.error(err, 'create subtribe')
 
-      const { groupId: subgroupId, groupKey: subgroupKey, poBoxId } = data
+      const { groupId: subgroupId, groupKey: subgroupKey, poBoxId, groupInitMsg } = data
 
       t.true(isGroup(subgroupId), 'subgroupId')
       t.true(Buffer.isBuffer(subgroupKey) && subgroupKey.length === 32, 'subgroupKey')
@@ -34,8 +34,23 @@ test('tribes.subtribe.create', t => {
         t.equal(child, subgroupId, 'link/group-subgroup child')
         t.deepEqual(recps, [groupId], 'link/group-subgroup recps')
 
-        server.close()
-        t.end()
+        server.tribes.get(subgroupId, (err, group) => {
+          t.error(err, 'get subgroup')
+
+          t.deepEqual(
+            group,
+            {
+              key: subgroupKey,
+              root: groupInitMsg.key,
+              scheme: 'envelope-large-symmetric-group',
+              parentGroupId: groupId
+            },
+            'returns subgroup with parentGroupId'
+          )
+
+          server.close()
+          t.end()
+        })
       })
     })
   })

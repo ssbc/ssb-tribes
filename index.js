@@ -27,6 +27,7 @@ module.exports = {
       createSubgroupLink: 'async'
     },
     findByFeedId: 'async',
+    findBySubgroupId: 'async',
 
     application: {
       create: 'async ',
@@ -197,7 +198,19 @@ function init (ssb, config) {
       const data = keystore.group.get(id)
       if (!data) return cb(new Error(`unknown groupId ${id})`))
 
-      cb(null, data)
+      // find if this group has any parent links
+      scuttle.link.findGroupBySubgroupId(id, (err, links) => {
+        if (err) return cb(err)
+
+        if (!links || !links.length) return cb(null, data) // not a subgroup
+
+        const groupData = {
+          ...data,
+          parentGroupId: links[0].parentGroupId // NOTE: here we assume that there can only be one parent group
+        }
+
+        cb(null, groupData)
+      })
     })
   }
 
@@ -235,6 +248,7 @@ function init (ssb, config) {
 
     application: scuttle.application,
     poBox: scuttle.poBox,
+    findBySubgroupId: scuttle.link.findGroupBySubgroupId,
     subtribe: {
       create (groupId, opts, cb) {
         tribeCreate(opts, (err, data) => {
