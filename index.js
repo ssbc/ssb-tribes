@@ -192,6 +192,15 @@ function init (ssb, config) {
     })
   }
 
+  const tribeGet = (id, cb) => {
+    onKeystoreReady(() => {
+      const data = keystore.group.get(id)
+      if (!data) return cb(new Error(`unknown groupId ${id})`))
+
+      cb(null, data)
+    })
+  }
+
   return {
     register (groupId, info, cb) {
       keystore.group.register(groupId, info, cb)
@@ -212,14 +221,7 @@ function init (ssb, config) {
     list (cb) {
       onKeystoreReady(() => cb(null, keystore.group.list()))
     },
-    get (id, cb) {
-      onKeystoreReady(() => {
-        const data = keystore.group.get(id)
-        if (!data) return cb(new Error(`unknown groupId ${id})`))
-
-        cb(null, data)
-      })
-    },
+    get: tribeGet,
     listAuthors (groupId, cb) {
       onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
     },
@@ -258,6 +260,7 @@ function init (ssb, config) {
           })
         })
       },
+      get: tribeGet,
       findByGroupId: scuttle.link.findSubgroupByGroupId
     }
   }
