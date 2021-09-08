@@ -77,6 +77,7 @@ module.exports = function Link (ssb) {
         recps: [group]
       }
 
+      // TODO check bind needed?
       groupSubGroupLink.create.bind(groupSubGroupLink)(input, (err, linkId) => {
         if (err) return cb(err)
 
@@ -134,10 +135,10 @@ module.exports = function Link (ssb) {
       )
     },
     findSubGroupLinks (groupId, cb) {
-      findLinks('group-subGroup', { parent: groupId }, cb)
+      findLinks('group-subgroup', { parent: groupId }, cb)
     },
     findParentGroupLinks (groupId, cb) {
-      findLinks('group-subGroup', { child: groupId }, cb)
+      findLinks('group-subgroup', { child: groupId }, cb)
     }
   }
 }

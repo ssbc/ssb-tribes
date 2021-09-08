@@ -11,31 +11,31 @@ test('tribes.findSubGroupLinks', t => {
   server.tribes.create(null, (err, data) => {
     t.error(err, 'create tribe')
 
-    const { groupId, groupKey } = data
-    t.true(isGroup(groupId), 'returns group identifier - groupId')
+    const { groupId: parentGroupId, groupKey } = data
+    t.true(isGroup(parentGroupId), 'returns group identifier - groupId')
     t.true(Buffer.isBuffer(groupKey) && groupKey.length === 32, 'returns group symmetric key - groupKey')
 
-    server.tribes.subtribe.create(groupId, null, (err, data) => {
+    server.tribes.subtribe.create(parentGroupId, null, (err, data) => {
       t.error(err, 'create subtribe')
 
-      const { subGroupId, groupKey: subGroupKey } = data
+      const { groupId: subGroupId, groupKey: subGroupKey, parentGroupId } = data
 
       t.true(isGroup(subGroupId), 'returns subGroup identifier - groupId')
       t.true(Buffer.isBuffer(subGroupKey) && subGroupKey.length === 32, 'returns subGroup symmetric key - groupKey')
 
-      t.notEqual(groupId, subGroupId, 'different subGroup,group ids')
+      t.notEqual(parentGroupId, subGroupId, 'different subGroup,group ids')
       t.notDeepEqual(groupKey, subGroupKey, 'different subGroup,group keys')
 
-      server.tribes.findSubGroupLinks(groupId, (err, data) => {
+      server.tribes.findSubGroupLinks(parentGroupId, (err, data) => {
         t.error(err, 'finds subGroup by groupId')
 
         t.deepEqual(
           data,
           [{
             linkId: data[0].linkId,
-            groupId,
+            groupId: parentGroupId,
             subGroupId,
-            recps: [groupId]
+            recps: [parentGroupId]
           }],
           'returns matching data'
         )

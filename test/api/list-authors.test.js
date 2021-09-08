@@ -2,7 +2,7 @@ const test = require('tape')
 const keys = require('ssb-keys')
 const { Server } = require('../helpers')
 
-test('listAuthors', (t) => {
+test('tribes.listAuthors', (t) => {
   const server = Server()
 
   server.tribes.create(null, (err, { groupId }) => {

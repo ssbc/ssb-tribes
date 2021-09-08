@@ -32,7 +32,6 @@ module.exports = {
 
     subtribe: {
       create: 'async',
-      findByGroupId: 'async',
       findParentGroupLinks: 'async'
     },
 
@@ -205,12 +204,13 @@ function init (ssb, config) {
       scuttle.link.findParentGroupLinks(id, (err, parentGroupLinks) => {
         if (err) return cb(err)
 
-        if (!parentGroupLinks || !parentGroupLinks.length) return cb(null, data) // not a subGroup
-
         const groupData = {
           ...data,
-          subGroupId: id,
-          groupId: parentGroupLinks[0].groupId // NOTE: here we assume that there can only be one parent group
+          groupId: id
+        }
+        if (parentGroupLinks.length) {
+          groupData.parentGroupId = parentGroupLinks[0].groupId
+          // NOTE: here we assume that there can only be one parent group
         }
 
         cb(null, groupData)
@@ -270,25 +270,25 @@ function init (ssb, config) {
     },
 
     subtribe: {
-      create (groupId, opts, cb) {
+      create (parentGroupId, opts, cb) {
         tribeCreate(opts, (err, data) => {
           if (err) return cb(err)
 
-          const { groupId: subGroupId, groupKey, groupInitMsg } = data
+          const { groupId, groupKey, groupInitMsg } = data
 
           // create + share the poBox key to the subGroup
-          scuttle.group.addPOBox(subGroupId, (err, poBoxId) => {
+          scuttle.group.addPOBox(groupId, (err, poBoxId) => {
             if (err) return cb(err)
 
             // link the subGroup to the group
-            scuttle.link.createSubGroupLink({ group: groupId, subGroup: subGroupId }, (err) => {
+            scuttle.link.createSubGroupLink({ group: parentGroupId, subGroup: groupId }, (err, link) => {
               if (err) return cb(err)
 
               cb(null, {
                 groupId,
-                subGroupId,
                 groupKey,
                 groupInitMsg,
+                parentGroupId,
                 poBoxId
               })
             })

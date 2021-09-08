@@ -12,17 +12,18 @@ test('tribes.subtribe.create', t => {
   server.tribes.create(null, (err, data) => {
     t.error(err, 'create tribe')
 
-    const { groupId, groupKey } = data
-    t.true(isGroup(groupId), 'returns group identifier - groupId')
+    const { groupId: parentGroupId, groupKey } = data
+    t.true(isGroup(parentGroupId), 'returns group identifier - groupId')
     t.true(Buffer.isBuffer(groupKey) && groupKey.length === 32, 'returns group symmetric key - groupKey')
 
-    server.tribes.subtribe.create(groupId, null, (err, data) => {
+    server.tribes.subtribe.create(parentGroupId, null, (err, data) => {
       t.error(err, 'create subtribe')
 
-      const { subGroupId, groupKey: subGroupKey, poBoxId, groupInitMsg } = data
+      const { groupId: subGroupId, groupKey: subGroupKey, poBoxId, parentGroupId, groupInitMsg } = data
 
-      t.true(isGroup(subGroupId), 'subGroupId')
-      t.true(Buffer.isBuffer(subGroupKey) && subGroupKey.length === 32, 'subGroupKey')
+      t.true(isGroup(subGroupId), 'data.groupId')
+      t.true(isGroup(parentGroupId), 'dada.parentGroupId')
+      t.true(Buffer.isBuffer(subGroupKey) && subGroupKey.length === 32, 'data.subGroupKey')
       t.true(isPoBox(poBoxId), 'data.poBoxId')
 
       getLink((err, link) => {
@@ -30,9 +31,9 @@ test('tribes.subtribe.create', t => {
 
         const { parent, child, recps } = link.value.content
 
-        t.equal(parent, groupId, 'link/group-subGroup parent')
-        t.equal(child, subGroupId, 'link/group-subGroup child')
-        t.deepEqual(recps, [groupId], 'link/group-subGroup recps')
+        t.equal(parent, parentGroupId, 'link/group-subgroup parent')
+        t.equal(child, subGroupId, 'link/group-subgroup child')
+        t.deepEqual(recps, [parentGroupId], 'link/group-subgroup recps')
 
         server.tribes.get(subGroupId, (err, group) => {
           t.error(err, 'get subGroup')
@@ -43,10 +44,10 @@ test('tribes.subtribe.create', t => {
               key: subGroupKey,
               root: groupInitMsg.key,
               scheme: 'envelope-large-symmetric-group',
-              subGroupId,
-              groupId
+              groupId: subGroupId,
+              parentGroupId: parentGroupId
             },
-            'returns subGroup with parentGroupId'
+            'tribes.get returns subGroup with parentGroupId'
           )
 
           server.close()
@@ -61,7 +62,7 @@ test('tribes.subtribe.create', t => {
       $filter: {
         value: {
           content: {
-            type: 'link/group-subGroup'
+            type: 'link/group-subgroup'
           }
         }
       }
