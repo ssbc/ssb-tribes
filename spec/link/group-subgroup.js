@@ -1,5 +1,5 @@
 module.exports = {
-  type: 'link/group-subgroup',
+  type: 'link/group-subGroup',
   tangle: 'link',
   staticProps: {
     parent: { $ref: '#/definitions/cloakedMessageId', required: true },

@@ -1,8 +1,9 @@
 const test = require('tape')
-const { Server } = require('../../helpers')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
 
-test('tribes.subtribe.findByGroupId', t => {
+const { Server } = require('../helpers')
+
+test('tribes.findSubGroupLinks', t => {
   t.plan(10)
   const server = Server()
 
@@ -17,29 +18,24 @@ test('tribes.subtribe.findByGroupId', t => {
     server.tribes.subtribe.create(groupId, null, (err, data) => {
       t.error(err, 'create subtribe')
 
-      const { subgroupId, groupKey: subgroupKey } = data
+      const { subGroupId, groupKey: subGroupKey } = data
 
-      t.true(isGroup(subgroupId), 'returns subgroup identifier - groupId')
-      t.true(Buffer.isBuffer(subgroupKey) && subgroupKey.length === 32, 'returns subgroup symmetric key - groupKey')
+      t.true(isGroup(subGroupId), 'returns subGroup identifier - groupId')
+      t.true(Buffer.isBuffer(subGroupKey) && subGroupKey.length === 32, 'returns subGroup symmetric key - groupKey')
 
-      t.notEqual(groupId, subgroupId, 'different subgroup,group ids')
-      t.notDeepEqual(groupKey, subgroupKey, 'different subgroup,group keys')
+      t.notEqual(groupId, subGroupId, 'different subGroup,group ids')
+      t.notDeepEqual(groupKey, subGroupKey, 'different subGroup,group keys')
 
-      server.tribes.subtribe.findByGroupId(groupId, (err, data) => {
-        t.error(err, 'finds subgroup by groupId')
+      server.tribes.findSubGroupLinks(groupId, (err, data) => {
+        t.error(err, 'finds subGroup by groupId')
 
         t.deepEqual(
           data,
           [{
             linkId: data[0].linkId,
             groupId,
-            subgroupId,
-            recps: [groupId],
-            states: [{
-              head: data[0].linkId, // dont have this
-              state: {
-              }
-            }]
+            subGroupId,
+            recps: [groupId]
           }],
           'returns matching data'
         )

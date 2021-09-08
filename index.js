@@ -25,10 +25,16 @@ module.exports = {
     listAuthors: 'async',
     link: {
       create: 'async',
-      createSubgroupLink: 'async'
+      createSubGroupLink: 'async'
     },
     findByFeedId: 'async',
-    findBySubgroupId: 'async',
+    findSubGroupLinks: 'async',
+
+    subtribe: {
+      create: 'async',
+      findByGroupId: 'async',
+      findParentGroupLinks: 'async'
+    },
 
     application: {
       create: 'async ',
@@ -41,10 +47,6 @@ module.exports = {
     },
     poBox: {
       create: 'async'
-    },
-    subtribe: {
-      create: 'async',
-      findByGroupId: 'async'
     }
   },
   init
@@ -203,12 +205,11 @@ function init (ssb, config) {
       scuttle.link.findParentGroupLinks(id, (err, parentGroupLinks) => {
         if (err) return cb(err)
 
-        if (!parentGroupLinks || !parentGroupLinks.length) return cb(null, data) // not a subgroup
+        if (!parentGroupLinks || !parentGroupLinks.length) return cb(null, data) // not a subGroup
 
-        console.log(data)
         const groupData = {
           ...data,
-          subgroupId: id,
+          subGroupId: id,
           groupId: parentGroupLinks[0].groupId // NOTE: here we assume that there can only be one parent group
         }
 
@@ -261,31 +262,31 @@ function init (ssb, config) {
       create: scuttle.link.create
     },
     findByFeedId: scuttle.link.findGroupByFeedId,
+    findSubGroupLinks: scuttle.link.findSubGroupLinks,
+
+    // NOTE this won't work over RPC
     addNewAuthorListener (fn) {
       state.newAuthorListeners.push(fn)
     },
 
-    application: scuttle.application,
-    poBox: scuttle.poBox,
-    findBySubgroupId: scuttle.link.findParentGroupLinks,
     subtribe: {
       create (groupId, opts, cb) {
         tribeCreate(opts, (err, data) => {
           if (err) return cb(err)
 
-          const { groupId: subgroupId, groupKey, groupInitMsg } = data
+          const { groupId: subGroupId, groupKey, groupInitMsg } = data
 
-          // create + share the poBox key to the subgroup
-          scuttle.group.addPOBox(subgroupId, (err, poBoxId) => {
+          // create + share the poBox key to the subGroup
+          scuttle.group.addPOBox(subGroupId, (err, poBoxId) => {
             if (err) return cb(err)
 
-            // link the subgroup to the group
-            scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId }, (err) => {
+            // link the subGroup to the group
+            scuttle.link.createSubGroupLink({ group: groupId, subGroup: subGroupId }, (err) => {
               if (err) return cb(err)
 
               cb(null, {
                 groupId,
-                subgroupId,
+                subGroupId,
                 groupKey,
                 groupInitMsg,
                 poBoxId
@@ -295,7 +296,10 @@ function init (ssb, config) {
         })
       },
       get: tribeGet,
-      findByGroupId: scuttle.link.findSubGroupLinks
-    }
+      findParentGroupLinks: scuttle.link.findParentGroupLinks
+    },
+
+    application: scuttle.application,
+    poBox: scuttle.poBox
   }
 }

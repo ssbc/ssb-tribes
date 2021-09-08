@@ -2,13 +2,14 @@ const Crut = require('ssb-crut')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const pull = require('pull-stream')
 const FeedGroupLink = require('../spec/link/feed-group')
-const GroupSubgroupLink = require('../spec/link/group-subgroup')
+const GroupSubGroupLink = require('../spec/link/group-subgroup')
 
 module.exports = function Link (ssb) {
   const feedGroupLink = new Crut(ssb, FeedGroupLink)
-  const groupSubgroupLink = new Crut(ssb, GroupSubgroupLink)
+  const groupSubGroupLink = new Crut(ssb, GroupSubGroupLink)
 
-  function findLinks (type, opts = {}, cb) {
+  // NOTE this is not generalised to all links, it's about group links
+  function findLinks (subType, opts = {}, cb) {
     const { parent, child } = opts
     if (parent && !isGroup(parent)) return cb(new Error(`findLinks expected a groupId for parent, got ${parent} instead.`))
     if (child && !isGroup(child)) return cb(new Error(`findLinks expected a groupId for child, got ${child} instead.`))
@@ -18,7 +19,7 @@ module.exports = function Link (ssb) {
       $filter: {
         value: {
           content: {
-            type: `link/${type}`,
+            type: `link/${subType}`,
             ...opts,
             tangles: {
               link: { root: null, previous: null }
@@ -37,20 +38,15 @@ module.exports = function Link (ssb) {
         if (parent) return link.value.content.child
         else return link.value.content.parent
       }),
-      pull.filter(groupSubgroupLink.spec.isRoot),
+      pull.filter(groupSubGroupLink.spec.isRoot),
       pull.map(link => {
         const { parent, child, recps } = link.value.content
 
         return {
           linkId: link.key,
           groupId: parent,
-          subgroupId: child,
-          recps,
-          states: [{
-            head: link.key,
-            state: {
-            }
-          }]
+          subGroupId: child,
+          recps
         }
       }),
       pull.collect(cb)
@@ -74,17 +70,17 @@ module.exports = function Link (ssb) {
         feedGroupLink.read(linkId, cb)
       })
     },
-    createSubgroupLink ({ group, subgroup }, cb) {
+    createSubGroupLink ({ group, subGroup }, cb) {
       const input = {
         parent: group,
-        child: subgroup,
+        child: subGroup,
         recps: [group]
       }
 
-      groupSubgroupLink.create.bind(groupSubgroupLink)(input, (err, linkId) => {
+      groupSubGroupLink.create.bind(groupSubGroupLink)(input, (err, linkId) => {
         if (err) return cb(err)
 
-        groupSubgroupLink.read(linkId, cb)
+        groupSubGroupLink.read(linkId, cb)
       })
     },
     findGroupByFeedId (feedId, cb) {
@@ -138,10 +134,10 @@ module.exports = function Link (ssb) {
       )
     },
     findSubGroupLinks (groupId, cb) {
-      findLinks('group-subgroup', { parent: groupId }, cb)
+      findLinks('group-subGroup', { parent: groupId }, cb)
     },
     findParentGroupLinks (groupId, cb) {
-      findLinks('group-subgroup', { child: groupId }, cb)
+      findLinks('group-subGroup', { child: groupId }, cb)
     }
   }
 }

@@ -19,10 +19,10 @@ test('tribes.subtribe.create', t => {
     server.tribes.subtribe.create(groupId, null, (err, data) => {
       t.error(err, 'create subtribe')
 
-      const { subgroupId, groupKey: subgroupKey, poBoxId, groupInitMsg } = data
+      const { subGroupId, groupKey: subGroupKey, poBoxId, groupInitMsg } = data
 
-      t.true(isGroup(subgroupId), 'subgroupId')
-      t.true(Buffer.isBuffer(subgroupKey) && subgroupKey.length === 32, 'subgroupKey')
+      t.true(isGroup(subGroupId), 'subGroupId')
+      t.true(Buffer.isBuffer(subGroupKey) && subGroupKey.length === 32, 'subGroupKey')
       t.true(isPoBox(poBoxId), 'data.poBoxId')
 
       getLink((err, link) => {
@@ -30,23 +30,23 @@ test('tribes.subtribe.create', t => {
 
         const { parent, child, recps } = link.value.content
 
-        t.equal(parent, groupId, 'link/group-subgroup parent')
-        t.equal(child, subgroupId, 'link/group-subgroup child')
-        t.deepEqual(recps, [groupId], 'link/group-subgroup recps')
+        t.equal(parent, groupId, 'link/group-subGroup parent')
+        t.equal(child, subGroupId, 'link/group-subGroup child')
+        t.deepEqual(recps, [groupId], 'link/group-subGroup recps')
 
-        server.tribes.get(subgroupId, (err, group) => {
-          t.error(err, 'get subgroup')
+        server.tribes.get(subGroupId, (err, group) => {
+          t.error(err, 'get subGroup')
 
           t.deepEqual(
             group,
             {
-              key: subgroupKey,
+              key: subGroupKey,
               root: groupInitMsg.key,
               scheme: 'envelope-large-symmetric-group',
-              subgroupId,
+              subGroupId,
               groupId
             },
-            'returns subgroup with parentGroupId'
+            'returns subGroup with parentGroupId'
           )
 
           server.close()
@@ -61,7 +61,7 @@ test('tribes.subtribe.create', t => {
       $filter: {
         value: {
           content: {
-            type: 'link/group-subgroup'
+            type: 'link/group-subGroup'
           }
         }
       }

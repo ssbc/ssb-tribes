@@ -144,18 +144,18 @@ Lists all the authors (feedIds) who you know are part of the group with id `grou
 
 A convenience method which:
 - mints a group
-- publishes a `link` in the parent group which advertises the existence of the subgroup
-- mints a `dmKey` for that group so that the parent group member can send messages to the subgroup
-- then creates a `link` inside the existing group (linking group + subgroup)
+- publishes a `link` in the parent group which advertises the existence of the subGroup
+- mints a `dmKey` for that group so that the parent group member can send messages to the subGroup
+- then creates a `link` inside the existing group (linking group + subGroup)
 
 where:
-- `groupId` *String* - the id of the _parent_ group this subgroup will be linked to
+- `groupId` *String* - the id of the _parent_ group this subGroup will be linked to
 - `opts` *Object* (currently no opts you can pass in but empty object still required)
 - `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
-  - `groupId` *String* - a cipherlink that's safe to use publicly to name the subgroup, and is used in `recps` to trigger enveloping messages to that group
-  - `groupKey` *Buffer*  - the symmetric key used for encryption by the subgroup
-  - `dmKey` *Buffer* - the asymetric key used to encrypt messages sent from outside of the subgroup
-  - `groupInitMsg` *Object* - a copy of the  (enveloped) message used to initialise the subgroup
+  - `groupId` *String* - a cipherlink that's safe to use publicly to name the subGroup, and is used in `recps` to trigger enveloping messages to that group
+  - `groupKey` *Buffer*  - the symmetric key used for encryption by the subGroup
+  - `dmKey` *Buffer* - the asymetric key used to encrypt messages sent from outside of the subGroup
+  - `groupInitMsg` *Object* - a copy of the  (enveloped) message used to initialise the subGroup
 
 _This method calls `ssb.tribes.create`_
 
@@ -171,14 +171,16 @@ These endpoints give you access to additional features, such as:
 - **registering groups or group-authors**:
     - `ssb.tribes.register(groupId, info, cb)`
     - `ssb.tribes.registerAuthors(groupId, [authorId], cb)`
+- **linking your feed to a group**
+    - `ssb.tribes.link.create({ group, name }, cb)`
+- **linking subGroups to a group**
+    - `ssb.tribes.link.createSubGroupLink({ group, subGroup }, cb)`
+- **finding groups/ subGroups**
+    - `ssb.tribes.findByFeedId(feedId, cb)`
+    - `ssb.tribes.findSubGroupLinks(groupId, cb)`
+    - `ssb.tribes.subtribe.findParentGroupLinks(subGroupId, cb)`
 - **P.O. Box tools**
     - `ssb.tribes.poBox.create(opts, cb)`
-- **binding groups to feeds**
-    - `ssb.tribes.link.create({ group, name }, cb)`
-    - `ssb.tribes.findByFeedId(feedId, cb)`
-- **binding subgroups to groups**
-    - `ssb.tribes.link.createSubgroupLink({ group, subgroup }, cb)`
-    - `ssb.tribes.link.findSubgroupByGroupId(groupId, cb)`
 - **managing people applying to join to a group**
     - `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
     - `ssb.tribes.application.get(applicationId, cb)`
@@ -236,14 +238,14 @@ Arguments:
 Note:
 - this link will be encrypted to the group you're linking to (i.e. link will have `recps: [groupId]`)
 
-### `ssb.tribes.link.createSubgroupLink({ group, subgroup }, cb)`
+### `ssb.tribes.link.createSubGroupLink({ group, subGroup }, cb)`
 
-Creates a message of tyoe `link/group-subgroup` which links a group to a subgroup
+Creates a message of tyoe `link/group-subGroup` which links a group to a subGroup
 
 Arguments:
 
 - `group` *GroupId* - the id of the parent private group
-- `subgroup` *GroupId* - the id of the subgroup you're linking to `group`
+- `subGroup` *GroupId* - the id of the subGroup you're linking to `group`
 - `cb` - *Function* - call with signature `(err, link)` where `link` is the link message
 Note:
 - this link will be encrypted to the parent group (i.e. link will have `recps: [group]`)
@@ -271,9 +273,9 @@ Find groups which have linked with a feedId (see `ssb.tribes.link.create`).
 
 NOTE: the strange format with states is to leave easy support for multiple editors (of a link to a group) in the future
 
-### `ssb.tribes.subtribe.findByGroupId(groupId, cb)`
+### `ssb.tribes.findSubGroupLinks(groupId, cb)`
 
-Find subgroups which have linked with a groupId (see `ssb.tribes.link.createSubgroupLink`).
+Find subGroups which have linked with a groupId (see `ssb.tribes.link.createSubGroupLink`).
 
 - `groupId` *GroupId* is a string representing the `groupId` of the parent group
 - `cb` *function* is a callback with signature `cb(err, data)` where `data` is an Array of items of form:
@@ -281,20 +283,25 @@ Find subgroups which have linked with a groupId (see `ssb.tribes.link.createSubg
   [{
     linkId: MsgId,
     groupId: GroupId,
-    subgroupId: GroupId,
+    subGroupId: GroupId,
     recps: Recps, // an array of recipients who know about this link (should just be the group)
-    states: [
-      {
-        head: MsgId,
-        state: {
-          // currently empty
-        }
-      }
-    ]
   }]
   ```
 
-NOTE: the strange format with states is to leave easy support for multiple editors (of a link to a group) in the future
+### `ssb.tribes.subtribe.findParentGroupLinks(subGroupId, cb)`
+
+Find subGroups which have linked with a groupId (see `ssb.tribes.link.createSubGroupLink`).
+
+- `subGroupId` *GroupId* is a string representing the `groupId` of the subGroup
+- `cb` *function* is a callback with signature `cb(err, data)` where `data` is an Array of items of form:
+  ```js
+  [{
+    linkId: MsgId,
+    groupId: GroupId, // the parent group
+    subGroupId: GroupId,
+    recps: Recps, // an array of recipients who know about this link (should just be the group)
+  }]
+  ```
 
 ### `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
 
