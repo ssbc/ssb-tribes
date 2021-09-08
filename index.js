@@ -4,6 +4,7 @@ const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const KeyRing = require('ssb-keyring')
 const bfe = require('ssb-bfe')
 const Obz = require('obz')
+const pull = require('pull-stream')
 
 const Envelope = require('./envelope')
 const listen = require('./listen')
@@ -24,9 +25,15 @@ module.exports = {
     listAuthors: 'async',
     link: {
       create: 'async',
-      createSubgroupLink: 'async'
+      createSubGroupLink: 'async'
     },
     findByFeedId: 'async',
+    findSubGroupLinks: 'async',
+
+    subtribe: {
+      create: 'async',
+      findParentGroupLinks: 'async'
+    },
 
     application: {
       create: 'async ',
@@ -39,10 +46,6 @@ module.exports = {
     },
     poBox: {
       create: 'async'
-    },
-    subtribe: {
-      create: 'async',
-      findByGroupId: 'async'
     }
   },
   init
@@ -197,7 +200,39 @@ function init (ssb, config) {
       const data = keystore.group.get(id)
       if (!data) return cb(new Error(`unknown groupId ${id})`))
 
-      cb(null, data)
+      // find if this group has any parent links
+      scuttle.link.findParentGroupLinks(id, (err, parentGroupLinks) => {
+        if (err) return cb(err)
+
+        const groupData = {
+          ...data,
+          groupId: id
+        }
+        if (parentGroupLinks.length) {
+          groupData.parentGroupId = parentGroupLinks[0].groupId
+          // NOTE: here we assume that there can only be one parent group
+        }
+
+        cb(null, groupData)
+      })
+    })
+  }
+
+  const tribeList = (cb) => {
+    onKeystoreReady(() => {
+      pull(
+        pull.values(keystore.group.list()),
+        pull.asyncMap((groupId, cb) => {
+          tribeGet(groupId, (err, tribe) => {
+            if (err) return cb(err)
+
+            cb(null, { ...tribe, groupId })
+          })
+        }),
+        pull.filter(tribe => tribe.parentGroupId === undefined),
+        pull.map(tribe => tribe.groupId),
+        pull.collect(cb)
+      )
     })
   }
 
@@ -218,9 +253,7 @@ function init (ssb, config) {
         })
       })
     },
-    list (cb) {
-      onKeystoreReady(() => cb(null, keystore.group.list()))
-    },
+    list: tribeList,
     get: tribeGet,
     listAuthors (groupId, cb) {
       onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
@@ -229,31 +262,33 @@ function init (ssb, config) {
       create: scuttle.link.create
     },
     findByFeedId: scuttle.link.findGroupByFeedId,
+    findSubGroupLinks: scuttle.link.findSubGroupLinks,
+
+    // NOTE this won't work over RPC
     addNewAuthorListener (fn) {
       state.newAuthorListeners.push(fn)
     },
 
-    application: scuttle.application,
-    poBox: scuttle.poBox,
     subtribe: {
-      create (groupId, opts, cb) {
+      create (parentGroupId, opts, cb) {
         tribeCreate(opts, (err, data) => {
           if (err) return cb(err)
 
-          const { groupId: subgroupId, groupKey, groupInitMsg } = data
+          const { groupId, groupKey, groupInitMsg } = data
 
-          // create + share the poBox key to the subgroup
-          scuttle.group.addPOBox(subgroupId, (err, poBoxId) => {
+          // create + share the poBox key to the subGroup
+          scuttle.group.addPOBox(groupId, (err, poBoxId) => {
             if (err) return cb(err)
 
-            // link the subgroup to the group
-            scuttle.link.createSubgroupLink({ group: groupId, subgroup: subgroupId }, (err) => {
+            // link the subGroup to the group
+            scuttle.link.createSubGroupLink({ group: parentGroupId, subGroup: groupId }, (err, link) => {
               if (err) return cb(err)
 
               cb(null, {
-                groupId: subgroupId,
+                groupId,
                 groupKey,
                 groupInitMsg,
+                parentGroupId,
                 poBoxId
               })
             })
@@ -261,7 +296,10 @@ function init (ssb, config) {
         })
       },
       get: tribeGet,
-      findByGroupId: scuttle.link.findSubgroupByGroupId
-    }
+      findParentGroupLinks: scuttle.link.findParentGroupLinks
+    },
+
+    application: scuttle.application,
+    poBox: scuttle.poBox
   }
 }

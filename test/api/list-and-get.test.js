@@ -1,7 +1,7 @@
 const test = require('tape')
 const { Server } = require('../helpers')
 
-test('list + get groups', (t) => {
+test('tribes.list + tribes.get', (t) => {
   const name = `list-and-get-groups-${Date.now()}`
   let server = Server({ name: name })
   const keys = server.keys
@@ -19,7 +19,8 @@ test('list + get groups', (t) => {
         const expectedGroup = {
           key: data.groupKey,
           root: data.groupInitMsg.key,
-          scheme: 'envelope-large-symmetric-group'
+          scheme: 'envelope-large-symmetric-group',
+          groupId: data.groupId
         }
         t.deepEqual(actualGroup, expectedGroup, 'gets group data')
 

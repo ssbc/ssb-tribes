@@ -1,6 +1,7 @@
 const test = require('tape')
 const pull = require('pull-stream')
-const { Server } = require('../../helpers')
+
+const { Server } = require('../helpers')
 
 function setup (linkDetails, next) {
   const server = Server()
