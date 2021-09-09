@@ -64,7 +64,7 @@ module.exports = function Link (ssb) {
 
       if (!name) delete input.name
 
-      feedGroupLink.create.bind(feedGroupLink)(input, (err, linkId) => {
+      feedGroupLink.create(input, (err, linkId) => {
         if (err) return cb(err)
 
         feedGroupLink.read(linkId, cb)
@@ -77,8 +77,7 @@ module.exports = function Link (ssb) {
         recps: [group]
       }
 
-      // TODO check bind needed?
-      groupSubGroupLink.create.bind(groupSubGroupLink)(input, (err, linkId) => {
+      groupSubGroupLink.create(input, (err, linkId) => {
         if (err) return cb(err)
 
         groupSubGroupLink.read(linkId, cb)
