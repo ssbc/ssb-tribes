@@ -75,9 +75,10 @@ function init (ssb, config) {
     Object.assign(keystore, api) // merging into existing reference
     state.loading.keystore.set(false)
   })
-  ssb.close.hook(function (fn, args) {
-    state.closed = true
-    keystore.close(() => fn.apply(this, args))
+  ssb.close.hook(function (close, args) {
+    const next = () => close.apply(this, args)
+    onKeystoreReady(() => keystore.close(next))
+    state.closed = true // NOTE must be after onKeystoreReady call
   })
 
   /* register the boxer / unboxer */
