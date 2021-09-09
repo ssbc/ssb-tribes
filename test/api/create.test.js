@@ -1,12 +1,14 @@
 const test = require('tape')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
+const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
+
 const { Server } = require('../helpers')
 
 test('tribes.create', t => {
   const server = Server()
 
   // this is more of an integration test over the api
-  server.tribes.create(null, (err, data) => {
+  server.tribes.create({}, (err, data) => {
     if (err) throw err
 
     const { groupId, groupKey, groupInitMsg } = data
@@ -31,5 +33,19 @@ test('tribes.create', t => {
       server.close()
       t.end()
     })
+  })
+})
+
+test('tribes.create (opts.addPOBox)', t => {
+  const server = Server()
+
+  // this is more of an integration test over the api
+  server.tribes.create({ addPOBox: true }, (err, data) => {
+    if (err) throw err
+
+    t.true(isPoBox(data.poBoxId), 'data.poBoxId')
+
+    server.close()
+    t.end()
   })
 })

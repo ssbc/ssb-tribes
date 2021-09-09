@@ -4,17 +4,13 @@ const { SecretKey } = require('ssb-private-group-keys')
 const bfe = require('ssb-bfe')
 const Crut = require('ssb-crut')
 
-const { groupId } = require('../lib')
+const { groupId: buildGroupId, poBoxKeys } = require('../lib')
 const initSpec = require('../spec/group/init')
 const addMemberSpec = require('../spec/group/add-member')
-const groupPOBoxSpec = require('../spec/group/po-box')
+const groupPoBoxSpec = require('../spec/group/po-box')
 
-module.exports = function GroupMethods (ssb, keystore, state, scuttlePOBox) {
-  const {
-    spec: {
-      isUpdate: isAddGroupPOBox
-    }
-  } = new Crut(ssb, groupPOBoxSpec)
+module.exports = function GroupMethods (ssb, keystore, state) {
+  const groupPoBoxCrut = new Crut(ssb, groupPoBoxSpec)
 
   return {
     init (cb) {
@@ -54,11 +50,19 @@ module.exports = function GroupMethods (ssb, keystore, state, scuttlePOBox) {
           if (err) return cb(err)
 
           const data = {
-            groupId: groupId({ groupInitMsg, msgKey }),
+            groupId: buildGroupId({ groupInitMsg, msgKey }),
             groupKey: groupKey.toBuffer(),
+            root: groupInitMsg.key,
             groupInitMsg
           }
-          cb(null, data)
+
+          keystore.group.register(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
+            if (err) return cb(err)
+            keystore.group.registerAuthors(data.groupId, [ssb.id], (err) => {
+              if (err) return cb(err)
+              cb(null, data)
+            })
+          })
         })
       })
     },
@@ -89,40 +93,25 @@ module.exports = function GroupMethods (ssb, keystore, state, scuttlePOBox) {
 
       ssb.publish(content, cb)
     },
-
     addPOBox (groupId, cb) {
       const info = keystore.group.get(groupId)
       if (!info) return cb(new Error('unknown groupId: ' + groupId))
 
-      scuttlePOBox.create({}, (err, data) => {
+      const { id: poBoxId, secret } = poBoxKeys.generate()
+
+      keystore.poBox.register(poBoxId, { key: secret }, (err) => {
         if (err) return cb(err)
 
-        const { poBoxId, poBoxKey } = data
-        const { root } = info
-
-        const content = {
-          type: 'group/po-box',
+        const props = {
           keys: {
-            set: {
-              poBoxId,
-              key: poBoxKey.toString('base64')
-            }
-          },
-          tangles: {
-            poBox: { root, previous: [root] },
-            // TODO 2021-09-03 (mix)
-            // tangles.poBox isn't a real tangle yes
-            // teach Crut to be relaxed about the root node being a different type, then use crut.update(groupId, props, cb)
-            group: { root, previous: [root] }
-            // NOTE: this is a dummy entry which is over-written in publish hook
-          },
-          recps: [groupId]
+            poBoxId,
+            key: secret.toString('base64')
+          }
         }
 
-        if (!isAddGroupPOBox(content)) return cb(new Error(isAddGroupPOBox.errorsString))
-
-        ssb.publish(content, (err, msg) => {
+        groupPoBoxCrut.updateGroup(groupId, props, (err) => {
           if (err) return cb(err)
+
           cb(null, poBoxId)
         })
       })

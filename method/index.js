@@ -1,13 +1,11 @@
 const Application = require('./application')
-const POBox = require('./po-box')
 const Link = require('./link')
 const Group = require('./group')
 
 module.exports = function Method (ssb, keystore, state) {
   const application = Application(ssb)
-  const poBox = POBox(ssb, keystore)
   const link = Link(ssb)
-  const group = Group(ssb, keystore, state, poBox)
+  const group = Group(ssb, keystore, state)
 
   return {
     group: {
@@ -15,29 +13,16 @@ module.exports = function Method (ssb, keystore, state) {
       addMember: patient(group.addMember),
       addPOBox: patient(group.addPOBox)
     },
-    link: {
-      create: patient(link.create),
-      createSubGroupLink: patient(link.createSubGroupLink),
-      findGroupByFeedId: patient(link.findGroupByFeedId),
-      findParentGroupLinks: patient(link.findParentGroupLinks),
-      findSubGroupLinks: patient(link.findSubGroupLinks)
-    },
-    // TODO - rm patient from these?
-    application: {
-      create: patient(application.create),
-      get: patient(application.get), // note get not read
-      update: patient(application.update),
-      comment: patient(application.comment),
-      accept: patient(application.accept),
-      reject: patient(application.reject),
-      list: patient(application.list)
-    },
-    poBox: {
-      create: patient(poBox.create)
-    }
+
+    link,
+    // create createSubGroupLink findGroupByFeedId findParentGroupLinks findSubGroupLinks
+    //
+    application
+    // create get update comment accept reject list
   }
 
   function patient (fn) {
+    // for functions that need keystore to be ready
     return function (...args) {
       if (state.loading.keystore.value === false) return fn(...args)
 
