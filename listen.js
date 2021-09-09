@@ -1,29 +1,37 @@
 // const flumeView = require('flumeview-reduce')
-const { isValid } = require('./spec/group/add-member')
 const pull = require('pull-stream')
+const CRUT = require('ssb-crut')
+
+const { isValid: isAddMember } = require('./spec/group/add-member')
+
+const poBoxSpec = require('./spec/group/po-box')
+const { isUpdate: isPOBox } = new CRUT({ backlinks: true }, poBoxSpec).spec
 
 module.exports = {
-  addMember
-}
-
-function addMember (ssb, emit) {
-  // const isIndexing = () => {
-  //   const status = ssb.status()
-  //   if (status.progress.indexes.target < 0) return true
-  //   return status.progress.indexes.target !== status.sync.plugins.links
-  //   // we only care if links is up to date, as this is what
-  //   // messagesByType is based on
-  // }
-
-  pull(
-    ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
-    // NOTE this will run through all messages on each startup, which will help guarentee
-    // all messages have been emitted AND processed
-    // (same not true if we used a dummy flume-view)
-    pull.filter(m => m.sync !== true),
-    pull.filter(isValid),
-    // NOTE we DO NOT filter our own messages out
-    // this is important for rebuilding indexes and keystore state if we have to restore our feed
-    pull.drain(emit)
-  )
+  addMember (ssb, emit) {
+    pull(
+      ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
+      // NOTE this will run through all messages on each startup, which will help guarentee
+      // all messages have been emitted AND processed
+      // (same not true if we used a dummy flume-view)
+      pull.filter(m => m.sync !== true),
+      pull.filter(isAddMember),
+      // NOTE we DO NOT filter our own messages out
+      // this is important for rebuilding indexes and keystore state if we have to restore our feed
+      pull.drain(emit)
+    )
+  },
+  poBox (ssb, emit) {
+    pull(
+      ssb.messagesByType({ type: 'group/po-box', private: true, live: true }),
+      // NOTE this will run through all messages on each startup, which will help guarentee
+      // all messages have been emitted AND processed
+      // (same not true if we used a dummy flume-view)
+      pull.filter(m => m.sync !== true),
+      pull.filter(isPOBox),
+      // NOTE we DO NOT filter our own messages out
+      // this is important for rebuilding indexes and keystore state if we have to restore our feed
+      pull.drain(emit)
+    )
+  }
 }
