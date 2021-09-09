@@ -1,30 +1,77 @@
 const test = require('tape')
-const pull = require('pull-stream')
+const { promisify: p } = require('util')
 const Manager = require('../rebuild-manager')
 
 const { Server } = require('./helpers')
 
-test('rebuild-manager', t => {
+test('rebuild-manager', async t => {
+  t.plan(3)
   const ssb = Server()
 
-  const manager = new Manager(ssb)
+  // NOTE - We cannot rebuild an empty DB ?!
+  await p(ssb.publish)({ type: 'filler', text: new Array(1000).fill('dog').join() })
+  await p(ssb.publish)({ type: 'filler', text: new Array(1000).fill('cat').join() })
 
-  let count = 0
-  // for test we fake-slow down the rebuild callback
-  ssb.rebuild.hook((rebuild, [cb]) => {
-    count++
-    rebuild((err) => {
-      console.log('rebuild done, waiting a moment...')
-      setTimeout(() => cb(err), 100)
-    })
+  // we fake indexing taking some time to be done
+  const TIME_TILL_INDEX_DONE = 1000
+  let isIndexingDone = false
+  setTimeout(() => { isIndexingDone = true }, TIME_TILL_INDEX_DONE)
+  ssb.status.hook(status => {
+    const current = status()
+    if (isIndexingDone) return current
+
+    // current.sync.plugins.links = 5000
+    current.sync.sync = false
+    return current
   })
 
-  manager.rebuild()
-  manager.rebuild()
-  manager.rebuild()
+  // we wrap ssb.rebuild once to know exactly what goes through to the db
+  // we expect only one call to come through from the rebuildManager
+  // AFTER indexing is complete
+  let rebuildCound = 0
+  ssb.rebuild.hook((rebuild, [cb]) => {
+    t.true(isIndexingDone, 'rebuild only get called once indexing is done')
 
-  t.equal(count, 1, 'db rebuild only get called once')
+    rebuildCound++
+    rebuild.call(ssb, cb)
+  })
 
-  ssb.close()
-  t.end()
+  // this wraps ssb.rebuild again
+  const manager = new Manager(ssb)
+
+  manager.rebuild()
+  manager.rebuild(() => t.pass('callback in the middle'))
+  manager.rebuild(() => {
+    t.equal(rebuildCound, 1, 'db rebuild only gets called once')
+
+    ssb.close()
+  })
 })
+
+//
+// managerHook ( testHook ( db.rebuild ) )
+//
+// if db is still indexing, new rebuilds wait until indexing is done
+//
+// 50%   manager.rebuild(cbA)
+// 70%   manager.rebuild(cbB)
+//
+//
+// 100%  ... then manager.rebuild => db.rebuild => cbA() + cbB()
+//
+//
+/*
+ * publishes a group/po-box
+ *
+ * listener(fn)
+ *
+ * fn = process po-box
+ *   -> keystore
+ *     ? is this new
+ *     if yes, add keys, call rebuildManager.rebuild
+ *
+ *
+ *
+ *
+ *
+ */
