@@ -15,7 +15,7 @@ test('tribes.findSubGroupLinks', t => {
     t.true(isGroup(parentGroupId), 'returns group identifier - groupId')
     t.true(Buffer.isBuffer(groupKey) && groupKey.length === 32, 'returns group symmetric key - groupKey')
 
-    server.tribes.subtribe.create(parentGroupId, null, (err, data) => {
+    server.tribes.subtribe.create(parentGroupId, {}, (err, data) => {
       t.error(err, 'create subtribe')
 
       const { groupId: subGroupId, groupKey: subGroupKey, parentGroupId } = data

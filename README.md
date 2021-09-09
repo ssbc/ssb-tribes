@@ -92,11 +92,13 @@ A Secret-Stack server running the plugins:
 Mint a new private group.
 
 where:
-- `opts` *Object* (currently no opts you can pass in but empty object still required)
+- `opts` *Object*
+    - `opts.addPOBox` *Boolean* attaches a P.O. Box to the group and publish the keys into the group
+        - default: `false`
 - `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
-  - `groupId` *String* - a cipherlink that's safe to use publicly to name the group, and is used in `recps` to trigger enveloping messages to that group
-  - `groupKey` *Buffer*  - the symmetric key used for encryption by the group
-  - `groupInitMsg` *Object* - a copy of the  (enveloped) message used to initialise the group
+    - `groupId` *String* - a cipherlink that's safe to use publicly to name the group, and is used in `recps` to trigger enveloping messages to that group
+    - `groupKey` *Buffer*  - the symmetric key used for encryption by the group
+    - `groupInitMsg` *Object* - a copy of the  (enveloped) message used to initialise the group
 
 _This method calls `group.add` and `group.addAuthors` for you (adding you)_
 
@@ -120,9 +122,8 @@ _This method calls `group.addAuthors` for you (adding that person to the group r
 Listens for when new authors are added to a tribe, and fires a given function
 
 - `fn` *Function* - a function to call when a new author is added to the tribe. The function receives:
-
-  - `groupId` *String* - the id of the tribe
-  - `newAuthors` *Array* - array of new authors added to the tribe
+    - `groupId` *String* - the id of the tribe
+    - `newAuthors` *Array* - array of new authors added to the tribe
 
 ### `ssb.tribes.list(cb)`
 
@@ -150,12 +151,14 @@ A convenience method which:
 
 where:
 - `groupId` *String* - the id of the _parent_ group this subGroup will be linked to
-- `opts` *Object* (currently no opts you can pass in but empty object still required)
+- `opts` *Object*
+    - `opts.addPOBox` *Boolean* attaches a P.O. Box to the group and publish the keys into the group
+        - default: `false`
 - `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
-  - `groupId` *String* - a cipherlink that's safe to use publicly to name the subGroup, and is used in `recps` to trigger enveloping messages to that group
-  - `groupKey` *Buffer*  - the symmetric key used for encryption by the subGroup
-  - `dmKey` *Buffer* - the asymetric key used to encrypt messages sent from outside of the subGroup
-  - `groupInitMsg` *Object* - a copy of the  (enveloped) message used to initialise the subGroup
+    - `groupId` *String* - a cipherlink that's safe to use publicly to name the subGroup, and is used in `recps` to trigger enveloping messages to that group
+    - `groupKey` *Buffer*  - the symmetric key used for encryption by the subGroup
+    - `dmKey` *Buffer* - the asymetric key used to encrypt messages sent from outside of the subGroup
+    - `groupInitMsg` *Object* - a copy of the  (enveloped) message used to initialise the subGroup
 
 _This method calls `ssb.tribes.create`_
 

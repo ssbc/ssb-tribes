@@ -1,13 +1,11 @@
 const Application = require('./application')
-const POBox = require('./po-box')
 const Link = require('./link')
 const Group = require('./group')
 
 module.exports = function Method (ssb, keystore, state) {
   const application = Application(ssb)
-  const poBox = POBox(ssb, keystore)
   const link = Link(ssb)
-  const group = Group(ssb, keystore, state, poBox)
+  const group = Group(ssb, keystore, state)
 
   return {
     group: {
@@ -31,9 +29,6 @@ module.exports = function Method (ssb, keystore, state) {
       accept: patient(application.accept),
       reject: patient(application.reject),
       list: patient(application.list)
-    },
-    poBox: {
-      create: patient(poBox.create)
     }
   }
 

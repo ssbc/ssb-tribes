@@ -4,12 +4,12 @@ const { SecretKey } = require('ssb-private-group-keys')
 const bfe = require('ssb-bfe')
 const Crut = require('ssb-crut')
 
-const { groupId } = require('../lib')
+const { groupId: buildGroupId, poBoxKeys } = require('../lib')
 const initSpec = require('../spec/group/init')
 const addMemberSpec = require('../spec/group/add-member')
 const groupPOBoxSpec = require('../spec/group/po-box')
 
-module.exports = function GroupMethods (ssb, keystore, state, scuttlePOBox) {
+module.exports = function GroupMethods (ssb, keystore, state) {
   const {
     spec: {
       isUpdate: isAddGroupPOBox
@@ -54,11 +54,19 @@ module.exports = function GroupMethods (ssb, keystore, state, scuttlePOBox) {
           if (err) return cb(err)
 
           const data = {
-            groupId: groupId({ groupInitMsg, msgKey }),
+            groupId: buildGroupId({ groupInitMsg, msgKey }),
             groupKey: groupKey.toBuffer(),
+            root: groupInitMsg.key,
             groupInitMsg
           }
-          cb(null, data)
+
+          keystore.group.register(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
+            if (err) return cb(err)
+            keystore.group.registerAuthors(data.groupId, [ssb.id], (err) => {
+              if (err) return cb(err)
+              cb(null, data)
+            })
+          })
         })
       })
     },
@@ -94,10 +102,11 @@ module.exports = function GroupMethods (ssb, keystore, state, scuttlePOBox) {
       const info = keystore.group.get(groupId)
       if (!info) return cb(new Error('unknown groupId: ' + groupId))
 
-      scuttlePOBox.create({}, (err, data) => {
+      const { id: poBoxId, secret } = poBoxKeys.generate()
+
+      keystore.poBox.register(poBoxId, { key: secret }, (err) => {
         if (err) return cb(err)
 
-        const { poBoxId, poBoxKey } = data
         const { root } = info
 
         const content = {
@@ -105,7 +114,7 @@ module.exports = function GroupMethods (ssb, keystore, state, scuttlePOBox) {
           keys: {
             set: {
               poBoxId,
-              key: poBoxKey.toString('base64')
+              key: secret.toString('base64')
             }
           },
           tangles: {

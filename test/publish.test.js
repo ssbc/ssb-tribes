@@ -56,7 +56,7 @@ test('publish (to groupId we dont have key for)', t => {
 test('publish (group + feedId)', t => {
   const server = Server()
 
-  server.tribes.create(null, (err, data) => {
+  server.tribes.create({}, (err, data) => {
     t.error(err)
 
     const { groupId } = data
@@ -120,7 +120,7 @@ test('publish (DMs: myFeedId + feedId)', async t => {
 test('publish (bulk)', t => {
   const server = Server()
 
-  server.tribes.create(null, (_, { groupId }) => {
+  server.tribes.create({}, (_, { groupId }) => {
     let count = 20
     const bulk = [...Array(count)]
       .map(() => ({ type: 'test', recps: [groupId] }))

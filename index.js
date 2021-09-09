@@ -8,7 +8,7 @@ const pull = require('pull-stream')
 
 const Envelope = require('./envelope')
 const listen = require('./listen')
-const { GetGroupTangle, groupId: buildGroupId } = require('./lib')
+const { GetGroupTangle, groupId: buildGroupId, poBoxKeys } = require('./lib')
 
 const Method = require('./method')
 
@@ -19,10 +19,12 @@ module.exports = {
     register: 'async',
     registerAuthors: 'async',
     create: 'async',
-    invite: 'async',
     get: 'async',
     list: 'async',
+
+    invite: 'async',
     listAuthors: 'async',
+
     link: {
       create: 'async',
       createSubGroupLink: 'async'
@@ -44,6 +46,8 @@ module.exports = {
       update: 'async',
       list: 'async,'
     },
+
+    // addPOBox // could add in future
     poBox: {
       create: 'async'
     }
@@ -169,28 +173,28 @@ function init (ssb, config) {
   const scuttle = Method(ssb, keystore, state) // ssb db methods
 
   const tribeCreate = (opts, cb) => {
-    scuttle.group.init((err, data) => {
-      if (err) return cb(err)
-
-      const { groupId, groupKey, groupInitMsg: root } = data
-
-      keystore.group.register(groupId, { key: groupKey, root: root.key }, (err) => {
+    opts = opts || {} // NOTE this catches opts = null, leave it like this
+    onKeystoreReady(() => {
+      scuttle.group.init((err, data) => {
         if (err) return cb(err)
 
-        keystore.group.registerAuthors(groupId, [ssb.id], (err) => {
-          if (err) return cb(err)
+        // NOTE this checks out group/init message was encrypted with the right `previous`.
+        // There is a potential race condition where the init method calls `ssb.getFeedState` to
+        // access `previous` but while encrypting the `group/init` message content another
+        // message is pushed into the queue, making our enveloping invalid.
+        const initValue = data.groupInitMsg.value
+        const readKey = unboxer.key(initValue.content, initValue)
+        if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
 
-          const readKey = unboxer.key(root.value.content, root.value)
-          if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
-          // NOTE this checks out group/init message was encrypted with the right `previous`.
-          // There is a potential race condition where the init method calls `ssb.getFeedState` to
-          // access `previous` but while encrypting the `group/init` message content another
-          // message is pushed into the queue, making our enveloping invalid.
+        state.newAuthorListeners.forEach(fn => fn({ groupId: data.groupId, newAuthors: [ssb.id] }))
 
-          state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [ssb.id] }))
-
-          cb(null, data)
-        })
+        if (!opts.addPOBox) return cb(null, data)
+        else {
+          scuttle.group.addPOBox(data.groupId, (err, poBoxId) => {
+            if (err) cb(err)
+            cb(null, { ...data, poBoxId })
+          })
+        }
       })
     })
   }
@@ -244,6 +248,9 @@ function init (ssb, config) {
       keystore.group.registerAuthors(groupId, authors, (err) => err ? cb(err) : cb(null, true))
     },
     create: tribeCreate,
+    list: tribeList,
+    get: tribeGet,
+
     invite (groupId, authorIds, opts = {}, cb) {
       scuttle.group.addMember(groupId, authorIds, opts, (err, data) => {
         if (err) return cb(err)
@@ -253,11 +260,10 @@ function init (ssb, config) {
         })
       })
     },
-    list: tribeList,
-    get: tribeGet,
     listAuthors (groupId, cb) {
       onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
     },
+
     link: {
       create: scuttle.link.create
     },
@@ -274,24 +280,11 @@ function init (ssb, config) {
         tribeCreate(opts, (err, data) => {
           if (err) return cb(err)
 
-          const { groupId, groupKey, groupInitMsg } = data
-
-          // create + share the poBox key to the subGroup
-          scuttle.group.addPOBox(groupId, (err, poBoxId) => {
+          // link the subGroup to the group
+          scuttle.link.createSubGroupLink({ group: parentGroupId, subGroup: data.groupId }, (err, link) => {
             if (err) return cb(err)
 
-            // link the subGroup to the group
-            scuttle.link.createSubGroupLink({ group: parentGroupId, subGroup: groupId }, (err, link) => {
-              if (err) return cb(err)
-
-              cb(null, {
-                groupId,
-                groupKey,
-                groupInitMsg,
-                parentGroupId,
-                poBoxId
-              })
-            })
+            cb(null, { ...data, parentGroupId })
           })
         })
       },
@@ -300,6 +293,20 @@ function init (ssb, config) {
     },
 
     application: scuttle.application,
-    poBox: scuttle.poBox
+
+    // addPOBox: scuttle.group.addPOBox, // could add in future
+    poBox: {
+      create (opts, cb) {
+        const { id: poBoxId, secret } = poBoxKeys.generate()
+
+        onKeystoreReady(() => {
+          keystore.poBox.register(poBoxId, { key: secret }, (err) => {
+            if (err) return cb(err)
+
+            cb(null, { poBoxId, poBoxKey: secret })
+          })
+        })
+      }
+    }
   }
 }

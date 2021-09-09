@@ -9,7 +9,7 @@ test('get-group-tangle unit test', t => {
   const server = Server({ name: name })
 
   //    - creating a group and publishing messages (ssb-tribes)
-  server.tribes.create({}, (err, data) => {
+  server.tribes.create(null, (err, data) => {
     if (err) throw err
     const keystore = {
       group: {
@@ -65,7 +65,7 @@ test('get-group-tangle (cache)', t => {
   const name = `get-group-tangle-cache-${Date.now()}`
   const server = Server({ name: name })
 
-  server.tribes.create({}, (err, data) => {
+  server.tribes.create(null, (err, data) => {
     if (err) throw err
 
     const content = { type: 'memo', recps: [data.groupId] }
@@ -97,7 +97,7 @@ test(`get-group-tangle-${n}-publishes`, t => {
   const publishArray = new Array(n).fill().map((item, i) => i)
   const server = Server()
   let count = 0
-  server.tribes.create({}, (err, data) => {
+  server.tribes.create(null, (err, data) => {
     if (err) throw err
 
     const groupId = data.groupId
@@ -187,7 +187,7 @@ test('get-group-tangle with branch', t => {
     }
   }
   // Alice creates a group
-  alice.tribes.create({}, (err, data) => {
+  alice.tribes.create(null, (err, data) => {
     if (err) throw err
     // Prepare to get Alice's group tangle from both servers
     const keystore = {

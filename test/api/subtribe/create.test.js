@@ -9,14 +9,14 @@ test('tribes.subtribe.create', t => {
   const server = Server()
 
   // this is more of an integration test over the api
-  server.tribes.create(null, (err, data) => {
+  server.tribes.create({}, (err, data) => {
     t.error(err, 'create tribe')
 
     const { groupId: parentGroupId, groupKey } = data
     t.true(isGroup(parentGroupId), 'returns group identifier - groupId')
     t.true(Buffer.isBuffer(groupKey) && groupKey.length === 32, 'returns group symmetric key - groupKey')
 
-    server.tribes.subtribe.create(parentGroupId, null, (err, data) => {
+    server.tribes.subtribe.create(parentGroupId, {}, (err, data) => {
       t.error(err, 'create subtribe')
 
       const { groupId: subGroupId, groupKey: subGroupKey, poBoxId, parentGroupId, groupInitMsg } = data
@@ -24,7 +24,7 @@ test('tribes.subtribe.create', t => {
       t.true(isGroup(subGroupId), 'data.groupId')
       t.true(isGroup(parentGroupId), 'dada.parentGroupId')
       t.true(Buffer.isBuffer(subGroupKey) && subGroupKey.length === 32, 'data.subGroupKey')
-      t.true(isPoBox(poBoxId), 'data.poBoxId')
+      t.false(isPoBox(poBoxId), 'data.poBoxId')
 
       getLink((err, link) => {
         if (err) throw err
@@ -73,4 +73,27 @@ test('tribes.subtribe.create', t => {
       pull.collect((err, msgs) => err ? cb(err) : cb(null, msgs[0]))
     )
   }
+})
+
+test('tribes.subtribe.create (opts.addPOBox)', t => {
+  const server = Server()
+
+  // this is more of an integration test over the api
+  server.tribes.create({}, (err, data) => {
+    t.error(err, 'create tribe')
+
+    const { groupId: parentGroupId, groupKey } = data
+    t.true(isGroup(parentGroupId), 'returns group identifier - groupId')
+    t.true(Buffer.isBuffer(groupKey) && groupKey.length === 32, 'returns group symmetric key - groupKey')
+
+    server.tribes.subtribe.create(parentGroupId, { addPOBox: true }, (err, data) => {
+      if (err) throw err
+      const { poBoxId } = data
+
+      t.true(isPoBox(poBoxId), 'data.poBoxId')
+
+      server.close()
+      t.end()
+    })
+  })
 })
