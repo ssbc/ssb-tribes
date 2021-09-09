@@ -5,5 +5,6 @@ module.exports = {
   tangle: 'poBox',
   props: {
     keys: poBoxInfo
-  }
+  },
+  arbitraryRoot: true
 }
