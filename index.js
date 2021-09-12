@@ -11,6 +11,7 @@ const listen = require('./listen')
 const { GetGroupTangle, groupId: buildGroupId, poBoxKeys } = require('./lib')
 
 const Method = require('./method')
+const RebuildManager = require('./rebuild-manager')
 
 module.exports = {
   name: 'tribes',
@@ -94,6 +95,7 @@ function init (ssb, config) {
   }
 
   /* start listeners */
+  const rebuildManager = new RebuildManager(ssb)
   listen.addMember(ssb, m => {
     const { root, groupKey } = m.value.content
     ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
@@ -110,8 +112,10 @@ function init (ssb, config) {
         if (newAuthors.length) {
           state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
 
-          console.log('rebuild!!!   (ﾉ´ヮ´)ﾉ*:･ﾟ✧')
-          ssb.rebuild(() => console.log('rebuild finished'))
+          if (ssb.name) {
+            console.log(ssb.name(ssb.id), 'found', newAuthors.map(id => [ssb.name(id), id]))
+          }
+          rebuildManager.rebuild()
         }
       })
     })

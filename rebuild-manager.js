@@ -32,7 +32,8 @@ module.exports = class RebuildManager {
 
   rebuild (cb) {
     if (this.isRebuilding) {
-      console.warn('RebuildManager had rebuild called while database was rebuilding...')
+      const name = this.ssb.name ? this.ssb.name(this.ssb.id) : ''
+      console.warn('rebuildManager.rebuild() called while database was rebuilding...', name)
     }
 
     if (!this.isRebuildRequested) {
@@ -41,7 +42,11 @@ module.exports = class RebuildManager {
       const interval = setInterval(
         () => {
           if (this.isIndexComplete) {
-            this.ssb.rebuild()
+            const name = this.ssb.name ? ` (${this.ssb.name(this.ssb.id)})` : ''
+            console.log('rebuild!!!   (ﾉ´ヮ´)ﾉ*:･ﾟ✧', name)
+            this.ssb.rebuild(() => console.log('rebuild finished', name))
+
+            this.isRebuildRequested = false
             clearInterval(interval)
           }
         },

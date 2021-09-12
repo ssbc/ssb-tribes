@@ -47,31 +47,3 @@ test('rebuild-manager', async t => {
     ssb.close()
   })
 })
-
-//
-// managerHook ( testHook ( db.rebuild ) )
-//
-// if db is still indexing, new rebuilds wait until indexing is done
-//
-// 50%   manager.rebuild(cbA)
-// 70%   manager.rebuild(cbB)
-//
-//
-// 100%  ... then manager.rebuild => db.rebuild => cbA() + cbB()
-//
-//
-/*
- * publishes a group/po-box
- *
- * listener(fn)
- *
- * fn = process po-box
- *   -> keystore
- *     ? is this new
- *     if yes, add keys, call rebuildManager.rebuild
- *
- *
- *
- *
- *
- */
