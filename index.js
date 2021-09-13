@@ -11,6 +11,7 @@ const listen = require('./listen')
 const { GetGroupTangle, groupId: buildGroupId, poBoxKeys } = require('./lib')
 
 const Method = require('./method')
+const RebuildManager = require('./rebuild-manager')
 
 module.exports = {
   name: 'tribes',
@@ -47,7 +48,7 @@ module.exports = {
       list: 'async,'
     },
 
-    // addPOBox // could add in future
+    addPOBox: 'async',
     poBox: {
       create: 'async'
     }
@@ -94,6 +95,7 @@ function init (ssb, config) {
   }
 
   /* start listeners */
+  const rebuildManager = new RebuildManager(ssb)
   listen.addMember(ssb, m => {
     const { root, groupKey } = m.value.content
     ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
@@ -110,10 +112,20 @@ function init (ssb, config) {
         if (newAuthors.length) {
           state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
 
-          console.log('rebuild!!!   (ﾉ´ヮ´)ﾉ*:･ﾟ✧')
-          ssb.rebuild(() => console.log('rebuild finished'))
+          const reason = ['add-member', ...newAuthors].join()
+          rebuildManager.rebuild(reason)
         }
       })
+    })
+  })
+  listen.poBox(ssb, m => {
+    const { poBoxId, key: poBoxKey } = m.value.content.keys.set
+    keystore.processPOBox({ poBoxId, poBoxKey }, (err, isNew) => {
+      if (err) throw err
+      if (isNew) {
+        const reason = ['po-box', poBoxId].join()
+        rebuildManager.rebuild(reason)
+      }
     })
   })
 
@@ -295,7 +307,7 @@ function init (ssb, config) {
 
     application: scuttle.application,
 
-    // addPOBox: scuttle.group.addPOBox, // could add in future
+    addPOBox: scuttle.group.addPOBox,
     poBox: {
       create (opts, cb) {
         const { id: poBoxId, secret } = poBoxKeys.generate()

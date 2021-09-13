@@ -23,11 +23,12 @@ test('rebuild (I am added to a group)', t => {
 
   replicate({ from: admin, to: me, name, live: true })
 
+  /* set up listener */
   me.rebuild.hook(function (rebuild, [cb]) {
     t.pass('I automatically call a rebuild')
 
     rebuild(() => {
-      cb()
+      cb && cb()
       t.true(me.status().sync.sync, 'all indexes updated') // 2
 
       pull(
@@ -48,6 +49,7 @@ test('rebuild (I am added to a group)', t => {
     t.false(me.status().sync.sync, 'all indexes updating') // 1
   })
 
+  /* kick off the process */
   admin.tribes.create({}, (err, data) => {
     if (err) throw err
 
@@ -58,45 +60,71 @@ test('rebuild (I am added to a group)', t => {
   })
 })
 
-test('rebuild (I am added to a group)', t => {
+test('rebuild (I am added to a group, then someone else is added)', t => {
+  // t.plan(9)
   const admin = Server()
-  const alice = Server()
+  const me = Server()
   const bob = Server()
+  const zelfId = FeedId()
   const name = (id) => {
     switch (id) {
       case admin.id: return 'admin'
-      case alice.id: return 'alice'
-      case bob.id: return 'bob  '
+      case me.id: return 'me'
+      case bob.id: return 'bob'
+      case zelfId: return 'zelf'
     }
   }
+  admin.name = name
+  me.name = name
+  bob.name = name
 
   let groupId
-  replicate({ from: admin, to: alice, name, live: true })
+
+  // Setting up listeners ready for initial action
+
+  replicate({ from: admin, to: me, name, live: true })
   replicate({ from: admin, to: bob, name, live: true })
 
-  alice.rebuild.hook(function (rebuild, [cb]) {
+  admin.rebuild.hook(function (rebuild, [cb]) {
+    t.fail('admin should not rebuild')
+    throw new Error('stop')
+  })
+
+  /* after I am added, admin adds bob */
+  let myRebuildCount = 0
+  me.rebuild.hook(function (rebuild, [cb]) {
+    myRebuildCount++
+    if (myRebuildCount > 2) throw new Error('I should only rebuild twice!')
+    // 1st time - I realise I've been added to a group, and re-index
+    // 2nd time - I am re-indexing, and discover zelf was added too
+
     rebuild(() => {
-      t.pass('alice is in the group')
+      cb && cb()
 
-      cb()
-      pull(
-        pull.values(nMessages(20, { type: 'alice', recps: [groupId] })),
-        pull.asyncMap(alice.publish),
-        pull.collect((err) => {
-          t.error(err, 'alice publishes to the group')
+      if (myRebuildCount === 1) t.pass('I am in the group')
+      if (myRebuildCount === 2) {
+        // I publish 20 messages to the group
+        pull(
+          pull.values(nMessages(20, { type: 'me', recps: [groupId] })),
+          pull.asyncMap(me.publish),
+          pull.collect((err) => {
+            t.error(err, 'I publish 20 messages to the group')
 
-          replicate({ from: alice, to: bob, name, live: false }, (err) => {
-            t.error(err, 'bob has received all of admin + alices messages to date')
-            alice.close()
-            // NOTE: we close alice here to stop her from re-indexing
-            // when we add bob is added to the group
-            // If you close while rebuilding, you get a segmentation fault
-            admin.tribes.invite(groupId, [bob.id], { text: 'hi!' }, (err) => {
-              t.error(err, 'admin adds bob to the group')
+            replicate({ from: me, to: bob, name, live: false }, (err) => {
+              t.error(err, 'bob has received all of admin + me messages to date')
+
+              // NOTE: we close me here to stop re-indexing when admin adds bob to group
+              // If you close while rebuilding, you get a segmentation fault
+              me.close((err) => {
+                t.error(err, 'I shut down')
+                admin.tribes.invite(groupId, [bob.id], { text: 'hi!' }, (err) => {
+                  t.error(err, 'admin adds bob to the group')
+                })
+              })
             })
           })
-        })
-      )
+        )
+      }
     })
   })
 
@@ -109,17 +137,18 @@ test('rebuild (I am added to a group)', t => {
         t.pass('bob calls rebuild (added to group)')
         break
       case 2:
-        t.pass('bob calls rebuild (realises alice is in group)')
+        t.pass('bob calls rebuild (realises me + zelf are in group)')
         break
       default:
-        t.fail(`rebuild called to many times: ${_count}`)
+        t.fail(`rebuild called too many times: ${_count}`)
     }
 
     rebuild(() => {
-      cb()
+      cb && cb()
       if (_count !== 2) return
 
-      let seenAlices = 0
+      /* check can see all of my group messages */
+      let seenMine = 0
       pull(
         bob.createLogStream({ private: true }),
         pull.map(m => m.value.content),
@@ -130,16 +159,16 @@ test('rebuild (I am added to a group)', t => {
             if (type === 'group/add-member') {
               comment += `: ${recps.filter(r => r[0] === '@').map(name)}`
             }
-            if (type === 'alice') {
-              seenAlices++
+            if (type === 'me') {
+              seenMine++
               if (count === 0 || count === 19) comment += `(${count})`
               else if (count === 1) comment += '...'
               else return
             }
-            t.true(type, comment)
+            t.true(type, comment) // 3 asserts here
           },
           (err) => {
-            if (seenAlices === 20) t.equal(seenAlices, 20, 'saw 20 messages from alice')
+            if (seenMine === 20) t.equal(seenMine, 20, 'bob saw 20 messages from me')
             if (err) throw err
             bob.close()
             admin.close()
@@ -150,13 +179,22 @@ test('rebuild (I am added to a group)', t => {
     })
   })
 
+  // Action which kicks everthing off starts here
+
+  /* admin adds alice + zelf to a group */
   admin.tribes.create({}, (err, data) => {
     if (err) throw err
 
     groupId = data.groupId
-    admin.tribes.invite(groupId, [alice.id], { text: 'ahoy' }, (err) => {
+    admin.tribes.invite(groupId, [me.id], { text: 'ahoy' }, (err) => {
       t.error(err, 'admin adds alice to group')
-      if (err) throw err
+
+      // we do this seperately to test if rebuild gets called 2 or 3 times
+      // should wait till indexing done before rebuilding again
+      admin.tribes.invite(groupId, [zelfId], { text: 'ahoy' }, (err) => {
+        t.error(err, 'admin adds zelf to group')
+        if (err) throw err
+      })
     })
   })
 })
@@ -185,6 +223,180 @@ test('rebuild (not called when I invite another member)', t => {
         server.close()
         t.end()
       }, 1e3)
+    })
+  })
+})
+
+test('rebuild from listen.addMember', t => {
+  // NOTE this is some old test... may no longer be needed
+
+  const A = Server() // me
+  const B = Server() // some friend
+
+  const messages = []
+  let root
+  let groupId
+
+  let heardCount = 0
+  // NOTE with auto-rebuild active, this listener gets hit twice:
+  // 1. first time we see group/add-member (unboxed with DM key)
+  // 2. after rebuild
+  function checkRebuildDone (done) {
+    if (A.status().sync.sync) return done()
+
+    console.log('waiting for rebuild')
+    setTimeout(() => checkRebuildDone(done), 500)
+  }
+  pull(
+    A.messagesByType({ type: 'group/add-member', private: true, live: true }),
+    pull.filter(m => !m.sync),
+    pull.drain(m => {
+      t.equal(m.value.content.root, root, `listened + heard the group/add-member: ${++heardCount}`)
+
+      if (heardCount === 2) {
+        checkRebuildDone(() => {
+          A.close(err => {
+            t.error(err, 'A closed')
+            t.end()
+          })
+        })
+      }
+    })
+  )
+
+  B.tribes.create({}, (err, data) => {
+    if (err) throw err
+
+    messages.push(data.groupInitMsg)
+    root = data.groupInitMsg.key
+    groupId = data.groupId
+    console.log(`created group: ${groupId}`)
+
+    B.tribes.invite(groupId, [A.id], { text: 'ahoy' }, (err, invite) => {
+      if (err) throw err
+      messages.push(invite)
+      B.close(err => t.error(err, 'closed B'))
+
+      pull(
+        pull.values(messages),
+        pull.asyncMap((msg, cb) => {
+          msg.value
+            ? A.add(msg.value, cb)
+            : A.add(msg, cb)
+        }),
+        pull.through(m => console.log('replicating', m.key)),
+        pull.collect((err, msgs) => {
+          if (err) throw err
+
+          const pruneTimestamp = m => {
+            delete m.timestamp
+            return m
+          }
+
+          t.deepEqual(
+            messages.map(pruneTimestamp),
+            msgs.map(pruneTimestamp),
+            'same messages in two logs'
+          )
+        })
+      )
+    })
+  })
+})
+
+test('rebuild (I learn about a new PO Box)', t => {
+  const admin = Server()
+  const me = Server()
+  const name = (id) => {
+    switch (id) {
+      case admin.id: return 'admin'
+      case me.id: return 'me'
+    }
+  }
+
+  let groupId
+  replicate({ from: admin, to: me, name, live: true })
+
+  /* set up listener */
+  let rebuildCount = 0
+  me.rebuild.hook((rebuild, [cb]) => {
+    rebuildCount++
+    const run = rebuildCount
+    if (rebuildCount === 1) t.pass('rebuild started (group/add-member)')
+    else if (rebuildCount === 2) t.pass('rebuild started (group/po-box)')
+    else throw new Error(`rebuild triggered ${rebuildCount} times `)
+
+    rebuild((err) => {
+      cb && cb()
+
+      if (run === 1) {
+        t.error(err, 'rebuild finished (group/add-member)')
+        admin.tribes.addPOBox(groupId, (err) => t.error(err, 'admin adds po-box'))
+      } // eslint-disable-line
+      else if (run === 2) {
+        t.error(err, 'rebuild finished (group/po-box)')
+        admin.close()
+        me.close()
+        t.end()
+      }
+    })
+  })
+
+  /* kick off the process */
+  admin.tribes.create({}, (err, data) => {
+    if (err) throw err
+    groupId = data.groupId
+
+    admin.tribes.invite(data.groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
+      t.error(err, 'admin adds me to group')
+      if (err) throw err
+    })
+  })
+})
+
+test('rebuild (added to group with poBox)', t => {
+  const admin = Server()
+  const me = Server()
+  const name = (id) => {
+    switch (id) {
+      case admin.id: return 'admin'
+      case me.id: return 'me'
+    }
+  }
+
+  /* set up listener */
+  let rebuildCount = 0
+  me.rebuild.hook((rebuild, [cb]) => {
+    rebuildCount++
+    if (rebuildCount === 1) t.pass('rebuild started (group/add-member)')
+    else if (rebuildCount === 2) t.pass('rebuild started (group/po-box)')
+    else throw new Error(`rebuild triggered ${rebuildCount} times `)
+
+    const run = rebuildCount
+    rebuild((err) => {
+      cb && cb()
+
+      if (run === 1) {
+        t.error(err, 'rebuild finished (group/add-member)')
+      } // eslint-disable-line
+      else if (run === 2) {
+        t.error(err, 'rebuild finished (group/po-box)')
+        admin.close()
+        me.close()
+        t.end()
+      }
+    })
+  })
+
+  /* kick off the process */
+  admin.tribes.create({ addPOBox: true }, (err, data) => {
+    if (err) throw err
+
+    replicate({ from: admin, to: me, name, live: true })
+
+    admin.tribes.invite(data.groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
+      t.error(err, 'admin adds me to group')
+      if (err) throw err
     })
   })
 })

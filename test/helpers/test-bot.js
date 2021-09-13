@@ -22,25 +22,38 @@ module.exports = function TestBot (opts = {}) {
 
   // HACK - calling close while a rebuild is happening really wrecks the tests for some reason
   // this is a crude way to ensure we wait before it's called for proper
-  let rebuilding = false
-  ssb.close.hook((close, args) => {
-    function waitTillSync () {
-      if (!rebuilding && ssb.status().sync.sync) return close(...args)
-
-      setTimeout(waitTillSync, 100)
+  const state = {
+    isRebuilding: false,
+    get isReadyToClose () {
+      return !this.isRebuilding // && ssb.status().sync.sync
     }
-
-    setTimeout(waitTillSync, 100)
-  })
-  ssb.rebuild.hook((rebuild, args) => {
-    rebuilding = true
+  }
+  ssb.rebuild.hook((rebuild, [cb]) => {
+    state.isRebuilding = true
 
     rebuild((err) => {
-      rebuilding = false
+      state.isRebuilding = false
 
-      const cb = args[0]
       if (cb) cb(err)
     })
+  })
+  ssb.close.hook((close, args) => {
+    if (state.isReadyToClose) return close(...args)
+
+    console.log('... (waiting rebuild)')
+
+    const interval = setInterval(
+      () => {
+        if (state.isReadyToClose) {
+          clearInterval(interval)
+          close(...args)
+          return
+        }
+
+        console.log('... (waiting rebuild)')
+      },
+      100
+    )
   })
 
   return ssb
