@@ -44,9 +44,7 @@ test('listen.poBox', async t => {
   let iHeard = 0
   let friendHeard = 0
 
-  listen.poBox(me, m => {
-    iHeard++
-  })
+  listen.poBox(me, m => iHeard++)
   listen.poBox(friend, m => friendHeard++)
 
   const { groupId } = await p(me.tribes.create)({ addPOBox: true })
@@ -56,10 +54,14 @@ test('listen.poBox', async t => {
 
   setTimeout(() => {
     t.equal(iHeard, 1, 'I heard my own po-box')
-    t.equal(friendHeard, 1, 'friend heard po-box')
-    // only seen once and this was encrypted to the group, and only seen after rebuild
+    t.equal(friendHeard, 2, 'friend heard po-box')
+    // seen twice:
+    // - first rebuild triggered when find `group/add-member`
+    // - second rebuild triggered when see `group/po-box`
+    //
+    // listen stream starts again after each rebuild
     me.close()
     friend.close()
     t.end()
-  }, 500)
+  }, 500) // wait for friend to do two rebuilds
 })

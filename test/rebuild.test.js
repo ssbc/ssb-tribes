@@ -303,3 +303,100 @@ test('rebuild from listen.addMember', t => {
     })
   })
 })
+
+test('rebuild (I learn about a new PO Box)', t => {
+  const admin = Server()
+  const me = Server()
+  const name = (id) => {
+    switch (id) {
+      case admin.id: return 'admin'
+      case me.id: return 'me'
+    }
+  }
+
+  let groupId
+  replicate({ from: admin, to: me, name, live: true })
+
+  /* set up listener */
+  let rebuildCount = 0
+  me.rebuild.hook((rebuild, [cb]) => {
+    rebuildCount++
+    const run = rebuildCount
+    if (rebuildCount === 1) t.pass('rebuild started (group/add-member)')
+    else if (rebuildCount === 2) t.pass('rebuild started (group/po-box)')
+    else throw new Error(`rebuild triggered ${rebuildCount} times `)
+
+    rebuild((err) => {
+      cb && cb()
+
+      if (run === 1) {
+        t.error(err, 'rebuild finished (group/add-member)')
+        admin.tribes.addPOBox(groupId, (err) => t.error(err, 'admin adds po-box'))
+      } // eslint-disable-line
+      else if (run === 2) {
+        t.error(err, 'rebuild finished (group/po-box)')
+        admin.close()
+        me.close()
+        t.end()
+      }
+    })
+  })
+
+  /* kick off the process */
+  admin.tribes.create({}, (err, data) => {
+    if (err) throw err
+    groupId = data.groupId
+
+    admin.tribes.invite(data.groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
+      t.error(err, 'admin adds me to group')
+      if (err) throw err
+    })
+  })
+})
+
+test('rebuild (added to group with poBox)', t => {
+  const admin = Server()
+  const me = Server()
+  const name = (id) => {
+    switch (id) {
+      case admin.id: return 'admin'
+      case me.id: return 'me'
+    }
+  }
+
+  /* set up listener */
+  let rebuildCount = 0
+  me.rebuild.hook((rebuild, [cb]) => {
+    rebuildCount++
+    if (rebuildCount === 1) t.pass('rebuild started (group/add-member)')
+    else if (rebuildCount === 2) t.pass('rebuild started (group/po-box)')
+    else throw new Error(`rebuild triggered ${rebuildCount} times `)
+
+    const run = rebuildCount
+    rebuild((err) => {
+      cb && cb()
+
+      if (run === 1) {
+        t.error(err, 'rebuild finished (group/add-member)')
+      } // eslint-disable-line
+      else if (run === 2) {
+        t.error(err, 'rebuild finished (group/po-box)')
+        admin.close()
+        me.close()
+        t.end()
+      }
+    })
+  })
+
+  /* kick off the process */
+  admin.tribes.create({ addPOBox: true }, (err, data) => {
+    if (err) throw err
+
+    replicate({ from: admin, to: me, name, live: true })
+
+    admin.tribes.invite(data.groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
+      t.error(err, 'admin adds me to group')
+      if (err) throw err
+    })
+  })
+})

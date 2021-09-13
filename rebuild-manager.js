@@ -23,6 +23,7 @@ module.exports = class RebuildManager {
 
     ssb.rebuild.hook((rebuild, [cb]) => {
       log('(ﾉ´ヮ´)ﾉ*:･ﾟ✧')
+      // log('reasons', JSON.stringify(this.requests.reasons, null, 2))
       this.isRebuilding = true
 
       rebuild(err => {
@@ -105,6 +106,9 @@ function Requests () {
     },
     callback (err) {
       callbacks.set(err)
+    },
+    get reasons () {
+      return Array.from(reasons)
     },
     get size () {
       return reasons.size

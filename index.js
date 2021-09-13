@@ -112,19 +112,22 @@ function init (ssb, config) {
         if (newAuthors.length) {
           state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
 
-          const reason = 'add-member' + newAuthors.join()
+          const reason = ['add-member', ...newAuthors].join()
           rebuildManager.rebuild(reason)
         }
       })
     })
   })
-
-  // listen for group/poBox
-  //
-  // keystore.poBox.register(poBoxId, { key }, (err, data) => {
-  //
-  //   ssb.rebuild(() => console.log('rebuild finished'))
-  // })
+  listen.poBox(ssb, m => {
+    const { poBoxId, key: poBoxKey } = m.value.content.keys.set
+    keystore.processPOBox({ poBoxId, poBoxKey }, (err, isNew) => {
+      if (err) throw err
+      if (isNew) {
+        const reason = ['po-box', poBoxId].join()
+        rebuildManager.rebuild(reason)
+      }
+    })
+  })
 
   setImmediate(() => {
     if (ssb.replicate) {
