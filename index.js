@@ -48,7 +48,7 @@ module.exports = {
       list: 'async,'
     },
 
-    // addPOBox // could add in future
+    addPOBox: 'async',
     poBox: {
       create: 'async'
     }
@@ -304,7 +304,7 @@ function init (ssb, config) {
 
     application: scuttle.application,
 
-    // addPOBox: scuttle.group.addPOBox, // could add in future
+    addPOBox: scuttle.group.addPOBox,
     poBox: {
       create (opts, cb) {
         const { id: poBoxId, secret } = poBoxKeys.generate()

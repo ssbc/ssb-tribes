@@ -184,6 +184,7 @@ These endpoints give you access to additional features, such as:
     - `ssb.tribes.subtribe.findParentGroupLinks(subGroupId, cb)`
 - **P.O. Box tools**
     - `ssb.tribes.poBox.create(opts, cb)`
+    - `ssb.tribes.addPOBox(groupId, cb)`
 - **managing people applying to join to a group**
     - `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
     - `ssb.tribes.application.get(applicationId, cb)`
@@ -227,6 +228,14 @@ Creates a P.O. Box key-pair, which is like a one-way group messaging setup with 
   - `poBoxId` *String* - a cipherlink that can be used in `recps` by anyone, to send messages only those with the secret key can open
   - `public` *Buffer*  - the public part of the keypair
   - `secret` *Buffer*  - the secret part of the keypair
+
+### `ssb.tribes.addPOBox(groupId, cb)`
+
+Creates a P.O. Box key-pair, and publishes a message announcing those to a group.
+This will be heard by group members, allowing them to open messages sent to that P.O. Box
+
+- `groupId` *String* - group to add P.O. Box to
+- `cb` *Function* is a callback with signature `cb(err, poBoxId)`
 
 
 ### `ssb.tribes.link.create({ group, name }, cb)`
