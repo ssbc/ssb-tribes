@@ -61,6 +61,7 @@ test('rebuild (I am added to a group)', t => {
 })
 
 test('rebuild (I am added to a group, then someone else is added)', t => {
+  // t.plan(9)
   const admin = Server()
   const me = Server()
   const bob = Server()
@@ -86,35 +87,44 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
 
   admin.rebuild.hook(function (rebuild, [cb]) {
     t.fail('admin should not rebuild')
-    rebuild(cb)
+    throw new Error('stop')
   })
 
-  /* after I am added, I add bob */
+  /* after I am added, admin adds bob */
+  let myRebuildCount = 0
   me.rebuild.hook(function (rebuild, [cb]) {
+    myRebuildCount++
+    if (myRebuildCount > 2) throw new Error('I should only rebuild twice!')
+    // 1st time - I realise I've been added to a group, and re-index
+    // 2nd time - I am re-indexing, and discover zelf was added too
+
     rebuild(() => {
-      t.pass('I am in the group')
-
       cb && cb()
-      pull(
-        pull.values(nMessages(20, { type: 'me', recps: [groupId] })),
-        pull.asyncMap(me.publish),
-        pull.collect((err) => {
-          t.error(err, 'I publish to the group')
 
-          replicate({ from: me, to: bob, name, live: false }, (err) => {
-            t.error(err, 'bob has received all of admin + me messages to date')
+      if (myRebuildCount === 1) t.pass('I am in the group')
+      if (myRebuildCount === 2) {
+        // I publish 20 messages to the group
+        pull(
+          pull.values(nMessages(20, { type: 'me', recps: [groupId] })),
+          pull.asyncMap(me.publish),
+          pull.collect((err) => {
+            t.error(err, 'I publish 20 messages to the group')
 
-            // NOTE: we close me here to stop re-indexing when admin adds bob to group
-            // If you close while rebuilding, you get a segmentation fault
-            me.close((err) => {
-              t.error(err, 'I shut down')
-              admin.tribes.invite(groupId, [bob.id], { text: 'hi!' }, (err) => {
-                t.error(err, 'admin adds bob to the group')
+            replicate({ from: me, to: bob, name, live: false }, (err) => {
+              t.error(err, 'bob has received all of admin + me messages to date')
+
+              // NOTE: we close me here to stop re-indexing when admin adds bob to group
+              // If you close while rebuilding, you get a segmentation fault
+              me.close((err) => {
+                t.error(err, 'I shut down')
+                admin.tribes.invite(groupId, [bob.id], { text: 'hi!' }, (err) => {
+                  t.error(err, 'admin adds bob to the group')
+                })
               })
             })
           })
-        })
-      )
+        )
+      }
     })
   })
 
@@ -155,7 +165,7 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
               else if (count === 1) comment += '...'
               else return
             }
-            t.true(type, comment)
+            t.true(type, comment) // 3 asserts here
           },
           (err) => {
             if (seenMine === 20) t.equal(seenMine, 20, 'bob saw 20 messages from me')

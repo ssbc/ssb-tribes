@@ -112,10 +112,8 @@ function init (ssb, config) {
         if (newAuthors.length) {
           state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
 
-          if (ssb.name) {
-            console.log(ssb.name(ssb.id), 'found', newAuthors.map(id => [ssb.name(id), id]))
-          }
-          rebuildManager.rebuild()
+          const reason = 'add-member' + newAuthors.join()
+          rebuildManager.rebuild(reason)
         }
       })
     })

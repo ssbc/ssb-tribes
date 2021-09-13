@@ -1,12 +1,13 @@
 const test = require('tape')
 const { promisify: p } = require('util')
+const Server = require('scuttle-testbot')
+// NOTE we do not use the helpers/test-bot as that has a RebuildManager installed with ssb-tribes!
+
 const Manager = require('../rebuild-manager')
 
-const { Server } = require('./helpers')
-
-test('rebuild-manager', async t => {
-  t.plan(3)
+async function setup () {
   const ssb = Server()
+  // ssb.post(console.log)
 
   // NOTE - We cannot rebuild an empty DB ?!
   await p(ssb.publish)({ type: 'filler', text: new Array(1000).fill('dog').join() })
@@ -14,36 +15,95 @@ test('rebuild-manager', async t => {
 
   // we fake indexing taking some time to be done
   const TIME_TILL_INDEX_DONE = 1000
-  let isIndexingDone = false
-  setTimeout(() => { isIndexingDone = true }, TIME_TILL_INDEX_DONE)
+  setTimeout(() => { ssb._isIndexingDone = true }, TIME_TILL_INDEX_DONE)
+
   ssb.status.hook(status => {
     const current = status()
-    if (isIndexingDone) return current
+    if (ssb._isIndexingDone) return current
 
     // current.sync.plugins.links = 5000
     current.sync.sync = false
     return current
   })
 
+  return ssb
+}
+
+test('rebuild-manager', async t => {
+  t.plan(3)
+  const ssb = await setup()
+
   // we wrap ssb.rebuild once to know exactly what goes through to the db
   // we expect only one call to come through from the rebuildManager
   // AFTER indexing is complete
-  let rebuildCound = 0
+  let rebuildCount = 0
   ssb.rebuild.hook((rebuild, [cb]) => {
-    t.true(isIndexingDone, 'rebuild only get called once indexing is done')
-
-    rebuildCound++
-    rebuild.call(ssb, cb)
+    t.true(ssb.status().sync.sync, 'rebuild only gets called once indexing is done')
+    rebuildCount++
+    rebuild(cb)
   })
 
   // this wraps ssb.rebuild again
   const manager = new Manager(ssb)
 
-  manager.rebuild()
-  manager.rebuild(() => t.pass('callback in the middle'))
-  manager.rebuild(() => {
-    t.equal(rebuildCound, 1, 'db rebuild only gets called once')
+  manager.rebuild('my dog')
+  manager.rebuild('my cat', () => t.pass('callback in the middle'))
+  manager.rebuild('my fish', () => {
+    t.equal(rebuildCount, 1, 'db rebuild only gets called once')
 
     ssb.close()
+  })
+})
+
+test('rebuild-manager (rebuild called during rebuild with EXISTING reason)', async t => {
+  t.plan(4)
+  const ssb = await setup()
+
+  let rebuildCount = 0
+  ssb.rebuild.hook((rebuild, [cb]) => {
+    t.true(ssb.status().sync.sync, 'rebuild only gets called once indexing is done')
+    rebuildCount++
+    rebuild.call(ssb, cb)
+    manager.rebuild('my cat', () => { // << 'my cat' already cited as EXISTING reason for rebuild
+      t.equal(rebuildCount, 1, 'existing reason and cb folded into current run')
+    })
+  })
+
+  const manager = new Manager(ssb)
+
+  manager.rebuild('my fish')
+  manager.rebuild('my dog', () => t.pass('callback in the middle'))
+  manager.rebuild('my cat', () => {
+    t.equal(rebuildCount, 1, 'db rebuild only gets called once')
+
+    ssb.close()
+  })
+})
+
+test('rebuild-manager (rebuild called during rebuild with NEW reason)', async t => {
+  t.plan(5)
+  const ssb = await setup()
+
+  let rebuildCount = 0
+  ssb.rebuild.hook((rebuild, [cb]) => {
+    t.true(ssb.status().sync.sync, 'rebuild only gets called once indexing is done') // see this twice
+    rebuildCount++
+    rebuild.call(ssb, cb)
+
+    if (rebuildCount === 1) {
+      manager.rebuild('my pig', () => { // << 'my pig' is a NEW reason for rebuilding!
+        t.equal(rebuildCount, 2, 'rebuild called second time')
+
+        ssb.close()
+      })
+    }
+  })
+
+  const manager = new Manager(ssb)
+
+  manager.rebuild('my fish')
+  manager.rebuild('my dog', () => t.pass('callback in the middle'))
+  manager.rebuild('my cat', () => {
+    t.equal(rebuildCount, 1, 'first rebuild completed')
   })
 })

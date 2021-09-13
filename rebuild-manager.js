@@ -9,56 +9,105 @@ const Obz = require('obz')
  * After the rebuild is complete the RebuildManager ensures all callbacks passed to it are then run
  */
 
+const log = (...str) => console.info('db.rebuild', ...str)
+
 module.exports = class RebuildManager {
   constructor (ssb) {
     this.ssb = ssb
-    this.isRebuildRequested = false
+    //   isIndexing
+    this.isInitializing = false
     this.isRebuilding = false
-    this.queue = Obz()
+
+    this.requests = new Requests()
+    this.nextRequests = new Requests()
 
     ssb.rebuild.hook((rebuild, [cb]) => {
+      log('(ﾉ´ヮ´)ﾉ*:･ﾟ✧')
       this.isRebuilding = true
 
-      rebuild.call(ssb, err => {
+      rebuild(err => {
+        log('finished')
+        // rebuild done
+        this.requests.callback(err)
+
+        this.requests = this.nextRequests
+        this.nextRequests = new Requests()
         this.isRebuilding = false
-        this.queue.set(err)
-        this.queue = Obz()
 
         if (typeof cb === 'function') cb(err)
         else err && console.error(err)
+
+        // if there are outstanding rebuild requests, start a new rebuild
+        if (this.requests.hasRequests()) {
+          this.initiateRebuild()
+        }
       })
     })
   }
 
-  rebuild (cb) {
+  rebuild (reason, cb) {
     if (this.isRebuilding) {
-      const name = this.ssb.name ? this.ssb.name(this.ssb.id) : ''
-      console.warn('rebuildManager.rebuild() called while database was rebuilding...', name)
+      // if the current rebuild was already kicked off by a reason we're not registering, it's safe to
+      // add it to the current rebuild process (so long as the "reasons" was specific enough)
+      if (this.requests.has(reason)) this.requests.add(reason, cb)
+      // otherwise, queue it up for the next round of rebuilds - this is because we may have added new things to
+      // the keystore which would justify re-trying decrypting all messages
+      else this.nextRequests.add(reason, cb)
+
+      return
     }
 
-    if (!this.isRebuildRequested) {
-      this.isRebuildRequested = true
-
-      const interval = setInterval(
-        () => {
-          if (this.isIndexComplete) {
-            const name = this.ssb.name ? ` (${this.ssb.name(this.ssb.id)})` : ''
-            console.log('rebuild!!!   (ﾉ´ヮ´)ﾉ*:･ﾟ✧', name)
-            this.ssb.rebuild(() => console.log('rebuild finished', name))
-
-            this.isRebuildRequested = false
-            clearInterval(interval)
-          }
-        },
-        100
-      )
-    }
-
-    // queue up cb for when rebuild is done
-    if (typeof cb === 'function') this.queue.once(cb)
+    this.requests.add(reason, cb)
+    this.initiateRebuild()
   }
 
-  get isIndexComplete () {
-    return this.ssb.status().sync.sync
+  initiateRebuild () {
+    if (this.isInitializing) return
+
+    this.isInitializing = true
+    const interval = setInterval(
+      () => {
+        if (this.isIndexing) return
+
+        this.ssb.rebuild()
+        this.isInitializing = false
+
+        clearInterval(interval)
+      },
+      100
+    )
+  }
+
+  get isIndexing () {
+    return this.ssb.status().sync.sync !== true
+  }
+}
+
+function Requests () {
+  const reasons = new Set([])
+  const callbacks = Obz()
+
+  return {
+    add (reason, cb) {
+      if (!reason) throw new Error('rebuild requests request a reason')
+      reasons.add(reason)
+
+      if (cb === undefined) return
+
+      if (typeof cb === 'function') callbacks.once(cb)
+      else throw new Error(`expected cb to be function, got ${cb}`)
+    },
+    has (reason) {
+      return reasons.has(reason)
+    },
+    hasRequests () {
+      return reasons.size > 0
+    },
+    callback (err) {
+      callbacks.set(err)
+    },
+    get size () {
+      return reasons.size
+    }
   }
 }
