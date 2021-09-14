@@ -5,6 +5,7 @@ const KeyRing = require('ssb-keyring')
 const bfe = require('ssb-bfe')
 const Obz = require('obz')
 const pull = require('pull-stream')
+const paraMap = require('pull-paramap')
 
 const Envelope = require('./envelope')
 const listen = require('./listen')
@@ -217,7 +218,6 @@ function init (ssb, config) {
       const data = keystore.group.get(id)
       if (!data) return cb(new Error(`unknown groupId ${id})`))
 
-      // find if this group has any parent links
       scuttle.link.findParentGroupLinks(id, (err, parentGroupLinks) => {
         if (err) return cb(err)
 
@@ -239,13 +239,7 @@ function init (ssb, config) {
     onKeystoreReady(() => {
       pull(
         pull.values(keystore.group.list()),
-        pull.asyncMap((groupId, cb) => {
-          tribeGet(groupId, (err, tribe) => {
-            if (err) return cb(err)
-
-            cb(null, { ...tribe, groupId })
-          })
-        }),
+        paraMap(tribeGet, 4),
         pull.filter(tribe => tribe.parentGroupId === undefined),
         pull.map(tribe => tribe.groupId),
         pull.collect(cb)

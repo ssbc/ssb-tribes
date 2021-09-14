@@ -357,7 +357,7 @@ Returns the current state of a tribe application. e.g.
     '@CQi7RZDHLHalHErknddXIczj6FulnAdbYfULVSXTbns=.ed25519',
     '@qYeVniXyC0/D9GIlGMAiIKg5jGgJTY7ZEgeikRWIJ/Y=.ed25519',
   ],
-  
+
   answers: [
     {
       q: 'where are you from?',
