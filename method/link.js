@@ -40,12 +40,13 @@ module.exports = function Link (ssb) {
       }),
       pull.filter(groupSubGroupLink.spec.isRoot),
       pull.map(link => {
-        const { parent, child, recps } = link.value.content
+        const { parent, child, recps, admin } = link.value.content
 
         return {
           linkId: link.key,
           groupId: parent,
           subGroupId: child,
+          admin: (admin && admin.set) || null,
           recps
         }
       }),
@@ -70,12 +71,14 @@ module.exports = function Link (ssb) {
         feedGroupLink.read(linkId, cb)
       })
     },
-    createSubGroupLink ({ group, subGroup }, cb) {
+    createSubGroupLink ({ group, subGroup, admin }, cb) {
       const input = {
         parent: group,
         child: subGroup,
         recps: [group]
       }
+
+      if (admin) input.admin = true
 
       groupSubGroupLink.create(input, (err, linkId) => {
         if (err) return cb(err)

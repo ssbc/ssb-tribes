@@ -287,8 +287,17 @@ function init (ssb, config) {
         tribeCreate(opts, (err, data) => {
           if (err) return cb(err)
 
+          const linkOpts = {
+            group: parentGroupId,
+            subGroup: data.groupId
+          }
+
+          if (opts && opts.admin) {
+            linkOpts.admin = opts.admin
+          }
+
           // link the subGroup to the group
-          scuttle.link.createSubGroupLink({ group: parentGroupId, subGroup: data.groupId }, (err, link) => {
+          scuttle.link.createSubGroupLink(linkOpts, (err, link) => {
             if (err) return cb(err)
 
             cb(null, { ...data, parentGroupId })

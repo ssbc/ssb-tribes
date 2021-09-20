@@ -34,6 +34,7 @@ test('tribes.subtribe.findParentGroupLinks', t => {
             linkId: data[0].linkId,
             groupId: parentGroupId,
             subGroupId,
+            admin: null,
             recps: [parentGroupId]
           }],
           'returns matching data'
