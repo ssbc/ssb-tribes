@@ -177,7 +177,7 @@ These endpoints give you access to additional features, such as:
 - **linking your feed to a group**
     - `ssb.tribes.link.create({ group, name }, cb)`
 - **linking subGroups to a group**
-    - `ssb.tribes.link.createSubGroupLink({ group, subGroup }, cb)`
+    - `ssb.tribes.link.createSubGroupLink({ group, subGroup, admin }, cb)`
 - **finding groups/ subGroups**
     - `ssb.tribes.findByFeedId(feedId, cb)`
     - `ssb.tribes.findSubGroupLinks(groupId, cb)`
@@ -250,7 +250,7 @@ Arguments:
 Note:
 - this link will be encrypted to the group you're linking to (i.e. link will have `recps: [groupId]`)
 
-### `ssb.tribes.link.createSubGroupLink({ group, subGroup }, cb)`
+### `ssb.tribes.link.createSubGroupLink({ group, subGroup, admin }, cb)`
 
 Creates a message of tyoe `link/group-subGroup` which links a group to a subGroup
 
@@ -258,6 +258,7 @@ Arguments:
 
 - `group` *GroupId* - the id of the parent private group
 - `subGroup` *GroupId* - the id of the subGroup you're linking to `group`
+- `admin` *Boolean* - when set to true, this flag is used to tell when a subgroup is the admin-only subgroup for the group
 - `cb` - *Function* - call with signature `(err, link)` where `link` is the link message
 Note:
 - this link will be encrypted to the parent group (i.e. link will have `recps: [group]`)
@@ -296,6 +297,7 @@ Find subGroups which have linked with a groupId (see `ssb.tribes.link.createSubG
     linkId: MsgId,
     groupId: GroupId,
     subGroupId: GroupId,
+    admin: Boolean,
     recps: Recps, // an array of recipients who know about this link (should just be the group)
   }]
   ```

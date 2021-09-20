@@ -1,3 +1,5 @@
+const { boolean } = require('../lib/field-types')
+
 module.exports = {
   type: 'link/group-subgroup',
   tangle: 'link',
@@ -6,5 +8,6 @@ module.exports = {
     child: { $ref: '#/definitions/cloakedMessageId', required: true }
   },
   props: {
+    admin: boolean
   }
 }
