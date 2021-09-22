@@ -31,9 +31,9 @@ test('tribes.subtribe.create', t => {
 
         const { parent, child, recps } = link.value.content
 
-        t.equal(parent, parentGroupId, 'link/group-subgroup parent')
-        t.equal(child, subGroupId, 'link/group-subgroup child')
-        t.deepEqual(recps, [parentGroupId], 'link/group-subgroup recps')
+        t.equal(parent, parentGroupId, 'link/group-group/subgroup parent')
+        t.equal(child, subGroupId, 'link/group-group/subgroup child')
+        t.deepEqual(recps, [parentGroupId], 'link/group-group/subgroup recps')
 
         server.tribes.get(subGroupId, (err, group) => {
           t.error(err, 'get subGroup')
@@ -62,7 +62,7 @@ test('tribes.subtribe.create', t => {
       $filter: {
         value: {
           content: {
-            type: 'link/group-subgroup'
+            type: 'link/group-group/subgroup'
           }
         }
       }

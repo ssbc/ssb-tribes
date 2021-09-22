@@ -9,7 +9,7 @@ module.exports = function Link (ssb) {
   const groupSubGroupLink = new Crut(ssb, GroupSubGroupLink)
 
   // NOTE this is not generalised to all links, it's about group links
-  function findLinks (subType, opts = {}, cb) {
+  function findLinks (type, opts = {}, cb) {
     const { parent, child } = opts
     if (parent && !isGroup(parent)) return cb(new Error(`findLinks expected a groupId for parent, got ${parent} instead.`))
     if (child && !isGroup(child)) return cb(new Error(`findLinks expected a groupId for child, got ${child} instead.`))
@@ -19,7 +19,7 @@ module.exports = function Link (ssb) {
       $filter: {
         value: {
           content: {
-            type: `link/${subType}`,
+            type,
             ...opts,
             tangles: {
               link: { root: null, previous: null }
@@ -137,10 +137,10 @@ module.exports = function Link (ssb) {
       )
     },
     findSubGroupLinks (groupId, cb) {
-      findLinks('group-subgroup', { parent: groupId }, cb)
+      findLinks('link/group-group/subgroup', { parent: groupId }, cb)
     },
     findParentGroupLinks (groupId, cb) {
-      findLinks('group-subgroup', { child: groupId }, cb)
+      findLinks('link/group-group/subgroup', { child: groupId }, cb)
     }
   }
 }
