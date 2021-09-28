@@ -146,7 +146,7 @@ Lists all the authors (feedIds) who you know are part of the group with id `grou
 A convenience method which:
 - mints a group
 - publishes a `link` in the parent group which advertises the existence of the subGroup
-- mints a `dmKey` for that group so that the parent group member can send messages to the subGroup
+- mints a `poBoxId` for that group so that the parent group member can send messages to the subGroup
 - then creates a `link` inside the existing group (linking group + subGroup)
 
 where:
@@ -154,10 +154,11 @@ where:
 - `opts` *Object*
     - `opts.addPOBox` *Boolean* attaches a P.O. Box to the group and publish the keys into the group
         - default: `false`
+    - `opts.admin` *Booelan* adds meta-data to the link flagging it as the admin subgroup
 - `cb` *Function* is a callback with signature `cb(err, data)` where `data` is an Object with properties:
     - `groupId` *String* - a cipherlink that's safe to use publicly to name the subGroup, and is used in `recps` to trigger enveloping messages to that group
     - `groupKey` *Buffer*  - the symmetric key used for encryption by the subGroup
-    - `dmKey` *Buffer* - the asymetric key used to encrypt messages sent from outside of the subGroup
+    - `poBoxId` *Buffer* - the asymetric key used to encrypt messages sent from outside of the subGroup
     - `groupInitMsg` *Object* - a copy of the  (enveloped) message used to initialise the subGroup
 
 _This method calls `ssb.tribes.create`_
