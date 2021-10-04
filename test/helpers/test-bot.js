@@ -20,6 +20,15 @@ module.exports = function TestBot (opts = {}) {
 
   const ssb = stack(opts)
 
+  if (opts.debug) {
+    ssb.post(m => {
+      ssb.get({ id: m.key, private: true }, (_, value) => {
+        console.log(value.sequence, m.key)
+        console.log(JSON.stringify(value.content, null, 2))
+      })
+    })
+  }
+
   // HACK - calling close while a rebuild is happening really wrecks the tests for some reason
   // this is a crude way to ensure we wait before it's called for proper
   const state = {
