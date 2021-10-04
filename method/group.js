@@ -115,6 +115,12 @@ module.exports = function GroupMethods (ssb, keystore, state) {
           cb(null, poBoxId)
         })
       })
+    },
+    getPOBox (groupId, cb) {
+      groupPoBoxCrut.readGroup(groupId, (err, data) => {
+        if (err) return cb(err)
+        cb(null, data.states[0].keys)
+      })
     }
   }
 }

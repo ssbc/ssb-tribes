@@ -186,6 +186,7 @@ These endpoints give you access to additional features, such as:
 - **P.O. Box tools**
     - `ssb.tribes.poBox.create(opts, cb)`
     - `ssb.tribes.addPOBox(groupId, cb)`
+    - `ssb.tribes.poBox.get(groupId, cb)`
 - **managing people applying to join to a group**
     - `ssb.tribes.application.create(groupdId, groupAdmins, opts, cb)`
     - `ssb.tribes.application.get(applicationId, cb)`
@@ -238,6 +239,12 @@ This will be heard by group members, allowing them to open messages sent to that
 - `groupId` *String* - group to add P.O. Box to
 - `cb` *Function* is a callback with signature `cb(err, poBoxId)`
 
+### `ssb.tribes.poBox.get(groupId, cb)`
+
+Get the keypair that's attached to a group
+
+- `groupId` *String* - group that has a P.O. Box
+- `cb` *Function* is a callback with signature `cb(err, { poBoxId, key })`
 
 ### `ssb.tribes.link.create({ group, name }, cb)`
 

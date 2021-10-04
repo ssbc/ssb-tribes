@@ -51,7 +51,8 @@ module.exports = {
 
     addPOBox: 'async',
     poBox: {
-      create: 'async'
+      create: 'async',
+      get: 'async'
     }
   },
   init
@@ -322,7 +323,8 @@ function init (ssb, config) {
             cb(null, { poBoxId, poBoxKey: secret })
           })
         })
-      }
+      },
+      get: scuttle.group.getPOBox
     }
   }
 }
