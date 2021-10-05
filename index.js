@@ -46,6 +46,7 @@ module.exports = {
       accept: 'async',
       reject: 'async',
       update: 'async',
+      tombstone: 'async',
       list: 'async,'
     },
 
@@ -309,8 +310,6 @@ function init (ssb, config) {
       findParentGroupLinks: scuttle.link.findParentGroupLinks
     },
 
-    application: scuttle.application,
-
     addPOBox: scuttle.group.addPOBox,
     poBox: {
       create (opts, cb) {
@@ -325,6 +324,9 @@ function init (ssb, config) {
         })
       },
       get: scuttle.group.getPOBox
-    }
+    },
+
+    /* deprecated */
+    application: scuttle.application
   }
 }

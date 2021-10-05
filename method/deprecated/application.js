@@ -2,7 +2,10 @@ const Crut = require('ssb-crut')
 const pull = require('pull-stream')
 const paraMap = require('pull-paramap')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
-const spec = require('../spec/application.js')
+
+const spec = require('../../spec/deprecated/application.js')
+
+let isWarned = false
 
 module.exports = function Application (ssb) {
   const crut = new Crut(ssb, spec)
@@ -22,6 +25,11 @@ module.exports = function Application (ssb) {
       if (typeof input === 'function') {
         cb = input
         input = {}
+      }
+
+      if (!isWarned) {
+        isWarned = true
+        console.log('ssb-tribes applications have been deprecated, please use ssb-tribes-registratoin')
       }
 
       crut.create({
@@ -63,6 +71,9 @@ module.exports = function Application (ssb) {
     /* update */
     update (applicationId, input, cb) {
       crut.update(applicationId, pruneInput(input), cb)
+    },
+    tombstone (applicationId, input, cb) {
+      crut.tombstone(applicationId, input, cb)
     },
     comment (applicationId, comment, cb) {
       crut.update(applicationId, { comment }, cb)

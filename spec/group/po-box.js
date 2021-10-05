@@ -1,4 +1,4 @@
-const { poBoxInfo } = require('../lib/field-types')
+const { poBoxInfo } = require('../../lib/spec-field-types')
 
 module.exports = {
   type: 'group/po-box',

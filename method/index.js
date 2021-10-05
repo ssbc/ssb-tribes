@@ -1,6 +1,6 @@
-const Application = require('./application')
 const Link = require('./link')
 const Group = require('./group')
+const Application = require('./deprecated/application')
 
 module.exports = function Method (ssb, keystore, state) {
   const application = Application(ssb)
@@ -17,9 +17,10 @@ module.exports = function Method (ssb, keystore, state) {
 
     link,
     // create createSubGroupLink findGroupByFeedId findParentGroupLinks findSubGroupLinks
-    //
+
+    /* deprecated */
     application
-    // create get update comment accept reject list
+    // create get update tombstone comment accept reject list
   }
 
   function patient (fn) {

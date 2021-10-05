@@ -1,4 +1,4 @@
-const { string } = require('../lib/field-types')
+const { string } = require('../../lib/spec-field-types')
 
 module.exports = {
   type: 'link/feed-group',

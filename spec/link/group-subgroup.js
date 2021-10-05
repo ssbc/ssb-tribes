@@ -1,4 +1,4 @@
-const { boolean } = require('../lib/field-types')
+const { boolean } = require('../../lib/spec-field-types')
 
 module.exports = {
   type: 'link/group-group/subgroup',
