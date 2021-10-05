@@ -10,6 +10,12 @@ const text1 = 'Hello, can I join?'
 const text2 = 'Welcome!'
 const text3 = 'Welcome for a second time!'
 
+const emptyFields = {
+  answers: null,
+  decision: null,
+  tombstone: null
+}
+
 test('tribes.application.list (v2.1 application)', async t => {
   const strangerOpts = {
     name: 'stranger-test-' + Date.now(),
@@ -77,7 +83,7 @@ test('tribes.application.list (v2.1 application)', async t => {
     })
     t.deepEqual(listData, [application], 'kaitiaki can see same application')
 
-    const listData2 = await p(stranger.tribes.application.list)({})
+    const listData2 = await p(stranger.tribes.application.list)({ })
 
     /* Stranger closes + restarts server */
     await p(stranger.close)()
@@ -211,13 +217,12 @@ test('tribes.application.list (v2 application)', t => {
         t.deepEqual(
           results,
           [{
+            ...emptyFields,
             id: m.key,
             groupId: '%EPdhGFkWxLn2k7kzthIddA8yqdX8VwjmhmTes0gMMqE=.cloaked',
             profileId: null, // expect this because it didnt exist in v2
             applicantId: ssb.id,
             groupAdmins: ['@rHfP8mgPkmWT+KYkNoQMef+dFJLD3wi4gVdU+1LoABI=.ed25519'],
-            answers: null,
-            decision: null,
             history: []
           }],
           'v2 applications are returned when opts={get: true}'

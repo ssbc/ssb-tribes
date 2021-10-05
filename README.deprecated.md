@@ -34,6 +34,9 @@ where:
 - `opts` *Object*:
   - `reason` *String*: a message to be viewed in the application thread along with the rejection
 
+### `ssb.tribes.application.update(applicationId, opts, cb)`
+### `ssb.tribes.application.tombstone(applicationId, opts, cb)`
+
 ### `ssb.tribes.application.get(applicationId, cb)`
 
 Returns the current state of a tribe application. e.g.

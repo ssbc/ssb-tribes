@@ -3,6 +3,11 @@ const keys = require('ssb-keys')
 const { promisify: p } = require('util')
 const { Server, GroupId, replicate } = require('../../helpers')
 
+const emptyFields = {
+  decision: null,
+  tombstone: null
+}
+
 test('tribes.application.get (v2.1 application)', async t => {
   const alice = Server()
   const kaitiaki = Server()
@@ -41,6 +46,7 @@ test('tribes.application.get (v2.1 application)', async t => {
   }
 
   const expected = {
+    ...emptyFields,
     id,
     groupId,
     applicantId: alice.id,
@@ -126,6 +132,7 @@ test('tribes.application.get (v2 application)', async t => {
       t.deepEqual(
         state,
         {
+          ...emptyFields,
           id: m.key,
           groupId,
           profileId: null, // wasnt set in old version

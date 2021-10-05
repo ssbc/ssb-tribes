@@ -63,7 +63,8 @@ module.exports = function Application (ssb) {
 
           answers: application.states[0].answers,
           decision: decisions.accept || decisions.reject || null, // accept > reject > nothng
-          history: application.states[0].history
+          history: application.states[0].history,
+          tombstone: application.states[0].tombstone
         })
       })
     },
@@ -177,6 +178,13 @@ function GroupApplicationList (server, crut) {
             return a.decision && a.decision.accepted === accepted // boolean
           })
         : null,
+
+      // filter out tombstoned applications if possible
+      pull.filter(a => {
+        if (typeof a === 'string') return true
+        if ('tombstone' in a) return a.tombstone === null
+        return true
+      }),
 
       pull.collect((err, data) => {
         cb(err, data)
