@@ -128,6 +128,9 @@ Listens for when new authors are added to a tribe, and fires a given function
 ### `ssb.tribes.list(cb)`
 
 Returns a list of all known group IDs.
+By default this excludes subgroups
+
+Alternatively `ssb.tribes.list({ subtribes: true }, cb)` will give you all group IDs (including those of subtribes)
 
 ### `ssb.tribes.get(groupId, cb)`
 

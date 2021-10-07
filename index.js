@@ -237,12 +237,16 @@ function init (ssb, config) {
     })
   }
 
-  const tribeList = (cb) => {
+  function tribeList (opts, cb) {
+    if (typeof opts === 'function') return tribeList({}, opts)
+
     onKeystoreReady(() => {
       pull(
         pull.values(keystore.group.list()),
         paraMap(tribeGet, 4),
-        pull.filter(tribe => tribe.parentGroupId === undefined),
+        opts.subtribes
+          ? null
+          : pull.filter(tribe => tribe.parentGroupId === undefined),
         pull.map(tribe => tribe.groupId),
         pull.collect(cb)
       )

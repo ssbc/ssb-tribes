@@ -1,4 +1,6 @@
 const test = require('tape')
+const { promisify: p } = require('util')
+
 const { Server } = require('../helpers')
 
 test('tribes.list + tribes.get', (t) => {
@@ -38,4 +40,22 @@ test('tribes.list + tribes.get', (t) => {
       })
     })
   })
+})
+
+test('tribes.list (subtribes)', async (t) => {
+  const server = Server()
+
+  const { groupId } = await p(server.tribes.create)({})
+  const { groupId: subGroupId } = await p(server.tribes.subtribe.create)(groupId, {})
+
+  let list = await p(server.tribes.list)()
+
+  t.deepEqual(list, [groupId], 'excludes subtribes by default')
+
+  list = await p(server.tribes.list)({ subtribes: true })
+
+  t.deepEqual(list, [groupId, subGroupId], '{ subtribes: true } includes subtribes')
+
+  server.close()
+  t.end()
 })
