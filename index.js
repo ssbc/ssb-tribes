@@ -105,10 +105,11 @@ function init (ssb, config) {
       if (err) throw err
 
       const groupId = buildGroupId({ groupInitMsg, groupKey })
-      const authors = [
+      const authors = unique([
+        groupInitMsg.value.author,
         m.value.author,
         ...m.value.content.recps.filter(isFeed)
-      ]
+      ])
 
       keystore.processAddMember({ groupId, groupKey, root, authors }, (err, newAuthors) => {
         if (err) throw err
@@ -333,4 +334,8 @@ function init (ssb, config) {
     /* deprecated */
     application: scuttle.application
   }
+}
+
+function unique (array) {
+  return Array.from(new Set(array))
 }

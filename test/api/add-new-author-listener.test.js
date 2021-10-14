@@ -1,6 +1,5 @@
 const test = require('tape')
 const { promisify: p } = require('util')
-const { setTimeout } = require('timers')
 const { Server, replicate } = require('../helpers')
 
 test('addNewAuthorListener', async t => {
@@ -19,13 +18,13 @@ test('addNewAuthorListener', async t => {
   admin.tribes.addNewAuthorListener(({ newAuthors, groupId: _groupId }) => {
     // should hear adding self to newly created group
     t.deepEqual(newAuthors.map(name), ['admin'], 'admin = returns expected newAuthors')
-    setTimeout(() => t.equal(_groupId, groupId, 'admin = returns expected groupId'), 500)
+    setImmediate(() => t.equal(_groupId, groupId, 'admin = returns expected groupId'))
   })
 
   newPerson.tribes.addNewAuthorListener(({ newAuthors, groupId: _groupId }) => {
     // being added to the new group, this person immediately discovers themself + their inviter in group
-    t.deepEqual(newAuthors.map(name), ['admin', 'newPerson'], 'returns expected newAuthors')
-    t.equal(_groupId, groupId, 'returns expected groupId')
+    t.deepEqual(newAuthors.map(name), ['admin', 'newPerson'], 'newPerson returns expected newAuthors')
+    t.equal(_groupId, groupId, 'newPerson, returns expected groupId')
 
     admin.close()
     newPerson.close()
@@ -36,9 +35,7 @@ test('addNewAuthorListener', async t => {
     groupId = groupData.groupId
     await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
 
-    setTimeout(async () => {
-      p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
-    }, 500)
+    await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
     // we want to test that duplicate adds dont fire the addNewAuthorListener multiple times,
     // unfortunately there are race conditions around calculating the new authors, so
     // we have added a small delay here
