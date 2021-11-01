@@ -119,7 +119,10 @@ module.exports = function GroupMethods (ssb, keystore, state) {
     getPOBox (groupId, cb) {
       groupPoBoxCrut.readGroup(groupId, (err, data) => {
         if (err) return cb(err)
-        cb(null, data.states[0].keys)
+
+        const keys = data.states[0].keys
+        if (keys) cb(null, keys)
+        else cb(new Error('no poBox found for this group'))
       })
     }
   }
