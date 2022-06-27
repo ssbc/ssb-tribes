@@ -17,7 +17,7 @@ const stack = SecretStack({ caps })
   .use(require('ssb-backlinks')) // << required index
   .use(require('ssb-query'))     // << required index
   .use(require('ssb-tribes'))
-  .use(require('ssb-private1'))  // if you want to support old encryption
+  .use(require('ssb-private1'))  // if you want to support old decryption
                                  // *order matters*, load tribes first
   .use(...)
 
@@ -80,10 +80,9 @@ This plugin provides functions for creating groups and administering things abou
 A Secret-Stack server running the plugins:
 - `ssb-db` >= 20.3.0
 - `ssb-tribes`
-- `ssb-backlinks` >= 2.1.1 - used for adding group tangle meta data to messages + loading applications
-
+- `ssb-backlinks` >= 2.1.1 - used for adding group tangle meta data to messages
+- `ssb-query` >= 2.4.5 - used for listing groups linked to your feedId, or subgroup linked to groups
 - `ssb-replicate` - (optional) used to auto-replicate people who you're in groups with
-- `ssb-query` >= 2.4.5 - (optional) used for listing applications
 
 ## API
 

@@ -39,6 +39,8 @@ module.exports = {
       findParentGroupLinks: 'async'
     },
 
+    // TODO deprecate
+    // rm -rf methed/deprecated spec/deprecated test/api/application
     application: {
       create: 'async ',
       get: 'async',
