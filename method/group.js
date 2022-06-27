@@ -77,7 +77,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
         root,
         tangles: {
           members: {
-            root: root,
+            root,
             previous: [root] // TODO calculate previous for members tangle
           },
 

@@ -74,10 +74,6 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
       case zelfId: return 'zelf'
     }
   }
-  admin.name = name
-  me.name = name
-  bob.name = name
-
   let groupId
 
   // Setting up listeners ready for initial action

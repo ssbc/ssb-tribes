@@ -9,7 +9,7 @@ const paraMap = require('pull-paramap')
 
 const Envelope = require('./envelope')
 const listen = require('./listen')
-const { GetGroupTangle, groupId: buildGroupId, poBoxKeys } = require('./lib')
+const { GetGroupTangle, tanglePrune, groupId: buildGroupId, poBoxKeys } = require('./lib')
 
 const Method = require('./method')
 const RebuildManager = require('./rebuild-manager')
@@ -166,22 +166,25 @@ function init (ssb, config) {
 
   /* Tangle: auto-add tangles.group info to all private-group messages */
   const getGroupTangle = GetGroupTangle(ssb, keystore)
-  ssb.publish.hook(function (fn, args) {
+  ssb.publish.hook(function (publish, args) {
     const [content, cb] = args
-    if (!content.recps) return fn.apply(this, args)
+    if (!content.recps) return publish.apply(this, args)
 
-    // NOTE there are two ways an err can occur in getGroupTangle
-    // 1. recps is not a groupId
-    // 2. unknown groupId,
-    // Rather than cb(err) here we we pass it on to boxers to see if an err is needed
-
-    if (!isGroup(content.recps[0])) return fn.apply(this, args)
+    if (!isGroup(content.recps[0])) return publish.apply(this, args)
 
     onKeystoreReady(() => {
       getGroupTangle(content.recps[0], (err, tangle) => {
-        if (err) return fn.apply(this, args)
+        // NOTE there are two ways an err can occur in getGroupTangle
+        // 1. recps is not a groupId
+        // 2. unknown groupId,
 
-        fn.apply(this, [set(content, 'tangles.group', tangle), cb])
+        // Rather than cb(err) here we we pass it on to boxers to see if an err is needed
+        if (err) return publish.apply(this, args)
+
+        set(content, 'tangles.group', tangle)
+        tanglePrune(content) // prune the group tangle down if needed
+
+        publish.call(this, content, cb)
       })
     })
   })

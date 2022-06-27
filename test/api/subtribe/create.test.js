@@ -45,7 +45,7 @@ test('tribes.subtribe.create', t => {
               root: groupInitMsg.key,
               scheme: 'envelope-large-symmetric-group',
               groupId: subGroupId,
-              parentGroupId: parentGroupId
+              parentGroupId
             },
             'tribes.get returns subGroup with parentGroupId'
           )

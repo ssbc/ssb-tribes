@@ -24,10 +24,17 @@ test('publish (to groupId)', t => {
     server.publish(content, (err, msg) => {
       t.error(err, 'msg published to group')
       t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
+      const cipherTextSize = Buffer.from(msg.value.content.replace('.box2', ''), 'base64').length
 
       server.get({ id: msg.key, private: true, meta: true }, (err, msg) => {
         t.error(err)
         t.deepEqual(msg.value.content, content, 'can open envelope!')
+
+        const plainTextSize = Buffer.from(JSON.stringify(msg.value.content)).length
+        const expectedSize = 32 + (msg.value.content.recps.length + 1) * 32 + (plainTextSize + 16)
+        // header + (recp key slots) + (content + HMAC)
+        // NOTE - we sneak ourselves in as a key_slot when we can
+        t.equal(cipherTextSize, expectedSize, 'cipherTextSize overhead correct') // 112 bytes
 
         /* return ENV to testing */
         process.env.NODE_ENV = 'test'

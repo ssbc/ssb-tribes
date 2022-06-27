@@ -160,23 +160,23 @@ function GroupApplicationList (server, crut) {
       // (optionally) convert applicationIds into application records
       (get !== undefined)
         ? pull(
-            paraMap(
-              (id, cb) => get(id, (err, application) => {
-                if (err) return cb(null, null) // don't choke of failed gets
-                return cb(null, application)
-              })
-              , 4
-            ), // 4 = width of parallel querying
-            pull.filter(Boolean) // filter out failed gets
-          )
+          paraMap(
+            (id, cb) => get(id, (err, application) => {
+              if (err) return cb(null, null) // don't choke of failed gets
+              return cb(null, application)
+            })
+            , 4
+          ), // 4 = width of parallel querying
+          pull.filter(Boolean) // filter out failed gets
+        )
         : null,
 
       // (optionally) filter applications by whether accepted
       (accepted !== undefined)
         ? pull.filter(a => {
-            if (accepted === null) return a.decision === null // no response
-            return a.decision && a.decision.accepted === accepted // boolean
-          })
+          if (accepted === null) return a.decision === null // no response
+          return a.decision && a.decision.accepted === accepted // boolean
+        })
         : null,
 
       // filter out tombstoned applications if possible
