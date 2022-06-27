@@ -17,8 +17,7 @@
     "url": "git+https://github.com/ssbc/ssb-tribes.git"
   },
   "dependencies": {
-    "@tangle/linear-append": "^1.1.0",
-    "@tangle/overwrite": "^2.1.0",
+    "@tangle/overwrite": "^3.0.0",
     "@tangle/reduce": "^5.0.0",
     "@tangle/strategy": "^4.1.0",
     "charwise": "^3.0.1",
@@ -37,7 +36,7 @@
     "pull-stream": "^3.6.14",
     "sodium-native": "^3.2.0",
     "ssb-bfe": "^3.3.0",
-    "ssb-crut": "^3.2.1",
+    "ssb-crut": "^4.5.2",
     "ssb-keyring": "^1.0.4",
     "ssb-keys": "^8.4.0",
     "ssb-private-group-keys": "^0.4.1",

@@ -5,7 +5,8 @@ const CRUT = require('ssb-crut')
 const { isValid: isAddMember } = require('./spec/group/add-member')
 
 const poBoxSpec = require('./spec/group/po-box')
-const { isUpdate: isPOBox } = new CRUT({ backlinks: true }, poBoxSpec).spec
+const mockSSB = { backlinks: true, query: true }
+const { isUpdate: isPOBox } = new CRUT(mockSSB, poBoxSpec).spec
 
 module.exports = {
   addMember (ssb, emit) {
