@@ -39,19 +39,6 @@ module.exports = {
       findParentGroupLinks: 'async'
     },
 
-    // TODO deprecate
-    // rm -rf methed/deprecated spec/deprecated test/api/application
-    application: {
-      create: 'async ',
-      get: 'async',
-      comment: 'async',
-      accept: 'async',
-      reject: 'async',
-      update: 'async',
-      tombstone: 'async',
-      list: 'async,'
-    },
-
     addPOBox: 'async',
     poBox: {
       create: 'async',
@@ -334,10 +321,7 @@ function init (ssb, config) {
         })
       },
       get: scuttle.group.getPOBox
-    },
-
-    /* deprecated */
-    application: scuttle.application
+    }
   }
 }
 
