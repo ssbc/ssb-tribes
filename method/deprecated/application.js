@@ -150,7 +150,7 @@ function GroupApplicationList (server, crut) {
 
     pull(
       server.query.read({ query }),
-      pull.filter(crut.spec.isRoot),
+      pull.filter(crut.isRoot),
       (groupId)
         ? pull.filter(m => m.value.content.groupId === groupId)
         : null,

@@ -5,7 +5,7 @@ const { Server, GroupId } = require('../../helpers')
 
 // const sleep = async (t) => new Promise(resolve => setTimeout(resolve, t))
 test('tribes.application.create (v2.1 application)', async t => {
-  const server = Server()
+  const server = Server({ application: true })
   const adminIds = [keys.generate().id]
   const groupId = GroupId()
   const answers = [

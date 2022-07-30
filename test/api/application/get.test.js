@@ -9,8 +9,8 @@ const emptyFields = {
 }
 
 test('tribes.application.get (v2.1 application)', async t => {
-  const alice = Server()
-  const kaitiaki = Server()
+  const alice = Server({ application: true })
+  const kaitiaki = Server({ application: true })
 
   const adminIds = [kaitiaki.id]
   const groupId = GroupId()
@@ -104,7 +104,7 @@ test('tribes.application.get (v2.1 application)', async t => {
 })
 
 test('tribes.application.get (v2 application)', async t => {
-  const server = Server()
+  const server = Server({ application: true })
 
   const groupId = GroupId()
   const groupAdmins = [keys.generate().id]
@@ -164,7 +164,7 @@ test('tribes.application.get (v2 application)', async t => {
 })
 
 test('tribes.application.get (v1 application)', t => {
-  const ssb = Server()
+  const ssb = Server({ application: true })
 
   const v1RootNodeT = {
     type: 'group/application',

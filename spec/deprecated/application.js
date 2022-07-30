@@ -56,7 +56,7 @@ module.exports = {
     // tombstone
   },
 
-  getTransformation (m, distance) {
+  getTransformation (m, distance = 0) {
     const T = m.value.content
 
     return decorateHistory({ ...T }, m, distance)
@@ -68,13 +68,13 @@ module.exports = {
     // AND the history validation (when they are mapped in decorated form into history mutations)
   },
 
-  isValidNextStep (context, msg) {
-    if (isRoot(msg)) {
-      if (msg.value.content.decision) return false
+  isValidNextStep (context, node) {
+    if (node.previos === null) {
+      if (node.data.decision) return false
     } else {
-      if (msg.value.content.decision) {
-        const applicant = context.graph.rootNodes[0].value.author
-        if (applicant === msg.value.author) return false
+      if (node.data.decision) {
+        const applicant = context.graph.rootNodes[0].author
+        if (applicant === node.author) return false
       }
     }
 
@@ -159,8 +159,4 @@ function historyItem (m, field) {
     body: m.value.content[field].set
     // NOTE plucking body like this only works while all the fields are of type Overwrite
   }
-}
-
-function isRoot (msg) {
-  return msg.value.content.tangles.application.root === null
 }

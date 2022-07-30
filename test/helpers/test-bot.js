@@ -1,4 +1,5 @@
 const Server = require('scuttle-testbot')
+const Application = require('../../method/deprecated/application.js')
 
 module.exports = function TestBot (opts = {}) {
   // opts = {
@@ -7,6 +8,7 @@ module.exports = function TestBot (opts = {}) {
   //   keys: SecretKeys
   //
   //   replicate: Boolean
+  //   application: Boolean
   // }
 
   let stack = Server // eslint-disable-line
@@ -27,6 +29,10 @@ module.exports = function TestBot (opts = {}) {
         console.log(JSON.stringify(value.content, null, 2))
       })
     })
+  }
+
+  if (opts.application === true) {
+    ssb.tribes.application = Application(ssb)
   }
 
   // HACK - calling close while a rebuild is happening really wrecks the tests for some reason

@@ -3,8 +3,8 @@ const { promisify: p } = require('util')
 const { Server, GroupId } = require('../../helpers')
 
 test('tribes.application.tombstone', async t => {
-  const alice = Server()
-  const kaitiaki = Server()
+  const alice = Server({ application: true })
+  const kaitiaki = Server({ application: true })
 
   const adminIds = [kaitiaki.id]
   kaitiaki.close()

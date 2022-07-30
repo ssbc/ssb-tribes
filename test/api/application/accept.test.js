@@ -4,8 +4,8 @@ const pull = require('pull-stream')
 const { Server, replicate } = require('../../helpers')
 
 test('tribes.application.accept', async t => {
-  const kaitiaki = Server()
-  const alice = Server()
+  const kaitiaki = Server({ application: true })
+  const alice = Server({ application: true })
 
   const applicationComment = 'So good you made it!'
   const groupIntro = 'Everyone I would like you to welcome John'

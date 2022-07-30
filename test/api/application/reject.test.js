@@ -3,8 +3,8 @@ const { promisify: p } = require('util')
 const { Server, GroupId, replicate } = require('../../helpers')
 
 test('tribes.application.reject', async t => {
-  const alice = Server()
-  const kaitiaki = Server()
+  const alice = Server({ application: true })
+  const kaitiaki = Server({ application: true })
 
   const adminIds = [kaitiaki.id]
   const groupId = GroupId()

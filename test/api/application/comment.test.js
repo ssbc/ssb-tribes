@@ -4,7 +4,7 @@ const { Server, GroupId } = require('../../helpers')
 const keys = require('ssb-keys')
 
 test('tribes.application.comment', async t => {
-  const alice = Server()
+  const alice = Server({ application: true })
 
   const adminIds = [keys.generate().id]
   const groupId = GroupId()

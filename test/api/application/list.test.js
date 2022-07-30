@@ -18,10 +18,12 @@ const emptyFields = {
 
 test('tribes.application.list (v2.1 application)', async t => {
   const strangerOpts = {
+    application: true,
     name: 'stranger-test-' + Date.now(),
     keys: keys.generate()
   }
   const kaitiakiOpts = {
+    application: true,
     name: 'kaitiaki-test-' + Date.now(),
     keys: keys.generate()
   }
@@ -87,7 +89,7 @@ test('tribes.application.list (v2.1 application)', async t => {
 
     /* Stranger closes + restarts server */
     await p(stranger.close)()
-    stranger = Server({ ...strangerOpts, startUnclean: true })
+    stranger = Server({ application: true, ...strangerOpts, startUnclean: true })
     // have to restart replication after closing server
 
     replicate({ from: kaitiaki, to: stranger, name, live: true })
@@ -190,7 +192,7 @@ test('tribes.application.list (v2.1 application)', async t => {
 })
 
 test('tribes.application.list (v2 application)', t => {
-  const ssb = Server()
+  const ssb = Server({ application: true })
 
   const v2RootNodeT = {
     type: 'group/application',
@@ -236,7 +238,7 @@ test('tribes.application.list (v2 application)', t => {
 })
 
 test('tribes.application.list (v1 application)', t => {
-  const ssb = Server()
+  const ssb = Server({ application: true })
 
   const v1RootNodeT = {
     type: 'group/application',
