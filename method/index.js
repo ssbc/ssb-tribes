@@ -15,7 +15,6 @@ module.exports = function Method (ssb, keystore, state) {
 
     link
     // create createSubGroupLink findGroupByFeedId findParentGroupLinks findSubGroupLinks
-
   }
 
   function patient (fn) {
