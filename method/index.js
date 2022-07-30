@@ -1,7 +1,9 @@
 const Link = require('./link')
 const Group = require('./group')
+const Application = require('./deprecated/application')
 
 module.exports = function Method (ssb, keystore, state) {
+  const application = Application(ssb)
   const link = Link(ssb)
   const group = Group(ssb, keystore, state)
 
@@ -13,9 +15,12 @@ module.exports = function Method (ssb, keystore, state) {
       getPOBox: group.getPOBox
     },
 
-    link
+    link,
     // create createSubGroupLink findGroupByFeedId findParentGroupLinks findSubGroupLinks
 
+    /* deprecated */
+    application
+    // create get update tombstone comment accept reject list
   }
 
   function patient (fn) {
