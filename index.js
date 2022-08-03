@@ -197,13 +197,19 @@ function init (ssb, config) {
 
         state.newAuthorListeners.forEach(fn => fn({ groupId: data.groupId, newAuthors: [ssb.id] }))
 
-        if (!opts.addPOBox) return cb(null, data)
-        else {
-          scuttle.group.addPOBox(data.groupId, (err, poBoxId) => {
-            if (err) cb(err)
-            cb(null, { ...data, poBoxId })
-          })
-        }
+        // addMember the admin
+        scuttle.group.addMember(data.groupId, [ssb.id], {}, (err) => {
+          if (err) return cb(err)
+
+          // add a P.O. Box to the group (maybe)
+          if (!opts.addPOBox) return cb(null, data)
+          else {
+            scuttle.group.addPOBox(data.groupId, (err, poBoxId) => {
+              if (err) cb(err)
+              cb(null, { ...data, poBoxId })
+            })
+          }
+        })
       })
     })
   }

@@ -65,7 +65,7 @@ test('unbox', async t => {
       console.log(err)
       return []
     })
-  t.equal(backlinks.length, 3, 'backlinks indexed all messages (unboxed!)')
+  t.equal(backlinks.length, 4, 'backlinks indexed all messages (unboxed!)')
   // console.log(backlinks.map(m => m.value.content))
 
   /* Vectors */
