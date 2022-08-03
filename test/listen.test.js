@@ -11,8 +11,8 @@ test('listen.addMember', async t => {
   const me = Server()
   const friend = Server()
 
-  let iHeard = 0
-  let friendHeard = 0
+  let iHeard = -1 // ignore the admin group/add-member
+  let friendHeard = -1 // ignore the admin group/add-member
 
   listen.addMember(me, m => {
     iHeard++

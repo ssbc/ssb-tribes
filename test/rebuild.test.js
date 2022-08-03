@@ -227,9 +227,10 @@ test('rebuild from listen.addMember', t => {
   // NOTE this is some old test... may no longer be needed
 
   const A = Server() // me
-  const B = Server() // some friend
+  A.name = 'me'
+  const B = Server() // friend
+  B.name = 'friend'
 
-  const messages = []
   let root
   let groupId
 
@@ -248,6 +249,9 @@ test('rebuild from listen.addMember', t => {
     pull.filter(m => !m.sync),
     pull.drain(m => {
       t.equal(m.value.content.root, root, `listened + heard the group/add-member: ${++heardCount}`)
+      // add-member:
+      // (1) B creates group, then adds self
+      // (2) B invites A
 
       if (heardCount === 2) {
         checkRebuildDone(() => {
@@ -263,39 +267,17 @@ test('rebuild from listen.addMember', t => {
   B.tribes.create({}, (err, data) => {
     if (err) throw err
 
-    messages.push(data.groupInitMsg)
     root = data.groupInitMsg.key
     groupId = data.groupId
-    console.log(`created group: ${groupId}`)
+    t.pass(`created group: ${groupId}`)
 
     B.tribes.invite(groupId, [A.id], { text: 'ahoy' }, (err, invite) => {
       if (err) throw err
-      messages.push(invite)
-      B.close(err => t.error(err, 'closed B'))
 
-      pull(
-        pull.values(messages),
-        pull.asyncMap((msg, cb) => {
-          msg.value
-            ? A.add(msg.value, cb)
-            : A.add(msg, cb)
-        }),
-        pull.through(m => console.log('replicating', m.key)),
-        pull.collect((err, msgs) => {
-          if (err) throw err
-
-          const pruneTimestamp = m => {
-            delete m.timestamp
-            return m
-          }
-
-          t.deepEqual(
-            messages.map(pruneTimestamp),
-            msgs.map(pruneTimestamp),
-            'same messages in two logs'
-          )
-        })
-      )
+      replicate({ from: B, to: A }, (err) => {
+        t.error(err, 'replicate finshed')
+        B.close(err => t.error(err, 'closed B'))
+      })
     })
   })
 })

@@ -76,33 +76,29 @@ test('get-group-tangle unit test', t => {
   })
 })
 
-test.only('get-group-tangle (cache)', t => {
+test('get-group-tangle (cache)', t => {
   const name = `get-group-tangle-cache-${Date.now()}`
   const server = Server({ name })
 
+  let queryCalls = 0
+  server.backlinks.read.hook(function (read, args) {
+    queryCalls += 1
+
+    return read(...args)
+  })
   server.tribes.create(null, (err, data) => {
     if (err) throw err
 
+    t.equal(queryCalls, 1, 'no cache for publishing of group/add-member, a backlink query was run')
     const content = { type: 'memo', recps: [data.groupId] }
-    let queryCalls = 0
-    server.backlinks.read.hook(function (read, args) {
-      queryCalls += 1
-
-      return read(...args)
-    })
 
     server.publish(content, (err, msg) => {
       if (err) throw err
 
-      t.equal(queryCalls, 1, 'no cache, a backlink query was run')
+      t.equal(queryCalls, 1, 'cache used for publishing next message')
 
-      server.publish(content, (err, msg) => {
-        if (err) throw err
-
-        t.equal(queryCalls, 1, 'cache used (no new backlink query was run)')
-        server.close()
-        t.end()
-      })
+      server.close()
+      t.end()
     })
   })
 })
@@ -212,16 +208,22 @@ test('get-group-tangle with branch', t => {
         }
       }
     }
+    const DELAY = 200
     const _getAliceGroupTangle = GetGroupTangle(alice, keystore)
     const getAliceGroupTangle = (id, cb) => {
-      setTimeout(() => _getAliceGroupTangle(id, cb), 200)
+      setTimeout(() => _getAliceGroupTangle(id, cb), DELAY)
     }
     const _getBobGroupTangle = GetGroupTangle(bob, keystore)
     const getBobGroupTangle = (id, cb) => {
-      setTimeout(() => _getBobGroupTangle(id, cb), 200)
+      setTimeout(() => _getBobGroupTangle(id, cb), DELAY)
     }
     // Alice invites Bob to the group
-    alice.tribes.invite(data.groupId, [bob.id], { text: 'ahoy' }, (err, invite) => {
+    const aliceInvite = (...args) => {
+      // slow this step down so the group tangle cache has time to be update
+      // and be linear
+      setTimeout(() => alice.tribes.invite(...args), DELAY)
+    }
+    aliceInvite(data.groupId, [bob.id], { text: 'ahoy' }, (err, invite) => {
       t.error(err, 'alice adds bob to group') // Not actually an error?
 
       // Alice shares the group creation and invite with Bob.
