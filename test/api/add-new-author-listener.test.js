@@ -18,7 +18,12 @@ test('addNewAuthorListener', async t => {
   admin.tribes.addNewAuthorListener(({ newAuthors, groupId: _groupId }) => {
     // should hear adding self to newly created group
     t.deepEqual(newAuthors.map(name), ['admin'], 'admin = returns expected newAuthors')
-    setImmediate(() => t.equal(_groupId, groupId, 'admin = returns expected groupId'))
+
+    const testGroupId = () => {
+      if (!groupId) return setTimeout(testGroupId, 50)
+      t.equal(_groupId, groupId, 'admin = returns expected groupId')
+    }
+    testGroupId()
   })
 
   newPerson.tribes.addNewAuthorListener(({ newAuthors, groupId: _groupId }) => {
@@ -32,6 +37,9 @@ test('addNewAuthorListener', async t => {
 
   try {
     const groupData = await p(admin.tribes.create)({})
+    console.log('group ready!')
+    // this makes a group, but also in the background, alerts the newAuthorListeners
+    // so the above listener can get called *before* we have access to the groupId
     groupId = groupData.groupId
     await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
 

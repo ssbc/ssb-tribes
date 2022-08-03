@@ -1,6 +1,7 @@
 const test = require('tape')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
 const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
+const pull = require('pull-stream')
 
 const { Server } = require('../helpers')
 
@@ -30,8 +31,38 @@ test('tribes.create', t => {
         'can decrypt group/init'
       )
 
-      server.close()
-      t.end()
+      // check I published a group/add-member to myself
+      pull(
+        server.createUserStream({ id: server.id, private: true, reverse: true }),
+        pull.map(msg => msg.value.content),
+        pull.collect((err, msgContents) => {
+          if (err) throw err
+
+          t.deepEqual(
+            msgContents[0], // contents of the latest message
+            {
+              type: 'group/add-member',
+              version: 'v1',
+              groupKey: groupKey.toString('base64'),
+              root: groupInitMsg.key,
+              recps: [groupId, server.id], // me being added to the group
+              tangles: {
+                members: {
+                  root: groupInitMsg.key,
+                  previous: [groupInitMsg.key]
+                },
+                group: {
+                  root: groupInitMsg.key,
+                  previous: [groupInitMsg.key]
+                }
+              }
+            },
+            'The admin was was also added to the group'
+          )
+          server.close()
+          t.end()
+        })
+      )
     })
   })
 })

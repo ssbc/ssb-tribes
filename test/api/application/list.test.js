@@ -4,7 +4,7 @@ const keys = require('ssb-keys')
 const { promisify: p } = require('util')
 const { Server, replicate } = require('../../helpers')
 
-// const sleep = async (t) => new Promise(resolve => setTimeout(resolve, t))
+const sleep = async (t) => new Promise(resolve => setTimeout(resolve, t))
 
 const text1 = 'Hello, can I join?'
 const text2 = 'Welcome!'
@@ -29,6 +29,7 @@ test('tribes.application.list (v2.1 application)', async t => {
   }
   const kaitiaki = Server(kaitiakiOpts)
   let stranger = Server(strangerOpts)
+
   const name = (id) => {
     switch (id) {
       case kaitiaki.id: return 'kaitiaki'
@@ -85,7 +86,9 @@ test('tribes.application.list (v2.1 application)', async t => {
     })
     t.deepEqual(listData, [application], 'kaitiaki can see same application')
 
-    const listData2 = await p(stranger.tribes.application.list)({ })
+    const listData2 = await p(stranger.tribes.application.list)({})
+
+    await sleep(100) // don't know why this is needed
 
     /* Stranger closes + restarts server */
     await p(stranger.close)()

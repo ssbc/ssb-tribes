@@ -30,38 +30,53 @@ test('get-group-tangle unit test', t => {
     getGroupTangle(data.groupId, (err, { root, previous }) => {
       if (err) throw err
       const rootKey = data.groupInitMsg.key
-      t.deepEqual({ root, previous }, { root: rootKey, previous: [rootKey] }, 'root should be tip')
-      //  publishing to the group:
-      const content = {
-        type: 'memo',
-        root: data.groupId,
-        message: 'unneccessary',
-        recps: [data.groupId]
-      }
 
-      server.publish(content, (err, msg) => {
-        if (err) throw err
-
-        getGroupTangle(data.groupId, (err, { root, previous }) => {
+      pull(
+        server.createUserStream({ id: server.id, reverse: true }),
+        pull.map(m => m.key),
+        pull.take(1),
+        pull.collect((err, keys) => {
           if (err) throw err
-          t.deepEqual({ root, previous }, { root: data.groupInitMsg.key, previous: [msg.key] }, 'adding message to root')
+
+          t.deepEqual(
+            { root, previous },
+            { root: rootKey, previous: [keys[0]] },
+            'group add-member of admin should be the tip'
+          )
+
+          //  publishing to the group:
+          const content = {
+            type: 'memo',
+            root: data.groupId,
+            message: 'unneccessary',
+            recps: [data.groupId]
+          }
 
           server.publish(content, (err, msg) => {
             if (err) throw err
+
             getGroupTangle(data.groupId, (err, { root, previous }) => {
               if (err) throw err
-              t.deepEqual({ root, previous }, { root: data.groupInitMsg.key, previous: [msg.key] }, 'adding message to tip')
-              server.close()
-              t.end()
+              t.deepEqual({ root, previous }, { root: data.groupInitMsg.key, previous: [msg.key] }, 'adding message to root')
+
+              server.publish(content, (err, msg) => {
+                if (err) throw err
+                getGroupTangle(data.groupId, (err, { root, previous }) => {
+                  if (err) throw err
+                  t.deepEqual({ root, previous }, { root: data.groupInitMsg.key, previous: [msg.key] }, 'adding message to tip')
+                  server.close()
+                  t.end()
+                })
+              })
             })
           })
         })
-      })
+      )
     })
   })
 })
 
-test('get-group-tangle (cache)', t => {
+test.only('get-group-tangle (cache)', t => {
   const name = `get-group-tangle-cache-${Date.now()}`
   const server = Server({ name })
 
