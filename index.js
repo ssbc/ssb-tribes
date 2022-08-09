@@ -338,6 +338,11 @@ function init (ssb, config) {
         onKeystoreReady(() => {
           cb(null, keystore.ownKeys())
         })
+      },
+      register (key, cb) {
+        onKeystoreReady(() => {
+          keystore.register(key, cb)
+        })
       }
     }
   }
