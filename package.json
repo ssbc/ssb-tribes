@@ -41,8 +41,7 @@
     "ssb-keys": "^8.4.1",
     "ssb-private-group-keys": "^0.4.1",
     "ssb-ref": "^2.14.3",
-    "ssb-schema-definitions": "^3.1.0",
-    "tap": "^16.3.0"
+    "ssb-schema-definitions": "^3.1.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
