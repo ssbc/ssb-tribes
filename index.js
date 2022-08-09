@@ -43,6 +43,9 @@ module.exports = {
     poBox: {
       create: 'async',
       get: 'async'
+    },
+    ownKeys: {
+      list: 'async'
     }
   },
   init
@@ -327,6 +330,15 @@ function init (ssb, config) {
         })
       },
       get: scuttle.group.getPOBox
+    },
+
+    // for internal use - ssb-ahau uses this for backups
+    ownKeys: {
+      list (cb) {
+        onKeystoreReady(() => {
+          cb(null, keystore.ownKeys())
+        })
+      }
     }
   }
 }
