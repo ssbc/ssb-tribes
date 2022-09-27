@@ -61,7 +61,7 @@
     "private-groups"
   ],
   "author": "mixmix",
-  "license": "AGPL-3.0",
+  "license": "LGPL-3.0-only",
   "bugs": {
     "url": "https://github.com/ssbc/ssb-tribes/issues"
   }
