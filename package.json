@@ -1,6 +1,6 @@
 {
   "name": "ssb-tribes",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "description": "a scuttlebutt (secret-stack) plugin which adds envelope encryption capabilities",
   "main": "index.js",
   "scripts": {
