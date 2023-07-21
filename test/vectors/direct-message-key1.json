@@ -1,0 +1,14 @@
+{
+  "type": "direct_message_shared_key",
+  "description": "calculate a shared DM key for another feedID. Note all inputs here are TFK encoded!",
+  "input": {
+    "my_dh_secret": "AwAAVBWosdJiUxa5F8b80q9zuDEKpOIZtPC8TUvAg7rKWA==",
+    "my_dh_public": "AwCgOagkeHCncXEVBdh1VJvD9MZHkwPx0zW8SF8V4b3BSw==",
+    "my_feed_id": "AAAUZ8SPimu5pvsd1V2gTnRAOFNaYYT57gUXsA+GxVXHMw==",
+    "your_dh_public": "AwANNqWZhzlZAfoeNJ2U/H525k8SP4zlvUU7a6SbkkxmZw==",
+    "your_feed_id": "AAA9ZhEGPhMmVd2y1YhnKh7r+RN4fI0pElnblvIgX7rQcg=="
+  },
+  "output": {
+    "shared_key": "DSf3Ac/sy5xLoulfxdpUwNlYPctJoCB7MiJksZsOn+U="
+  }
+}

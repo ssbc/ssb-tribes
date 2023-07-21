@@ -8,8 +8,8 @@ const envelope = require('../envelope')
 const { decodeLeaves, Server } = require('./helpers')
 
 const vectors = [
-  require('private-group-spec/vectors/unbox1.json'),
-  require('private-group-spec/vectors/unbox2.json')
+  require('./vectors/unbox1.json'),
+  require('./vectors/unbox2.json')
 ].map(decodeLeaves)
 
 test('unbox', async t => {
