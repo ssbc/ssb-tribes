@@ -25,6 +25,7 @@ module.exports = {
     list: 'async',
 
     invite: 'async',
+    excludeMembers: 'async',
     listAuthors: 'async',
 
     link: {
@@ -275,6 +276,7 @@ function init (ssb, config) {
         })
       })
     },
+    excludeMembers: scuttle.group.excludeMembers,
     listAuthors (groupId, cb) {
       onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
     },

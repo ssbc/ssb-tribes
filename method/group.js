@@ -7,6 +7,7 @@ const Crut = require('ssb-crut')
 const { groupId: buildGroupId, poBoxKeys } = require('../lib')
 const initSpec = require('../spec/group/init')
 const addMemberSpec = require('../spec/group/add-member')
+const excludeMemberSpec = require('../spec/group/exclude-member')
 const groupPoBoxSpec = require('../spec/group/po-box')
 
 module.exports = function GroupMethods (ssb, keystore, state) {
@@ -90,6 +91,28 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       if (opts.text) content.text = opts.text
 
       if (!addMemberSpec.isValid(content)) return cb(new Error(addMemberSpec.isValid.errorsString))
+
+      ssb.publish(content, cb)
+    },
+    excludeMembers (groupId, authorIds, cb) {
+      const { root } = keystore.group.get(groupId)
+
+      const content = {
+        type: 'group/exclude-member',
+        excludes: authorIds,
+        tangles: {
+          members: {
+            root,
+            previous: [root] // TODO calculate previous for members tangle
+          },
+
+          group: { root, previous: [root] }
+          // NOTE: this is a dummy entry which is over-written in publish hook
+        },
+        recps: [groupId],
+      }
+
+      if (!excludeMemberSpec.isValid(content)) return cb(new Error(excludeMemberSpec.isValid.errorsString))
 
       ssb.publish(content, cb)
     },
