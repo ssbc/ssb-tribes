@@ -2,7 +2,7 @@ const test = require('tape')
 const { promisify: p } = require('util')
 const { Server, replicate, FeedId } = require('../helpers')
 
-test('tribes.excludeMembers',async t => {
+test('tribes.excludeMembers', async t => {
   const kaitiaki = Server()
   const newPerson = Server()
 
@@ -44,27 +44,14 @@ test('tribes.excludeMembers',async t => {
     t.fail(err)
   }
 
+  await p(setTimeout)(500)
+
   await Promise.all([
     p(kaitiaki.close)(true),
     p(newPerson.close)(true),
   ])
     .then(() => t.pass('clients close'))
     .catch((err) => t.error(err))
+
+  t.end()
 })
-
-function Getter (ssb) {
-  let attempts = 0
-
-  return function get (id, cb) {
-    attempts++
-    ssb.get({ id, private: true, meta: true }, (err, m) => {
-      if (err) return cb(err)
-      if (typeof m.value.content === 'string') {
-        if (attempts === 5) throw new Error(`failed to get decrypted msg: ${id}`)
-
-        return setTimeout(() => get(id, cb), 500)
-      }
-      cb(null, m)
-    })
-  }
-}
