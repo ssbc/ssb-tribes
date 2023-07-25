@@ -114,7 +114,15 @@ module.exports = function GroupMethods (ssb, keystore, state) {
 
       if (!excludeMemberSpec.isValid(content)) return cb(new Error(excludeMemberSpec.isValid.errorsString))
 
-      ssb.publish(content, cb)
+      ssb.publish(content, (err, msg)=> {
+        if (err) return cb(err)
+
+        // TODO: remove the excluded members from the keystore. the reverse of the 
+        //keystore.group.registerAuthors(groupId, authorIds, (err) => {
+        // that invite() does
+        
+        return cb(null, msg)
+      })
     },
     addPOBox (groupId, cb) {
       const info = keystore.group.get(groupId)
