@@ -109,7 +109,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
           group: { root, previous: [root] }
           // NOTE: this is a dummy entry which is over-written in publish hook
         },
-        recps: [groupId],
+        recps: [groupId]
       }
 
       if (!excludeMemberSpec.isValid(content)) return cb(new Error(excludeMemberSpec.isValid.errorsString))

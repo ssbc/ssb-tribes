@@ -26,7 +26,7 @@ test('tribes.excludeMembers', async t => {
 
     await p(replicate)({ from: kaitiaki, to: newPerson, live: false, name })
 
-    let exclude = await p(kaitiaki.tribes.excludeMembers)(groupId, authorIds).catch(err=>t.error(err, err.message))
+    let exclude = await p(kaitiaki.tribes.excludeMembers)(groupId, authorIds).catch(err => t.error(err, err.message))
 
     exclude = await p(kaitiaki.get)({ id: exclude.key, private: true })
     const expected = {
@@ -37,7 +37,7 @@ test('tribes.excludeMembers', async t => {
         members: { root: groupInitMsg.key, previous: [groupInitMsg.key] },
         group: { root: groupInitMsg.key, previous: [...exclude.content.tangles.group.previous] }
       },
-      recps: [groupId],
+      recps: [groupId]
     }
     t.deepEqual(exclude.content, expected, 'kaitiaki excluded everyone')
   } catch (err) {
@@ -48,7 +48,7 @@ test('tribes.excludeMembers', async t => {
 
   await Promise.all([
     p(kaitiaki.close)(true),
-    p(newPerson.close)(true),
+    p(newPerson.close)(true)
   ])
     .then(() => t.pass('clients close'))
     .catch((err) => t.error(err))
