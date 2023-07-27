@@ -1,3 +1,4 @@
+const { promisify: p } = require('util')
 const { join } = require('path')
 const set = require('lodash.set')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
@@ -135,13 +136,16 @@ function init (ssb, config) {
 
       state.loading.keystore.once((s) => {
         const peers = new Set()
-        keystore.group.list()
-          .map(groupId => keystore.group.listAuthors(groupId))
-          .forEach(authors => authors.forEach(author => peers.add(author)))
 
-        peers.delete(ssb.id)
-        Array.from(peers)
-          .forEach(id => ssb.replicate.request({ id, replicate: true }))
+        Promise.all(keystore.group.list()
+          .map(groupId => p(ssb.tribes.listAuthors)(groupId)))
+          .then((allGroupAuthors) => {
+            allGroupAuthors.forEach(authors => authors.forEach(author => peers.add(author)))
+
+            peers.delete(ssb.id)
+            Array.from(peers)
+              .forEach(id => ssb.replicate.request({ id, replicate: true }))
+          })
       })
     }
   })
