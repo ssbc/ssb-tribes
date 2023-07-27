@@ -9,6 +9,7 @@ module.exports = function Method (ssb, keystore, state) {
     group: {
       init: patient(group.init),
       addMember: patient(group.addMember),
+      listAuthors: patient(group.listAuthors),
       addPOBox: patient(group.addPOBox),
       getPOBox: group.getPOBox
     },

@@ -3,6 +3,7 @@ const { keySchemes } = require('private-group-spec')
 const { SecretKey } = require('ssb-private-group-keys')
 const bfe = require('ssb-bfe')
 const Crut = require('ssb-crut')
+const pull = require('pull-stream')
 
 const { groupId: buildGroupId, poBoxKeys } = require('../lib')
 const initSpec = require('../spec/group/init')
@@ -92,6 +93,32 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       if (!addMemberSpec.isValid(content)) return cb(new Error(addMemberSpec.isValid.errorsString))
 
       ssb.publish(content, cb)
+    },
+    listAuthors (groupId, cb) {
+      const query = [{
+        $filter: {
+          value: {
+            content: {
+              type: 'group/add-member'
+            }
+          }
+        }
+      }]
+
+      pull(
+        ssb.query.read({ query }),
+        pull.filter(addMemberSpec.isValid),
+        pull.filter(msg =>
+          groupId === msg.value.content.recps[0]
+        ),
+        pull.map(msg => msg.value.content.recps.slice(1)),
+        pull.flatten(),
+        pull.collect((err, members) => {
+          if (err) return cb(err)
+
+          return cb(null, members)
+        })
+      )
     },
     addPOBox (groupId, cb) {
       const info = keystore.group.get(groupId)

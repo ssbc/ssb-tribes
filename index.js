@@ -276,7 +276,7 @@ function init (ssb, config) {
       })
     },
     listAuthors (groupId, cb) {
-      onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
+      scuttle.group.listAuthors(groupId, cb)
     },
 
     link: {
