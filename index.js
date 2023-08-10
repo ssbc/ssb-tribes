@@ -263,9 +263,6 @@ function init (ssb, config) {
     register (groupId, info, cb) {
       keystore.group.register(groupId, info, cb)
     },
-    registerAuthors (groupId, authors, cb) {
-      keystore.group.registerAuthors(groupId, authors, (err) => err ? cb(err) : cb(null, true))
-    },
     create: tribeCreate,
     list: tribeList,
     get: tribeGet,
