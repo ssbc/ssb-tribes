@@ -9,8 +9,8 @@ const mockSSB = { backlinks: true, query: true }
 const { isUpdate: isPOBox } = new CRUT(mockSSB, poBoxSpec).spec
 
 module.exports = {
-  addMember (ssb, emit) {
-    pull(
+  addMember (ssb) {
+    return pull(
       ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
       // NOTE this will run through all messages on each startup, which will help guarentee
       // all messages have been emitted AND processed
@@ -19,7 +19,6 @@ module.exports = {
       pull.filter(isAddMember),
       // NOTE we DO NOT filter our own messages out
       // this is important for rebuilding indexes and keystore state if we have to restore our feed
-      pull.drain(emit)
     )
   },
   poBox (ssb, emit) {

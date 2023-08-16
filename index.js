@@ -92,29 +92,59 @@ function init (ssb, config) {
 
   /* start listeners */
   const rebuildManager = new RebuildManager(ssb)
-  listen.addMember(ssb, m => {
-    const { root, groupKey } = m.value.content
-    ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
-      if (err) throw err
-
-      const groupId = buildGroupId({ groupInitMsg, groupKey })
-      const authors = unique([
-        groupInitMsg.value.author,
-        m.value.author,
-        ...m.value.content.recps.filter(isFeed)
-      ])
-
-      keystore.processAddMember({ groupId, groupKey, root, authors }, (err, newAuthors) => {
+  let processedNewAuthors = {}
+  pull(
+    listen.addMember(ssb),
+    pull.asyncMap((m, cb) => {
+      const { root, groupKey } = m.value.content
+      ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
         if (err) throw err
-        if (newAuthors.length) {
-          state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
 
-          const reason = ['add-member', ...newAuthors].join()
-          rebuildManager.rebuild(reason)
+
+        const groupId = buildGroupId({ groupInitMsg, groupKey })
+        const authors = unique([
+          groupInitMsg.value.author,
+          m.value.author,
+          ...m.value.content.recps.filter(isFeed)
+        ])
+
+        const record = keystore.group.get(groupId)
+        // if we haven't been in the group since before, register the group
+        if (record == null) {
+          return keystore.group.register(groupId, { key: groupKey, root }, (err) => {
+            if (err) return cb(err)
+            processAuthors(cb)
+          })
+        } else {
+          processAuthors(cb)
+        }
+
+        function processAuthors(cb) {
+          if (processedNewAuthors[groupId] === undefined) processedNewAuthors[groupId] = []
+
+          const newAuthors = authors.filter(author=> !processedNewAuthors[groupId].includes(author))
+
+          // TODO persist membership between restarts so we don't have to process again even if we restart
+          // TODO write comment when persisting about why we persist
+          // we basically want to know which members we've already re-indexed for
+          processedNewAuthors[groupId] = [...processedNewAuthors[groupId], ...newAuthors]
+
+          if (newAuthors.length) {
+            state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
+
+            const reason = ['add-member', ...newAuthors].join()
+            // TODO shouldn't rebuild if we're the person who added them
+            rebuildManager.rebuild(reason)
+          }
+          return cb()
         }
       })
+    }),
+    pull.drain(()=>{},(err)=>{
+      if (err) console.error('Listening for new addMembers errored:', err)
     })
-  })
+  )
+
   listen.poBox(ssb, m => {
     const { poBoxId, key: poBoxKey } = m.value.content.keys.set
     keystore.processPOBox({ poBoxId, poBoxKey }, (err, isNew) => {
@@ -202,7 +232,7 @@ function init (ssb, config) {
         const readKey = unboxer.key(initValue.content, initValue)
         if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
 
-        state.newAuthorListeners.forEach(fn => fn({ groupId: data.groupId, newAuthors: [ssb.id] }))
+        //state.newAuthorListeners.forEach(fn => fn({ groupId: data.groupId, newAuthors: [ssb.id] }))
 
         // addMember the admin
         scuttle.group.addMember(data.groupId, [ssb.id], {}, (err) => {

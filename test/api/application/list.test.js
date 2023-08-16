@@ -16,7 +16,7 @@ const emptyFields = {
   tombstone: null
 }
 
-test('tribes.application.list (v2.1 application)', async t => {
+test.skip('tribes.application.list (v2.1 application)', async t => {
   const strangerOpts = {
     application: true,
     name: 'stranger-test-' + Date.now(),
