@@ -16,7 +16,7 @@ module.exports = {
       // all messages have been emitted AND processed
       // (same not true if we used a dummy flume-view)
       pull.filter(m => m.sync !== true),
-      pull.filter(isAddMember),
+      pull.filter(isAddMember)
       // NOTE we DO NOT filter our own messages out
       // this is important for rebuilding indexes and keystore state if we have to restore our feed
     )

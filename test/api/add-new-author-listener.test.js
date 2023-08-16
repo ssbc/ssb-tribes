@@ -5,8 +5,8 @@ const { Server, replicate } = require('../helpers')
 test('addNewAuthorListener', async t => {
   t.plan(6)
 
-  const admin = Server({name:'admin', debug: false}) // me
-  const newPerson = Server({name:'newPerson'}) // some friend
+  const admin = Server({ name: 'admin', debug: false }) // me
+  const newPerson = Server({ name: 'newPerson' }) // some friend
 
   const name = id => {
     if (id === admin.id) return 'admin'
@@ -20,7 +20,7 @@ test('addNewAuthorListener', async t => {
     // should hear adding self to newly created group
     if (numAdded < 1) {
       t.deepEqual(newAuthors.map(name), ['admin'], 'admin = returns expected newAuthors')
-    } else if(numAdded === 1) {
+    } else if (numAdded === 1) {
       t.deepEqual(newAuthors.map(name), ['newPerson'], 'admin sees newMember being added')
     }
     numAdded++
@@ -37,7 +37,7 @@ test('addNewAuthorListener', async t => {
     t.deepEqual(newAuthors.map(name), ['admin', 'newPerson'], 'newPerson returns expected newAuthors')
     t.equal(_groupId, groupId, 'newPerson, returns expected groupId')
 
-    setTimeout(()=> {
+    setTimeout(() => {
       admin.close()
       newPerson.close()
       t.end()

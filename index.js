@@ -92,14 +92,13 @@ function init (ssb, config) {
 
   /* start listeners */
   const rebuildManager = new RebuildManager(ssb)
-  let processedNewAuthors = {}
+  const processedNewAuthors = {}
   pull(
     listen.addMember(ssb),
     pull.asyncMap((m, cb) => {
       const { root, groupKey } = m.value.content
       ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
         if (err) throw err
-
 
         const groupId = buildGroupId({ groupInitMsg, groupKey })
         const authors = unique([
@@ -119,10 +118,10 @@ function init (ssb, config) {
           processAuthors(cb)
         }
 
-        function processAuthors(cb) {
+        function processAuthors (cb) {
           if (processedNewAuthors[groupId] === undefined) processedNewAuthors[groupId] = []
 
-          const newAuthors = authors.filter(author=> !processedNewAuthors[groupId].includes(author))
+          const newAuthors = authors.filter(author => !processedNewAuthors[groupId].includes(author))
 
           // TODO persist membership between restarts so we don't have to process again even if we restart
           // TODO write comment when persisting about why we persist
@@ -140,7 +139,7 @@ function init (ssb, config) {
         }
       })
     }),
-    pull.drain(()=>{},(err)=>{
+    pull.drain(() => {}, (err) => {
       if (err) console.error('Listening for new addMembers errored:', err)
     })
   )
@@ -232,7 +231,7 @@ function init (ssb, config) {
         const readKey = unboxer.key(initValue.content, initValue)
         if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
 
-        //state.newAuthorListeners.forEach(fn => fn({ groupId: data.groupId, newAuthors: [ssb.id] }))
+        // state.newAuthorListeners.forEach(fn => fn({ groupId: data.groupId, newAuthors: [ssb.id] }))
 
         // addMember the admin
         scuttle.group.addMember(data.groupId, [ssb.id], {}, (err) => {
