@@ -127,7 +127,8 @@ Listens for when new authors are added to a tribe, and fires a given function
 ### `ssb.tribes.excludeMembers(groupId, [authorId], cb)`
 
 Excludes an author from a group you belong to. 
-This publishes a message that both this new author AND the group can see. NOTE that this only politely asks the author to leave the group, we don't rotate keys or anything like that.
+This publishes a message that both this new author AND the group can see. 
+**NOTE** :warning:  this only politely asks the author to leave the group, we don't rotate keys (yet)
 
 where:
 - `groupId` *String* - is a cloaked id for a group you're a part of
