@@ -1,4 +1,3 @@
-const { promisify: p } = require('util')
 const { join } = require('path')
 const set = require('lodash.set')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
@@ -163,18 +162,25 @@ function init (ssb, config) {
           .forEach(id => ssb.replicate.request({ id, replicate: true }))
       })
 
-      state.loading.keystore.once((s) => {
-        const peers = new Set()
-
-        Promise.all(keystore.group.list()
-          .map(groupId => p(ssb.tribes.listAuthors)(groupId)))
-          .then((allGroupAuthors) => {
-            allGroupAuthors.forEach(authors => authors.forEach(author => peers.add(author)))
-
-            peers.delete(ssb.id)
-            Array.from(peers)
-              .forEach(id => ssb.replicate.request({ id, replicate: true }))
+      state.loading.keystore.once(() => {
+        pull(
+          pull.values(keystore.group.list()),
+          paraMap(
+            (groupId, cb) => ssb.tribes.listAuthors(groupId, (err, feedIds) => {
+              if (err) return cb('error listing authors to replicate on start')
+              cb(null, feedIds)
+            }),
+            5
+          ),
+          pull.flatten(),
+          pull.unique(),
+          pull.drain(feedId => {
+            if (feedId === ssb.id) return
+            ssb.replicate.request({ id: feedId, replicate: true })
+          }, (err) => {
+            if (err) console.error('error on initializing replication of group members')
           })
+        )
       })
     }
   })
