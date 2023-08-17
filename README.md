@@ -174,7 +174,7 @@ _alias of `ssb.tribes.get`_
 ## API (Extras)
 
 These endpoints give you access to additional features, such as:
-- **registering groups or group-authors**:
+- **registering groups**:
     - `ssb.tribes.register(groupId, info, cb)`
 - **linking your feed to a group**
     - `ssb.tribes.link.create({ group, name }, cb)`

@@ -113,6 +113,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
         ),
         pull.map(msg => msg.value.content.recps.slice(1)),
         pull.flatten(),
+        pull.unique(),
         pull.collect((err, members) => {
           if (err) return cb(err)
 
