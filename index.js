@@ -237,8 +237,6 @@ function init (ssb, config) {
         const readKey = unboxer.key(initValue.content, initValue)
         if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
 
-        // state.newAuthorListeners.forEach(fn => fn({ groupId: data.groupId, newAuthors: [ssb.id] }))
-
         // addMember the admin
         scuttle.group.addMember(data.groupId, [ssb.id], {}, (err) => {
           if (err) return cb(err)
