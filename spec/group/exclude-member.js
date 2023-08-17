@@ -6,9 +6,9 @@ const baseSchema = require('private-group-spec/group/exclude-member/schema.json'
 const schema = {
   ...baseSchema,
   definitions: {
-    ...baseSchema.definitions
-    feedId: addMemberSchema.definitions.feedId
-    groupId: addMemberSchema.definitions.cloakedMessageId
+    ...baseSchema.definitions,
+    feedId: addMemberSchema.definitions.feedId,
+    groupId: addMemberSchema.definitions.cloakedMessageId,
     messageId: addMemberSchema.definitions.messageId
   }
 }
