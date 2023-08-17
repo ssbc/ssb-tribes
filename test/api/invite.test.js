@@ -49,7 +49,10 @@ test('tribes.invite', async t => {
     }
     const { key: greetingKey } = await p(kaitiaki.publish)(greetingContent).catch(t.fail)
     await p(replicate)({ from: kaitiaki, to: newPerson, live: false, name }).catch(t.fail)
-    const greetingMsg = await p(Getter(newPerson))(greetingKey).catch(t.fail)
+    const greetingMsg = await p(Getter(newPerson))(greetingKey).catch(err => {
+      console.error('error on getting greeting msg:', err)
+      t.fail(err)
+    })
     t.deepEqual(greetingMsg.value.content, greetingContent, 'new person can read group content')
 
     /* new person posts to group, kaitiaki can read */
