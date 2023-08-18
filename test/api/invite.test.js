@@ -51,11 +51,10 @@ test('tribes.invite', async t => {
     // and know when the get requests "should" work by
     newPerson.rebuild.hook(function (rebuild, args) {
       const [cb] = args
-      numberRebuilds++
       rebuild.call(this, (err) => {
-        numberRebuilds--
+        numberRebuilds++
         if (typeof cb === 'function') cb(err)
-        if (numberRebuilds === 0) resolve()
+        if (numberRebuilds === 1) resolve()
       })
     })
   })
@@ -66,14 +65,13 @@ test('tribes.invite', async t => {
   )
   await rebuildPromise
 
-  const pull = require('pull-stream')
-  const msgs = await pull(
-    newPerson.createLogStream({ private: true }),
-    pull.map(m => m?.value?.content),
-    pull.collectAsPromise()
-  )
-
-  console.log(msgs)
+  // const pull = require('pull-stream')
+  // const msgs = await pull(
+  //   newPerson.createLogStream({ private: true }),
+  //   pull.map(m => m?.value?.content),
+  //   pull.collectAsPromise()
+  // )
+  // console.log(msgs)
 
   const greetingMsg = await run(
     'new-person can get message',
@@ -106,9 +104,10 @@ function Getter (ssb) {
     attempts++
     ssb.get({ id, private: true, meta: true }, (err, m) => {
       if (err) return cb(err)
-      if (typeof m.value.content === 'string') {
-        if (attempts === 5) throw new Error(`failed to get decrypted msg: ${id}`)
-
+      // if content is encrypted,
+      // and haven't tried too many times,
+      if (typeof m.value.content === 'string' && attempts > 5) {
+        // try again (in case indexing has finished in a moment)
         return setTimeout(() => get(id, cb), 500)
       }
       cb(null, m)
