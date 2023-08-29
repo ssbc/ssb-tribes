@@ -74,7 +74,7 @@ module.exports = function Envelope (keystore, state) {
     }
 
     /* check my group keys */
-    const trial_group_keys = keystore.author.groupKeys(author)
+    const trial_group_keys = keystore.group.list().map(groupId => keystore.group.get(groupId)).flat()
     readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
     // NOTE the group recp is only allowed in the first slot,
     // so we only test group keys in that slot (maxAttempts: 1)

@@ -167,7 +167,7 @@ function init (ssb, config) {
           pull.values(keystore.group.list()),
           paraMap(
             (groupId, cb) => ssb.tribes.listAuthors(groupId, (err, feedIds) => {
-              if (err) return cb('error listing authors to replicate on start')
+              if (err) return cb(new Error('error listing authors to replicate on start'))
               cb(null, feedIds)
             }),
             5
