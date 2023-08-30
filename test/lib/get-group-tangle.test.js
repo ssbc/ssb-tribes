@@ -6,7 +6,7 @@ const { GetGroupTangle } = require('../../lib')
 
 test('get-group-tangle unit test', t => {
   const name = `get-group-tangle-${Date.now()}`
-  const server = Server({ name })
+  const server = Server({ name, debug: false})
 
   //    - creating a group and publishing messages (ssb-tribes)
   server.tribes.create(null, (err, data) => {
@@ -45,21 +45,21 @@ test('get-group-tangle unit test', t => {
           )
 
           //  publishing to the group:
-          const content = {
+          const content = () => ({
             type: 'memo',
             root: data.groupId,
             message: 'unneccessary',
             recps: [data.groupId]
-          }
+          })
 
-          server.publish(content, (err, msg) => {
+          server.publish(content(), (err, msg) => {
             if (err) throw err
 
             getGroupTangle(data.groupId, (err, { root, previous }) => {
               if (err) throw err
               t.deepEqual({ root, previous }, { root: data.groupInitMsg.key, previous: [msg.key] }, 'adding message to root')
 
-              server.publish(content, (err, msg) => {
+              server.publish(content(), (err, msg) => {
                 if (err) throw err
                 getGroupTangle(data.groupId, (err, { root, previous }) => {
                   if (err) throw err
