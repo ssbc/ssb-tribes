@@ -6,7 +6,7 @@ const { GetGroupTangle } = require('../../lib')
 
 test('get-group-tangle unit test', t => {
   const name = `get-group-tangle-${Date.now()}`
-  const server = Server({ name, debug: false})
+  const server = Server({ name, debug: false })
 
   //    - creating a group and publishing messages (ssb-tribes)
   server.tribes.create(null, (err, data) => {

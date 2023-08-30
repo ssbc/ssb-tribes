@@ -131,8 +131,11 @@ function init (ssb, config) {
             state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
 
             const reason = ['add-member', ...newAuthors].join()
-            // TODO shouldn't rebuild if we're the person who added them
-            rebuildManager.rebuild(reason)
+
+            // we don't rebuild if we're the person who added them
+            if (m.value.author !== ssb.id) {
+              rebuildManager.rebuild(reason)
+            }
           }
           return cb()
         }
