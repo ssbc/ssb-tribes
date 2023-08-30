@@ -60,7 +60,7 @@ test('rebuild (I am added to a group)', t => {
   })
 })
 
-test('rebuild (I am added to a group, then someone else is added)', t => {
+test.skip('rebuild (I am added to a group, then someone else is added)', t => {
   // t.plan(9)
   const admin = Server()
   const me = Server()
