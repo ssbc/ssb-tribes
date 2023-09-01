@@ -65,7 +65,7 @@ test('replicate group members', async t => {
     t.pass()
     t.pass()
     t.pass()
-    return alice.close(true, ()=> bob.close(true))
+    return alice.close(true, () => bob.close(true))
 
     const requested = []
     alice.close((err) => {
