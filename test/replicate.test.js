@@ -4,7 +4,7 @@ const Keys = require('ssb-keys')
 const { Server, replicate } = require('./helpers')
 
 test('replicate group members', async t => {
-  t.plan(6)
+  t.plan(7)
   // 3 calls to request
   // 1 successful shutdown
   // 1 successful restart
@@ -14,6 +14,7 @@ test('replicate group members', async t => {
   // required to make sure you have all content
 
   const expected = [
+    'bob', // initial replicate call
     'bob',
     'cel',
     'eric'

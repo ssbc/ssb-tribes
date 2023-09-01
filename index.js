@@ -127,13 +127,15 @@ function init (ssb, config) {
           // we basically want to know which members we've already re-indexed for
           processedNewAuthors[groupId] = [...processedNewAuthors[groupId], ...newAuthors]
 
-          // we don't rebuild if we're the person who added them
-          if (newAuthors.length && m.value.author !== ssb.id) {
+          if (newAuthors.length) {
             state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
 
-            const reason = ['add-member', ...newAuthors].join()
+            // we don't rebuild if we're the person who added them
+            if (m.value.author !== ssb.id) {
+              const reason = ['add-member', ...newAuthors].join()
 
-            rebuildManager.rebuild(reason)
+              rebuildManager.rebuild(reason)
+            }
           }
           return cb()
         }
