@@ -118,17 +118,17 @@ function init (ssb, config) {
         }
 
         function processAuthors (cb) {
-          if (processedNewAuthors[groupId] === undefined) processedNewAuthors[groupId] = []
+          if (processedNewAuthors[groupId] === undefined) processedNewAuthors[groupId] = new Set([])
 
-          const newAuthors = authors.filter(author => !processedNewAuthors[groupId].includes(author))
+          const newAuthors = new Set(authors.filter(author => !processedNewAuthors[groupId].has(author)))
 
           // TODO persist membership between restarts so we don't have to process again even if we restart
           // TODO write comment when persisting about why we persist
           // we basically want to know which members we've already re-indexed for
-          processedNewAuthors[groupId] = [...processedNewAuthors[groupId], ...newAuthors]
+          processedNewAuthors[groupId] = new Set([...processedNewAuthors[groupId], ...newAuthors])
 
-          if (newAuthors.length) {
-            state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
+          if ([...newAuthors].length) {
+            state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [...newAuthors] }))
 
             // we don't rebuild if we're the person who added them
             if (m.value.author !== ssb.id) {
