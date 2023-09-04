@@ -169,7 +169,7 @@ function init (ssb, config) {
         pull(
           pull.values(keystore.group.list()),
           paraMap(
-            (groupId, cb) => ssb.tribes.listAuthors(groupId, (err, feedIds) => {
+            (groupId, cb) => scuttle.group.listAuthors(groupId, (err, feedIds) => {
               if (err) return cb(new Error('error listing authors to replicate on start'))
               cb(null, feedIds)
             }),
