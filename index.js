@@ -122,9 +122,6 @@ function init (ssb, config) {
 
           const newAuthors = new Set(authors.filter(author => !processedNewAuthors[groupId].has(author)))
 
-          // TODO persist membership between restarts so we don't have to process again even if we restart
-          // TODO write comment when persisting about why we persist
-          // we basically want to know which members we've already re-indexed for
           processedNewAuthors[groupId] = new Set([...processedNewAuthors[groupId], ...newAuthors])
 
           if ([...newAuthors].length) {
