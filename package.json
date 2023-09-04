@@ -35,7 +35,7 @@
     "pull-level": "^2.0.4",
     "pull-paramap": "^1.2.2",
     "pull-stream": "^3.7.0",
-    "sodium-native": "^3.2.0",
+    "sodium-native": "^3.4.1",
     "ssb-bfe": "^3.7.0",
     "ssb-crut": "^4.6.2",
     "ssb-keyring": "^1.1.0",
