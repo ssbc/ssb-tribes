@@ -51,7 +51,7 @@ ssb.tribes.create({}, (err, info) => {
 
 ## Behaviour
 
-This plugin provides functions for creating groups and administering things about them, but it also provides a bunch of "automatic" behviour.
+This plugin provides functions for creating groups and administering things about them, but it also provides a bunch of "automatic" behaviour.
 
 1. **When you publish a message with `recps` it will auto-encrypt** the content when:
     - there are 1-16 FeedIds (direct mesaaging)
