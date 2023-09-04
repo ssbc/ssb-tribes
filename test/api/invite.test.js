@@ -106,7 +106,7 @@ function Getter (ssb) {
       if (err) return cb(err)
       // if content is encrypted,
       // and haven't tried too many times,
-      if (typeof m.value.content === 'string' && attempts > 5) {
+      if (typeof m.value.content === 'string' && attempts < 5) {
         // try again (in case indexing has finished in a moment)
         return setTimeout(() => get(id, cb), 500)
       }
