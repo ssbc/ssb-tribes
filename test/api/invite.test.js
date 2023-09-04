@@ -68,7 +68,7 @@ test('tribes.invite', async t => {
   // const pull = require('pull-stream')
   // const msgs = await pull(
   //   newPerson.createLogStream({ private: true }),
-  //   pull.map(m => m?.value?.content),
+  //   pull.map(m => m.value.content),
   //   pull.collectAsPromise()
   // )
   // console.log(msgs)
@@ -77,7 +77,7 @@ test('tribes.invite', async t => {
     'new-person can get message',
     Getter(newPerson)(greetingKey)
   )
-  t.deepEqual(greetingMsg?.value?.content, greetingContent, 'new person can read group content')
+  t.deepEqual(greetingMsg.value.content, greetingContent, 'new person can read group content')
 
   /* new person posts to group, kaitiaki can read */
   const replyContent = {
@@ -88,7 +88,7 @@ test('tribes.invite', async t => {
   const { key: replyKey } = await p(newPerson.publish)(replyContent)
   await p(replicate)({ from: newPerson, to: kaitiaki, live: false })
   const replyMsg = await Getter(kaitiaki)(replyKey)
-  t.deepEqual(replyMsg?.value?.content, replyContent, 'kaitiaki can read things from new person')
+  t.deepEqual(replyMsg.value.content, replyContent, 'kaitiaki can read things from new person')
 
   kaitiaki.close()
   newPerson.close()
