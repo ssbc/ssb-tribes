@@ -31,8 +31,11 @@ test('addNewAuthorListener', async t => {
     t.deepEqual(newAuthors.map(name), ['admin', 'newPerson'], 'newPerson returns expected newAuthors')
     t.equal(_groupId, groupId, 'newPerson, returns expected groupId')
 
-    admin.close()
-    newPerson.close()
+    setTimeout(() => {
+      admin.close()
+      newPerson.close()
+      t.end()
+    }, 1000)
   })
 
   try {
