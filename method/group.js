@@ -59,10 +59,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
 
           keystore.group.register(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
             if (err) return cb(err)
-            keystore.group.registerAuthors(data.groupId, [ssb.id], (err) => {
-              if (err) return cb(err)
-              cb(null, data)
-            })
+            cb(null, data)
           })
         })
       })
