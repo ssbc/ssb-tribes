@@ -92,6 +92,27 @@ function init (ssb, config) {
   /* start listeners */
   const rebuildManager = new RebuildManager(ssb)
   const processedNewAuthors = {}
+
+  function processAuthors (groupId, authors, adder, cb) {
+    if (processedNewAuthors[groupId] === undefined) processedNewAuthors[groupId] = new Set([])
+
+    const newAuthors = new Set(authors.filter(author => !processedNewAuthors[groupId].has(author)))
+
+    processedNewAuthors[groupId] = new Set([...processedNewAuthors[groupId], ...newAuthors])
+
+    if ([...newAuthors].length) {
+      state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [...newAuthors] }))
+
+      // we don't rebuild if we're the person who added them
+      if (adder !== ssb.id) {
+        const reason = ['add-member', ...newAuthors].join()
+
+        rebuildManager.rebuild(reason)
+      }
+    }
+    return cb()
+  }
+
   pull(
     listen.addMember(ssb),
     pull.asyncMap((m, cb) => {
@@ -111,30 +132,10 @@ function init (ssb, config) {
         if (record == null) {
           return keystore.group.register(groupId, { key: groupKey, root }, (err) => {
             if (err) return cb(err)
-            processAuthors(cb)
+            processAuthors(groupId, authors, m.value.author, cb)
           })
         } else {
-          processAuthors(cb)
-        }
-
-        function processAuthors (cb) {
-          if (processedNewAuthors[groupId] === undefined) processedNewAuthors[groupId] = new Set([])
-
-          const newAuthors = new Set(authors.filter(author => !processedNewAuthors[groupId].has(author)))
-
-          processedNewAuthors[groupId] = new Set([...processedNewAuthors[groupId], ...newAuthors])
-
-          if ([...newAuthors].length) {
-            state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [...newAuthors] }))
-
-            // we don't rebuild if we're the person who added them
-            if (m.value.author !== ssb.id) {
-              const reason = ['add-member', ...newAuthors].join()
-
-              rebuildManager.rebuild(reason)
-            }
-          }
-          return cb()
+          processAuthors(groupId, authors, m.value.author, cb)
         }
       })
     }),
