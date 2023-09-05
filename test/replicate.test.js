@@ -63,10 +63,10 @@ test('replicate group members', async t => {
   function testPersistence () {
     // NOTE: Currently we do not persist membership because it's simpler.
     // If we decide to re-instate this, or re-instate initialization which loads state into memory
-    // (another solution to the same problem) then this code below will be useful and the `t.pass()` 
+    // (another solution to the same problem) then this code below will be useful and the `t.pass()`
     // and early `return` should be reverted.
     // TODO: remove this when we re-add member list persistence
-    // 
+    //
     t.pass()
     t.pass()
     t.pass()
