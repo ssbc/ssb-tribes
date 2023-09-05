@@ -1,5 +1,6 @@
 const test = require('tape')
 const { promisify: p } = require('util')
+const pull = require('pull-stream')
 
 const { Server, replicate } = require('./helpers')
 const listen = require('../listen')
@@ -16,27 +17,38 @@ test('listen.addMember', async t => {
 
   let groupId
 
-  listen.addMember(alice, m => {
-    const { recps } = m.value.content
-    if (recps.length !== 2) throw new Error('bad add-member')
+  pull(
+    listen.addMember(alice),
+    pull.drain(m => {
+      const { recps } = m.value.content
+      if (recps.length !== 2) throw new Error('bad add-member')
 
-    switch (++aliceHeard) {
-      case 1: return t.equal(recps[1], alice.id, 'alice: hears own "add self"')
-      case 2: return t.equal(recps[1], bob.id, 'alice: hears "add bob"')
-      default: t.fail('should not be here')
-    }
-  })
-  listen.addMember(bob, m => {
-    const { recps } = m.value.content
-    if (recps.length !== 2) throw new Error('bad add-member')
+      switch (++aliceHeard) {
+        case 1: return t.equal(recps[1], alice.id, 'alice: hears own "add self"')
+        case 2: return t.equal(recps[1], bob.id, 'alice: hears "add bob"')
+        default: t.fail('should not be here')
+      }
+    }, (err) => {
+      if (err) t.fail(err)
+    })
+  )
 
-    switch (++bobHeard) {
-      case 1: return t.equal(recps[1], bob.id, 'bob: discovers "add bob"... rebuilds')
-      case 2: return t.equal(recps[1], alice.id, 'bob: discovers "add alice" from alice')
-      case 3: return t.equal(recps[1], bob.id, 'bob: re-emits "add bob"')
-      default: t.fail('should not be here')
-    }
-  })
+  pull(
+    listen.addMember(bob),
+    pull.drain(m => {
+      const { recps } = m.value.content
+      if (recps.length !== 2) throw new Error('bad add-member')
+
+      switch (++bobHeard) {
+        case 1: return t.equal(recps[1], bob.id, 'bob: discovers "add bob"... rebuilds')
+        case 2: return t.equal(recps[1], alice.id, 'bob: discovers "add alice" from alice')
+        case 3: return t.equal(recps[1], bob.id, 'bob: re-emits "add bob"')
+        default: t.fail('should not be here')
+      }
+    }, (err) => {
+      if (err) t.fail(err)
+    })
+  )
 
   const groupData = await p(alice.tribes.create)({})
   groupId = groupData.groupId // eslint-disable-line

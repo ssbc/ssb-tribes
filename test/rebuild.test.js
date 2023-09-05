@@ -185,12 +185,14 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
     admin.tribes.invite(groupId, [me.id], { text: 'ahoy' }, (err) => {
       t.error(err, 'admin adds alice to group')
 
-      // we do this seperately to test if rebuild gets called 2 or 3 times
-      // should wait till indexing done before rebuilding again
-      admin.tribes.invite(groupId, [zelfId], { text: 'ahoy' }, (err) => {
-        t.error(err, 'admin adds zelf to group')
-        if (err) throw err
-      })
+      setTimeout(() => {
+        // we do this seperately to test if rebuild gets called 2 or 3 times
+        // should wait till indexing done before rebuilding again
+        admin.tribes.invite(groupId, [zelfId], { text: 'ahoy' }, (err) => {
+          t.error(err, 'admin adds zelf to group')
+          if (err) throw err
+        })
+      }, 1000)
     })
   })
 })

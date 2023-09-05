@@ -92,29 +92,59 @@ function init (ssb, config) {
 
   /* start listeners */
   const rebuildManager = new RebuildManager(ssb)
-  listen.addMember(ssb, m => {
-    const { root, groupKey } = m.value.content
-    ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
-      if (err) throw err
+  const processedNewAuthors = {}
 
-      const groupId = buildGroupId({ groupInitMsg, groupKey })
-      const authors = unique([
-        groupInitMsg.value.author,
-        m.value.author,
-        ...m.value.content.recps.filter(isFeed)
-      ])
+  function processAuthors (groupId, authors, adder, cb) {
+    if (processedNewAuthors[groupId] === undefined) processedNewAuthors[groupId] = new Set([])
 
-      keystore.processAddMember({ groupId, groupKey, root, authors }, (err, newAuthors) => {
+    const newAuthors = new Set(authors.filter(author => !processedNewAuthors[groupId].has(author)))
+
+    processedNewAuthors[groupId] = new Set([...processedNewAuthors[groupId], ...newAuthors])
+
+    if ([...newAuthors].length) {
+      state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [...newAuthors] }))
+
+      // we don't rebuild if we're the person who added them
+      if (adder !== ssb.id) {
+        const reason = ['add-member', ...newAuthors].join()
+
+        rebuildManager.rebuild(reason)
+      }
+    }
+    return cb()
+  }
+
+  pull(
+    listen.addMember(ssb),
+    pull.asyncMap((m, cb) => {
+      const { root, groupKey } = m.value.content
+      ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
         if (err) throw err
-        if (newAuthors.length) {
-          state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors }))
 
-          const reason = ['add-member', ...newAuthors].join()
-          rebuildManager.rebuild(reason)
+        const groupId = buildGroupId({ groupInitMsg, groupKey })
+        const authors = unique([
+          groupInitMsg.value.author,
+          m.value.author,
+          ...m.value.content.recps.filter(isFeed)
+        ])
+
+        const record = keystore.group.get(groupId)
+        // if we haven't been in the group since before, register the group
+        if (record == null) {
+          return keystore.group.register(groupId, { key: groupKey, root }, (err) => {
+            if (err) return cb(err)
+            processAuthors(groupId, authors, m.value.author, cb)
+          })
+        } else {
+          processAuthors(groupId, authors, m.value.author, cb)
         }
       })
+    }),
+    pull.drain(() => {}, (err) => {
+      if (err) console.error('Listening for new addMembers errored:', err)
     })
-  })
+  )
+
   listen.poBox(ssb, m => {
     const { poBoxId, key: poBoxKey } = m.value.content.keys.set
     keystore.processPOBox({ poBoxId, poBoxKey }, (err, isNew) => {
@@ -134,15 +164,25 @@ function init (ssb, config) {
           .forEach(id => ssb.replicate.request({ id, replicate: true }))
       })
 
-      state.loading.keystore.once((s) => {
-        const peers = new Set()
-        keystore.group.list()
-          .map(groupId => keystore.group.listAuthors(groupId))
-          .forEach(authors => authors.forEach(author => peers.add(author)))
-
-        peers.delete(ssb.id)
-        Array.from(peers)
-          .forEach(id => ssb.replicate.request({ id, replicate: true }))
+      state.loading.keystore.once(() => {
+        pull(
+          pull.values(keystore.group.list()),
+          paraMap(
+            (groupId, cb) => scuttle.group.listAuthors(groupId, (err, feedIds) => {
+              if (err) return cb(new Error('error listing authors to replicate on start'))
+              cb(null, feedIds)
+            }),
+            5
+          ),
+          pull.flatten(),
+          pull.unique(),
+          pull.drain(feedId => {
+            if (feedId === ssb.id) return
+            ssb.replicate.request({ id: feedId, replicate: true })
+          }, (err) => {
+            if (err) console.error('error on initializing replication of group members')
+          })
+        )
       })
     }
   })
@@ -198,8 +238,6 @@ function init (ssb, config) {
         const initValue = data.groupInitMsg.value
         const readKey = unboxer.key(initValue.content, initValue)
         if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
-
-        state.newAuthorListeners.forEach(fn => fn({ groupId: data.groupId, newAuthors: [ssb.id] }))
 
         // addMember the admin
         scuttle.group.addMember(data.groupId, [ssb.id], {}, (err) => {
@@ -260,9 +298,6 @@ function init (ssb, config) {
     register (groupId, info, cb) {
       keystore.group.register(groupId, info, cb)
     },
-    registerAuthors (groupId, authors, cb) {
-      keystore.group.registerAuthors(groupId, authors, (err) => err ? cb(err) : cb(null, true))
-    },
     create: tribeCreate,
     list: tribeList,
     get: tribeGet,
@@ -270,15 +305,12 @@ function init (ssb, config) {
     invite (groupId, authorIds, opts = {}, cb) {
       scuttle.group.addMember(groupId, authorIds, opts, (err, data) => {
         if (err) return cb(err)
-        keystore.group.registerAuthors(groupId, authorIds, (err) => {
-          if (err) return cb(err)
-          cb(null, data)
-        })
+        cb(null, data)
       })
     },
     excludeMembers: scuttle.group.excludeMembers,
     listAuthors (groupId, cb) {
-      onKeystoreReady(() => cb(null, keystore.group.listAuthors(groupId)))
+      scuttle.group.listAuthors(groupId, cb)
     },
 
     link: {

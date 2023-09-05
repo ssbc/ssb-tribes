@@ -7,6 +7,10 @@ const spec = require('../../spec/deprecated/application.js')
 
 let isWarned = false
 
+// WARNING 2023-09-04 (mix)
+// the test for this were causing problems so were deleted
+// this means changing this function is no longer safe
+
 module.exports = function Application (ssb) {
   const crut = new Crut(ssb, spec)
 

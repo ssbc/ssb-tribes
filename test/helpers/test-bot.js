@@ -20,7 +20,12 @@ module.exports = function TestBot (opts = {}) {
     stack = stack.use(require('ssb-replicate'))
   }
 
-  const ssb = stack(opts)
+  if (opts.name) opts.name = 'ssb-tribes/' + opts.name
+
+  const ssb = stack({
+    db1: true,
+    ...opts
+  })
 
   if (opts.debug) {
     ssb.post(m => {
