@@ -71,7 +71,7 @@ test('unbox', async t => {
   t.end()
 })
 
-test('unbox - test vectors', t => {
+test('unbox - test vectors', async t => {
   console.log('vectors:', vectors.length)
 
   vectors.forEach(vector => {
