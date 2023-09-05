@@ -70,7 +70,9 @@ test('replicate group members', async t => {
     t.pass()
     t.pass()
     t.pass()
-    return alice.close(true, () => bob.close(true))
+    alice.close()
+    bob.close()
+    return
     /* eslint-disable no-unreachable */
 
     const requested = []
