@@ -127,7 +127,8 @@ Listens for when new authors are added to a tribe, and fires a given function
 ### `ssb.tribes.excludeMembers(groupId, [authorId], cb)`
 
 Excludes an author from a group you belong to. 
-This publishes a message that both this new author AND the group can see. NOTE that this only politely asks the author to leave the group, we don't rotate keys or anything like that.
+This publishes a message that both this new author AND the group can see. 
+**NOTE** :warning:  this only politely asks the author to leave the group, we don't rotate keys (yet)
 
 where:
 - `groupId` *String* - is a cloaked id for a group you're a part of
@@ -184,9 +185,8 @@ _alias of `ssb.tribes.get`_
 ## API (Extras)
 
 These endpoints give you access to additional features, such as:
-- **registering groups or group-authors**:
+- **registering groups**:
     - `ssb.tribes.register(groupId, info, cb)`
-    - `ssb.tribes.registerAuthors(groupId, [authorId], cb)`
 - **linking your feed to a group**
     - `ssb.tribes.link.create({ group, name }, cb)`
 - **linking subGroups to a group**
@@ -216,19 +216,6 @@ where:
   - `key` *String* - a 32 byte symmetric key for the group (as a `base64` encoded string)
   - `scheme` *String* (optional) - a description of the key management scheme this key is part of
 - `cb`[ *Function* - a callback with signature `cb(err: Error, success: Boolean)`
-
-
-### `ssb.tribes.registerAuthors(groupId, [authorId], cb)`
-
-Makes an off-log note that some author(s) are part of a group.
-This is used to know which group keys to consider when you receive a private message from a particular author.
-
-_NOTE: mainly used internally_
-
-where:
-- `groupId` *String* - is a the id for the group you want to not these users are part of
-- `[authorId]` *Array* - is a connection of feedIds
-- `cb` *Function* - has signature `cb(err, success)`
 
 ### `ssb.tribes.poBox.create(opts, cb)`
 

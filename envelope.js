@@ -74,7 +74,10 @@ module.exports = function Envelope (keystore, state) {
     }
 
     /* check my group keys */
-    const trial_group_keys = keystore.author.groupKeys(author)
+    const trial_group_keys = keystore.group.list().map(groupId => keystore.group.get(groupId)).flat()
+    // NOTE we naively try *every* group key. Several optimizations are possible to improve this (if needed)
+    // 1. keep "try all" approach, but bubble successful keys to the front (frequently active groups get quicker decrypts)
+    // 2. try only groups this message (given author) - cache group membership, and use this to inform keys tried
     readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_group_keys, { maxAttempts: 1 })
     // NOTE the group recp is only allowed in the first slot,
     // so we only test group keys in that slot (maxAttempts: 1)

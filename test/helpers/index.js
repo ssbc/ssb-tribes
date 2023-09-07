@@ -1,5 +1,7 @@
 const { SecretKey } = require('ssb-private-group-keys')
 const { replicate } = require('scuttle-testbot')
+const test = require('tape')
+const { promisify: p } = require('util')
 
 const { FeedId, POBoxId, MsgId } = require('./cipherlinks')
 const decodeLeaves = require('./decode-leaves')
@@ -18,7 +20,26 @@ module.exports = {
 
   decodeLeaves,
   encodeLeaves,
+  p,
   print,
   replicate,
-  Server
+  Run (t) {
+    return function run (message, promise) {
+      if (!promise.then) {
+        t.pass(message)
+        return promise
+      }
+
+      return promise
+        .then(result => {
+          t.pass(message)
+          return result
+        })
+        .catch(err => {
+          t.error(err, message)
+        })
+    }
+  },
+  Server,
+  test
 }
