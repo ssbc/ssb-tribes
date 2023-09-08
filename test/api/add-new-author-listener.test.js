@@ -8,6 +8,8 @@ test('addNewAuthorListener', async t => {
   const admin = Server({ name: 'admin', debug: false }) // me
   const newPerson = Server({ name: 'newPerson' }) // some friend
 
+  t.pass('created servers')
+
   const name = id => {
     if (id === admin.id) return 'admin'
     if (id === newPerson.id) return 'newPerson'

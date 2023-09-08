@@ -66,8 +66,11 @@ function init (ssb, config) {
 
   /* secret keys store / helper */
   const keystore = {} // HACK we create an Object so we have a reference to merge into
-  KeyRing(join(config.path, 'tribes/keystore'), ssb.keys, (err, api) => {
+  KeyRing(join(config.path, 'tribes/keystore'), (err, api) => {
     if (err) throw err
+
+    api.dm.addFromSSBKeys(ssb.keys)
+
     Object.assign(keystore, api) // merging into existing reference
     state.loading.keystore.set(false)
   })
@@ -130,7 +133,7 @@ function init (ssb, config) {
         const record = keystore.group.get(groupId)
         // if we haven't been in the group since before, register the group
         if (record == null) {
-          return keystore.group.register(groupId, { key: groupKey, root }, (err) => {
+          return keystore.group.add(groupId, { key: groupKey, root }, (err) => {
             if (err) return cb(err)
             processAuthors(groupId, authors, m.value.author, cb)
           })
@@ -146,13 +149,14 @@ function init (ssb, config) {
 
   listen.poBox(ssb, m => {
     const { poBoxId, key: poBoxKey } = m.value.content.keys.set
-    keystore.processPOBox({ poBoxId, poBoxKey }, (err, isNew) => {
-      if (err) throw err
-      if (isNew) {
-        const reason = ['po-box', poBoxId].join()
-        rebuildManager.rebuild(reason)
-      }
-    })
+    console.error('trying to process poBox for msg', m.value.content)
+    //keystore.processPOBox({ poBoxId, poBoxKey }, (err, isNew) => {
+    //  if (err) throw err
+    //  if (isNew) {
+    //    const reason = ['po-box', poBoxId].join()
+    //    rebuildManager.rebuild(reason)
+    //  }
+    //})
   })
 
   setImmediate(() => {
@@ -295,7 +299,7 @@ function init (ssb, config) {
 
   return {
     register (groupId, info, cb) {
-      keystore.group.register(groupId, info, cb)
+      keystore.group.add(groupId, info, cb)
     },
     create: tribeCreate,
     list: tribeList,
@@ -354,7 +358,7 @@ function init (ssb, config) {
         const { id: poBoxId, secret } = poBoxKeys.generate()
 
         onKeystoreReady(() => {
-          keystore.poBox.register(poBoxId, { key: secret }, (err) => {
+          keystore.poBox.add(poBoxId, { key: secret }, (err) => {
             if (err) return cb(err)
 
             cb(null, { poBoxId, poBoxKey: secret })
@@ -368,12 +372,12 @@ function init (ssb, config) {
     ownKeys: {
       list (cb) {
         onKeystoreReady(() => {
-          cb(null, keystore.ownKeys())
+          cb(null, [keystore.self.get()])
         })
       },
       register (key, cb) {
         onKeystoreReady(() => {
-          keystore.register(key, cb)
+          keystore.self.set(key, cb)
         })
       }
     }

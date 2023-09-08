@@ -80,7 +80,6 @@ test('unbox - test vectors', async t => {
     const mockKeyStore = {
       author: {
         groupKeys: () => trial_keys,
-        sharedDMKey: () => ({ key: Buffer.alloc(32), scheme: 'junk' }) // just here to stop code choking
       },
       group: {
         list: () => ['a'],
