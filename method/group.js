@@ -112,18 +112,10 @@ module.exports = function GroupMethods (ssb, keystore, state) {
 
       if (!excludeMemberSpec.isValid(content)) return cb(new Error(excludeMemberSpec.isValid.errorsString))
 
-      ssb.publish(content, (err, msg)=> {
-        if (err) return cb(err)
-
-        // TODO: remove the excluded members from the keystore. the reverse of the 
-        //keystore.group.registerAuthors(groupId, authorIds, (err) => {
-        // that invite() does
-        
-        return cb(null, msg)
-      })
+      ssb.publish(content, cb)
     },
     listAuthors (groupId, cb) {
-      const query = [{
+      const addedQuery = [{
         $filter: {
           value: {
             content: {
@@ -134,7 +126,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       }]
 
       pull(
-        ssb.query.read({ query }),
+        ssb.query.read({ query: addedQuery }),
         pull.filter(addMemberSpec.isValid),
         pull.filter(msg =>
           groupId === msg.value.content.recps[0]
@@ -142,10 +134,36 @@ module.exports = function GroupMethods (ssb, keystore, state) {
         pull.map(msg => msg.value.content.recps.slice(1)),
         pull.flatten(),
         pull.unique(),
-        pull.collect((err, members) => {
+        pull.collect((err, addedMembers) => {
           if (err) return cb(err)
 
-          return cb(null, members)
+          const excludedQuery = [{
+            $filter: {
+              value: {
+                content: {
+                  type: 'group/exclude-member'
+                }
+              }
+            }
+          }]
+
+          pull(
+            ssb.query.read({ query: excludedQuery }),
+            pull.filter(excludeMemberSpec.isValid),
+            pull.filter(msg =>
+              groupId === msg.value.content.recps[0]
+            ),
+            pull.map(msg => msg.value.content.excludes),
+            pull.flatten(),
+            pull.unique(),
+            pull.collect((err, excludedMembers) => {
+              if (err) return cb(err)
+
+              const members = addedMembers.filter(addedMember => !excludedMembers.includes(addedMember))
+
+              return cb(null, members)
+            })
+          )
         })
       )
     },

@@ -43,7 +43,7 @@ test('tribes.excludeMembers', async t => {
 
     const authors = await p(kaitiaki.tribes.listAuthors)(groupId)
     console.log('authors', authors)
-    t.deepEqual(authors, [kaitiaki.id], "kaitiaki removed the others from the group")
+    t.deepEqual(authors, [kaitiaki.id], 'kaitiaki removed the others from the group')
   } catch (err) {
     t.fail(err)
   }
