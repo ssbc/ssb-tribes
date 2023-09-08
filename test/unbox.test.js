@@ -78,9 +78,6 @@ test('unbox - test vectors', async t => {
     const { msgs, trial_keys } = vector.input
 
     const mockKeyStore = {
-      author: {
-        groupKeys: () => trial_keys,
-      },
       group: {
         list: () => ['a'],
         get: () => trial_keys
