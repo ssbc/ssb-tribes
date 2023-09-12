@@ -68,13 +68,14 @@ module.exports = function Envelope (keystore, state) {
       readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_own_keys, { maxAttempts: 16 })
       if (readKey) return readKey
     } else {
-      const trial_dm_keys = keystore.decryptionKeys(author)
+      const trial_dm_keys = keystore.decryptionKeys(author).dm
       readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_dm_keys, { maxAttempts: 16 })
       if (readKey) return readKey
     }
 
     /* check my group keys */
     const trial_group_keys = keystore.group.list().map(groupId => keystore.group.get(groupId)).flat()
+    // TODO: do we need flat()?
     // NOTE we naively try *every* group key. Several optimizations are possible to improve this (if needed)
     // 1. keep "try all" approach, but bubble successful keys to the front (frequently active groups get quicker decrypts)
     // 2. try only groups this message (given author) - cache group membership, and use this to inform keys tried
