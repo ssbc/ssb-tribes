@@ -81,7 +81,12 @@ test('unbox - test vectors', async t => {
       group: {
         list: () => ['a'],
         get: () => trial_keys
-      }
+      },
+      decryptionKeys: () => ({
+        dm: [
+          { key: Buffer.alloc(32), scheme: 'junk' } // just here to stop code choking
+        ]
+      })
     }
 
     const mockState = {
