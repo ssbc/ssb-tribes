@@ -149,14 +149,12 @@ function init (ssb, config) {
 
   listen.poBox(ssb, m => {
     const { poBoxId, key: poBoxKey } = m.value.content.keys.set
-    console.error('trying to process poBox for msg', m.value.content)
-    //keystore.processPOBox({ poBoxId, poBoxKey }, (err, isNew) => {
-    //  if (err) throw err
-    //  if (isNew) {
-    //    const reason = ['po-box', poBoxId].join()
-    //    rebuildManager.rebuild(reason)
-    //  }
-    //})
+    keystore.poBox.add(poBoxId, { key: poBoxKey }, (err) => {
+      if (err) throw err
+
+      const reason = ['po-box', poBoxId].join()
+      rebuildManager.rebuild(reason)
+    })
   })
 
   setImmediate(() => {
