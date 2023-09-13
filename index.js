@@ -94,23 +94,22 @@ function init (ssb, config) {
   const processedNewAuthors = {}
 
   function processAuthors (groupId, authors, adder, cb) {
-    if (processedNewAuthors[groupId] === undefined) processedNewAuthors[groupId] = new Set([])
+    if (processedNewAuthors[groupId] === undefined) processedNewAuthors[groupId] = new Set()
 
-    const newAuthors = new Set(authors.filter(author => !processedNewAuthors[groupId].has(author)))
+    const newAuthors = authors.reduce((acc, author) => {
+      if (!processedNewAuthors[groupId].has(author)) acc.add(author)
+      return acc
+    }, new Set())
+    if (!newAuthors.size) return cb()
 
-    processedNewAuthors[groupId] = new Set([...processedNewAuthors[groupId], ...newAuthors])
-
-    if ([...newAuthors].length) {
-      state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [...newAuthors] }))
-
-      // we don't rebuild if we're the person who added them
-      if (adder !== ssb.id) {
-        const reason = ['add-member', ...newAuthors].join()
-
-        rebuildManager.rebuild(reason)
-      }
+    state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [...newAuthors] }))
+    // we don't rebuild if we're the person who added them
+    if (adder !== ssb.id) {
+      const reason = ['add-member', ...newAuthors].join('+')
+      rebuildManager.rebuild(reason)
     }
-    return cb()
+    newAuthors.forEach(author => processedNewAuthors[groupId].add(author))
+    cb()
   }
 
   pull(

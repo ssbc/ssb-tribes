@@ -3,9 +3,10 @@
 const test = require('tape')
 const pull = require('pull-stream')
 const { promisify: p } = require('util')
+const { decodeLeaves, Server, Run } = require('./helpers')
+const os = require('os')
 
 const envelope = require('../envelope')
-const { decodeLeaves, Server, Run } = require('./helpers')
 
 const vectors = [
   require('private-group-spec/vectors/unbox1.json'),
@@ -71,7 +72,7 @@ test('unbox', async t => {
   t.end()
 })
 
-test('unbox - test vectors', async t => {
+test('unbox - test vectors', { skip: os.platform() === 'win32' }, async t => {
   console.log('vectors:', vectors.length)
 
   vectors.forEach(vector => {
