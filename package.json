@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run test:js && npm run test:only && npm run lint",
-    "test:js": "NODE_ENV=test tape 'test/**/*.test.js' | tap-arc --bail",
+    "test:js": "NODE_ENV=test tape 'test/**/*.test.js'",
     "test:only": "if grep -r --exclude-dir=node_modules --exclude-dir=.git --color 'test\\.only' ; then exit 1; fi",
     "lint": "standard --fix",
-    "test:windows": "cross-env NODE_ENV=test tape test/**/*.test.js | tap-arc --bail",
+    "test:windows": "cross-env NODE_ENV=test tape test/**/*.test.js",
     "generate": "rm test/generate/*/* && node test/generate/index.js"
   },
   "homepage": "https://github.com/ssbc/ssb-tribes#readme",
@@ -52,7 +52,7 @@
     "ssb-query": "^2.4.5",
     "ssb-replicate": "^1.3.3",
     "standard": "^17.1.0",
-    "tap-arc": "^0.3.5",
+    "tap-arc": "^0.4.0",
     "tape": "^4.16.2"
   },
   "keywords": [
