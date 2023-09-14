@@ -80,14 +80,14 @@ test('unbox - test vectors', { skip: os.platform() === 'win32' }, async t => {
 
     const mockKeyStore = {
       group: {
-        list: () => ['a'],
+        listSync: () => ['a'],
         get: () => trial_keys
       },
-      decryptionKeys: () => ({
-        dm: [
-          { key: Buffer.alloc(32), scheme: 'junk' } // just here to stop code choking
-        ]
-      })
+      dm: {
+        has: () => true,
+        get: () =>
+          ({ key: Buffer.alloc(32), scheme: 'junk' }) // just here to stop code choking
+      }
     }
 
     const mockState = {

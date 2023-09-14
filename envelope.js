@@ -2,7 +2,7 @@
 
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const { box, unboxKey, unboxBody } = require('envelope-js')
-const { SecretKey, poBoxKey, DiffieHellmanKeys } = require('ssb-private-group-keys')
+const { SecretKey, poBoxKey, DiffieHellmanKeys, DHKeys } = require('ssb-private-group-keys')
 const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
 const bfe = require('ssb-bfe')
 
@@ -35,7 +35,7 @@ module.exports = function Envelope (keystore, state) {
       }
       if (isFeed(recp)) {
         if (recp === state.keys.id) return keystore.self.get() // use a special key for your own feedId
-        //else return keystore.encryptionKeys(state.keys.id, [recp])[0]
+        // else return keystore.encryptionKeys(state.keys.id, [recp])[0]
         else return keystore.dm.get(state.keys.id, recp)
       }
       if (isPoBox(recp)) return easyPoBoxKey(recp)
@@ -69,13 +69,30 @@ module.exports = function Envelope (keystore, state) {
       readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_own_keys, { maxAttempts: 16 })
       if (readKey) return readKey
     } else {
-      const trial_dm_keys = keystore.decryptionKeys(author).dm
+      // const trial_dm_keys = [keystore.dm.get(state.keys.id, author)]
+      /// ///
+      function addDMPairSync (myKeys, theirId) {
+        // if (!keyringReady.ready) throw new Error('keyring not ready')
+        const myId = myKeys.id
+        const myDhKeys = new DHKeys(myKeys, { fromEd25519: true })
+        const theirKeys = { public: bfe.encode(theirId).slice(2) }
+        const theirDhKeys = new DHKeys(theirKeys, { fromEd25519: true })
+        return keystore.dm.add(myId, theirId, myDhKeys, theirDhKeys, (err) => {
+          if (err) console.error(err)
+        })
+      }
+
+      if (!keystore.dm.has(state.keys.id, author)) addDMPairSync(state.keys, author)
+      // const dmKey = keyring.dm.get(authorKeys.id, recp)
+      const trial_dm_keys = [keystore.dm.get(state.keys.id, author)]
+
+      /// ///
       readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_dm_keys, { maxAttempts: 16 })
       if (readKey) return readKey
     }
 
     /* check my group keys */
-    const trial_group_keys = keystore.group.list().map(groupId => keystore.group.get(groupId)).flat()
+    const trial_group_keys = keystore.group.listSync().map(groupId => keystore.group.get(groupId)).flat()
     // TODO: do we need flat()?
     // NOTE we naively try *every* group key. Several optimizations are possible to improve this (if needed)
     // 1. keep "try all" approach, but bubble successful keys to the front (frequently active groups get quicker decrypts)
