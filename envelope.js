@@ -29,7 +29,7 @@ module.exports = function Envelope (keystore, state) {
 
     const recipentKeys = recps.map(recp => {
       if (isGroup(recp)) {
-        const keyInfo = keystore.group.get(recp)
+        const keyInfo = keystore.group.get(recp).writeKey
         if (!keyInfo) throw new Error(`unknown groupId ${recp}, cannot encrypt message`)
         return keyInfo
       }

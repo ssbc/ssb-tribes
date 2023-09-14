@@ -66,12 +66,12 @@ module.exports = function GroupMethods (ssb, keystore, state) {
     },
 
     addMember (groupId, authorIds, opts = {}, cb) {
-      const { key, root } = keystore.group.get(groupId)
+      const { writeKey, root } = keystore.group.get(groupId)
 
       const content = {
         type: 'group/add-member',
         version: 'v1',
-        groupKey: key.toString('base64'),
+        groupKey: writeKey.key.toString('base64'),
         root,
         tangles: {
           members: {
