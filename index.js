@@ -69,10 +69,12 @@ function init (ssb, config) {
   KeyRing(join(config.path, 'tribes/keystore'), (err, api) => {
     if (err) throw err
 
-    api.dm.addFromSSBKeys(ssb.keys)
+    api.signing.addNamed(ssb.keys.id, ssb.keys, (err) => {
+      if (err) throw err
 
-    Object.assign(keystore, api) // merging into existing reference
-    state.loading.keystore.set(false)
+      Object.assign(keystore, api) // merging into existing reference
+      state.loading.keystore.set(false)
+    })
   })
   ssb.close.hook(function (close, args) {
     const next = () => close.apply(this, args)

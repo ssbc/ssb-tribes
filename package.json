@@ -38,7 +38,7 @@
     "sodium-native": "^3.4.1",
     "ssb-bfe": "^3.7.0",
     "ssb-crut": "^4.6.2",
-    "ssb-keyring": "^2.0.0",
+    "ssb-keyring": "^3.0.0",
     "ssb-keys": "^8.5.0",
     "ssb-private-group-keys": "^0.4.1",
     "ssb-ref": "^2.16.0",

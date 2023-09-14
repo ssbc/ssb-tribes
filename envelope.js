@@ -35,7 +35,8 @@ module.exports = function Envelope (keystore, state) {
       }
       if (isFeed(recp)) {
         if (recp === state.keys.id) return keystore.self.get() // use a special key for your own feedId
-        else return keystore.encryptionKeys(state.keys.id, [recp])[0]
+        //else return keystore.encryptionKeys(state.keys.id, [recp])[0]
+        else return keystore.dm.get(state.keys.id, recp)
       }
       if (isPoBox(recp)) return easyPoBoxKey(recp)
 
