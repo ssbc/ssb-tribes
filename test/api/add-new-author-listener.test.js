@@ -49,7 +49,10 @@ test('addNewAuthorListener', async t => {
     // this makes a group, but also in the background, alerts the newAuthorListeners
     // so the above listener can get called *before* we have access to the groupId
     groupId = groupData.groupId
-    await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' }).catch(t.fail)
+    await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' }).catch(err => {
+      console.error('invite failed:', err)
+      t.fail(err)
+    })
 
     await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy again' }).catch(t.fail)
     // we want to test that duplicate adds dont fire the addNewAuthorListener multiple times,
