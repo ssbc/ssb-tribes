@@ -168,7 +168,7 @@ function init (ssb, config) {
 
       state.loading.keystore.once(() => {
         pull(
-          pull.values(keystore.group.list()),
+          pull.values(keystore.group.listSync()),
           paraMap(
             (groupId, cb) => scuttle.group.listAuthors(groupId, (err, feedIds) => {
               if (err) return cb(new Error('error listing authors to replicate on start'))
@@ -285,7 +285,7 @@ function init (ssb, config) {
 
     onKeystoreReady(() => {
       pull(
-        pull.values(keystore.group.list()),
+        pull.values(keystore.group.listSync()),
         paraMap(tribeGet, 4),
         opts.subtribes
           ? null
