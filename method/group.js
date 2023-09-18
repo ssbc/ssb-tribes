@@ -134,10 +134,36 @@ module.exports = function GroupMethods (ssb, keystore, state) {
         pull.map(msg => msg.value.content.recps.slice(1)),
         pull.flatten(),
         pull.unique(),
-        pull.collect((err, members) => {
+        pull.collect((err, addedMembers) => {
           if (err) return cb(err)
 
-          return cb(null, members)
+          const excludedQuery = [{
+            $filter: {
+              value: {
+                content: {
+                  type: 'group/exclude-member'
+                }
+              }
+            }
+          }]
+
+          pull(
+            ssb.query.read({ query: excludedQuery }),
+            pull.filter(excludeMemberSpec.isValid),
+            pull.filter(msg =>
+              groupId === msg.value.content.recps[0]
+            ),
+            pull.map(msg => msg.value.content.excludes),
+            pull.flatten(),
+            pull.unique(),
+            pull.collect((err, excludedMembers) => {
+              if (err) return cb(err)
+
+              const members = addedMembers.filter(addedMember => !excludedMembers.includes(addedMember))
+
+              return cb(null, members)
+            })
+          )
         })
       )
     },
