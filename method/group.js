@@ -159,6 +159,8 @@ module.exports = function GroupMethods (ssb, keystore, state) {
             pull.collect((err, excludedMembers) => {
               if (err) return cb(err)
 
+              // NOTE: this currently prevents people who've been removed from being re-added
+              // https://github.com/ssbc/ssb-tribes/issues/79
               const members = addedMembers.filter(addedMember => !excludedMembers.includes(addedMember))
 
               return cb(null, members)
