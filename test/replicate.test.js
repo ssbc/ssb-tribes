@@ -67,11 +67,14 @@ test('replicate group members', async t => {
     // and early `return` should be reverted.
     // TODO: remove this when we re-add member list persistence
     //
-    t.pass()
-    t.pass()
-    t.pass()
-    alice.close()
-    bob.close()
+    t.pass('')
+    t.pass('')
+    t.pass('')
+    // needed for windows tests not to fail D:
+    setTimeout(() => {
+      alice.close()
+      bob.close()
+    }, 150)
     return
     /* eslint-disable no-unreachable */
 
