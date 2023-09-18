@@ -50,7 +50,8 @@ test('tribes.excludeMembers', async t => {
     const newPersonExcludedGroup = await p(newPerson.tribes.get)(groupId)
     t.true(!!newPersonExcludedGroup.excluded, 'new person is excluded now')
 
-    // TODO: test list on newPerson
+    const excludedList = await p(newPerson.tribes.list)()
+    t.deepEqual(excludedList, [], "new person can't list any groups anymore")
   } catch (err) {
     t.fail(err)
   }
