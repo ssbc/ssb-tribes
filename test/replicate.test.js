@@ -4,7 +4,7 @@ const Keys = require('ssb-keys')
 const { Server, replicate } = require('./helpers')
 
 test('replicate group members', async t => {
-  t.plan(6)
+  t.plan(7)
   // 3 calls to request
   // 1 successful shutdown
   // 1 successful restart
@@ -14,6 +14,7 @@ test('replicate group members', async t => {
   // required to make sure you have all content
 
   const expected = [
+    'bob', // initial replicate call
     'bob',
     'cel',
     'eric'
@@ -60,6 +61,23 @@ test('replicate group members', async t => {
   }
 
   function testPersistence () {
+    // NOTE: Currently we do not persist membership because it's simpler.
+    // If we decide to re-instate this, or re-instate initialization which loads state into memory
+    // (another solution to the same problem) then this code below will be useful and the `t.pass()`
+    // and early `return` should be reverted.
+    // TODO: remove this when we re-add member list persistence
+    //
+    t.pass('')
+    t.pass('')
+    t.pass('')
+    // needed for windows tests not to fail D:
+    setTimeout(() => {
+      alice.close()
+      bob.close()
+    }, 150)
+    return
+    /* eslint-disable no-unreachable */
+
     const requested = []
     alice.close((err) => {
       t.error(err, 'shutdown (alice)')

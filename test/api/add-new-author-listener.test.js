@@ -3,10 +3,10 @@ const { promisify: p } = require('util')
 const { Server, replicate } = require('../helpers')
 
 test('addNewAuthorListener', async t => {
-  t.plan(4)
+  t.plan(6)
 
-  const admin = Server() // me
-  const newPerson = Server() // some friend
+  const admin = Server({ name: 'admin', debug: false }) // me
+  const newPerson = Server({ name: 'newPerson' }) // some friend
 
   const name = id => {
     if (id === admin.id) return 'admin'
@@ -15,9 +15,15 @@ test('addNewAuthorListener', async t => {
 
   let groupId // eslint-disable-line
 
+  let numAdded = 0
   admin.tribes.addNewAuthorListener(({ newAuthors, groupId: _groupId }) => {
     // should hear adding self to newly created group
-    t.deepEqual(newAuthors.map(name), ['admin'], 'admin = returns expected newAuthors')
+    if (numAdded < 1) {
+      t.deepEqual(newAuthors.map(name), ['admin'], 'admin = returns expected newAuthors')
+    } else if (numAdded === 1) {
+      t.deepEqual(newAuthors.map(name), ['newPerson'], 'admin sees newMember being added')
+    }
+    numAdded++
 
     const testGroupId = () => {
       if (!groupId) return setTimeout(testGroupId, 50)
@@ -31,8 +37,11 @@ test('addNewAuthorListener', async t => {
     t.deepEqual(newAuthors.map(name), ['admin', 'newPerson'], 'newPerson returns expected newAuthors')
     t.equal(_groupId, groupId, 'newPerson, returns expected groupId')
 
-    admin.close()
-    newPerson.close()
+    setTimeout(() => {
+      admin.close()
+      newPerson.close()
+      t.end()
+    }, 1000)
   })
 
   try {
@@ -43,7 +52,7 @@ test('addNewAuthorListener', async t => {
     groupId = groupData.groupId
     await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
 
-    await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
+    await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy again' })
     // we want to test that duplicate adds dont fire the addNewAuthorListener multiple times,
     // unfortunately there are race conditions around calculating the new authors, so
     // we have added a small delay here

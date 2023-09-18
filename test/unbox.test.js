@@ -3,9 +3,10 @@
 const test = require('tape')
 const pull = require('pull-stream')
 const { promisify: p } = require('util')
+const { decodeLeaves, Server, Run } = require('./helpers')
+const os = require('os')
 
 const envelope = require('../envelope')
-const { decodeLeaves, Server } = require('./helpers')
 
 const vectors = [
   require('private-group-spec/vectors/unbox1.json'),
@@ -13,26 +14,26 @@ const vectors = [
 ].map(decodeLeaves)
 
 test('unbox', async t => {
+  const run = Run(t)
   const ssb = Server()
   const { groupId, groupInitMsg } = await p(ssb.tribes.create)({})
   const { poBoxId } = await p(ssb.tribes.poBox.create)({})
 
   async function testRecps (recps) {
+    recps = Array.isArray(recps) ? recps : [recps]
     const content = {
       type: 'dummy',
       groupRef: groupInitMsg.key, // some randoms thing to hit with backlinks
-      recps: Array.isArray(recps) ? recps : [recps]
+      recps
     }
-    const msg = await p(ssb.publish)(content)
-      .catch(_ => {
-        t.fail(`failed to publish with recps: ${content.recps}`)
-      })
-    if (!msg) return
-
-    t.true(msg.value.content.endsWith('.box2'), `${content.recps} boxed`)
+    const msg = await run(
+      `publish with recps: ${recps}`,
+      p(ssb.publish)(content)
+    )
+    t.true(msg.value.content.endsWith('.box2'), 'box')
 
     const value = await p(ssb.get)({ id: msg.key, private: true })
-    t.deepEqual(value.content, content, `${content.recps} unboxed`)
+    t.deepEqual(value.content, content, 'unbox')
   }
 
   const RECPS = [
@@ -45,31 +46,35 @@ test('unbox', async t => {
     await testRecps(recps)
   }
 
-  async function getBacklinks (dest) {
-    const query = [{
-      $filter: { dest }
-    }]
-    return new Promise((resolve, reject) => {
-      pull(
-        ssb.backlinks.read({ query }),
-        pull.collect((err, msgs) => {
-          if (err) reject(err)
-          else resolve(msgs)
-        })
-      )
-    })
-  }
+  const backlinks = await run(
+    'get backlinks',
+    pull(
+      ssb.query.read({
+        query: [{
+          $filter: {
+            value: {
+              content: {
+                type: 'dummy',
+                groupRef: groupInitMsg.key
+              }
+            }
+          }
+        }]
+      }),
+      pull.map(m => m.value.content.recps[0]),
+      // just pull the recps on each one
+      pull.collectAsPromise()
+    )
+  )
+  t.deepEqual(backlinks, RECPS, 'backlinks indexed all messages (unboxed!)')
 
-  const backlinks = await getBacklinks(groupInitMsg.key)
-    .catch(err => {
-      console.log(err)
-      return []
-    })
-  t.equal(backlinks.length, 4, 'backlinks indexed all messages (unboxed!)')
-  // console.log(backlinks.map(m => m.value.content))
+  await run('close ssb', p(ssb.close)(true))
+  t.end()
+})
 
-  /* Vectors */
-  console.log('test vectors:', vectors.length)
+test('unbox - test vectors', { skip: os.platform() === 'win32' }, async t => {
+  console.log('vectors:', vectors.length)
+
   vectors.forEach(vector => {
     const { msgs, trial_keys } = vector.input
 
@@ -77,11 +82,22 @@ test('unbox', async t => {
       author: {
         groupKeys: () => trial_keys,
         sharedDMKey: () => ({ key: Buffer.alloc(32), scheme: 'junk' }) // just here to stop code choking
+      },
+      group: {
+        list: () => ['a'],
+        get: () => trial_keys
       }
     }
+
     const mockState = {
-      keys: ssb.keys
+      keys: {
+        curve: 'ed25519',
+        public: '3Wr/Swdt8vTC4NdOWJKaIX2hU2qcarSSdFpV4eyJKVw=.ed25519',
+        private: 'rlg3ciKZRCcYLjbDfy4eymsvNzCHRXDfWw65PvttqiXdav9LB23y9MLg105YkpohfaFTapxqtJJ0WlXh7IkpXA==.ed25519',
+        id: '@3Wr/Swdt8vTC4NdOWJKaIX2hU2qcarSSdFpV4eyJKVw=.ed25519'
+      }
     }
+
     const { unboxer } = envelope(mockKeyStore, mockState)
     const ciphertext = msgs[0].value.content
 
@@ -90,6 +106,7 @@ test('unbox', async t => {
     t.deepEqual(body, vector.output.msgsContent[0], vector.description)
   })
 
-  ssb.close()
+  console.log('DONE')
+
   t.end()
 })

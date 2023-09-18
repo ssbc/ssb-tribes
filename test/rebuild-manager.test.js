@@ -6,7 +6,9 @@ const Server = require('scuttle-testbot')
 const Manager = require('../rebuild-manager')
 
 async function setup () {
-  const ssb = Server()
+  const ssb = Server({
+    db1: true
+  })
   // ssb.post(console.log)
 
   // NOTE - We cannot rebuild an empty DB ?!

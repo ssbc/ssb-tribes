@@ -27,7 +27,7 @@ module.exports = class RebuildManager {
       this.isRebuilding = true
 
       rebuild(err => {
-        log('finished')
+        log('finished', ssb.id)
         // rebuild done
         this.requests.callback(err)
 
