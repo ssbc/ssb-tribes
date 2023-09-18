@@ -44,9 +44,9 @@ module.exports = function Envelope (keystore, state) {
 
     const recipentKeys = recps.map(recp => {
       if (isGroup(recp)) {
-        const keyInfo = keystore.group.get(recp).writeKey
+        const keyInfo = keystore.group.get(recp)
         if (!keyInfo) throw new Error(`unknown groupId ${recp}, cannot encrypt message`)
-        return keyInfo
+        return keyInfo.writeKey
       }
       if (isFeed(recp)) {
         if (recp === state.keys.id) return keystore.self.get() // use a special key for your own feedId

@@ -81,7 +81,9 @@ test('unbox - test vectors', { skip: os.platform() === 'win32' }, async t => {
     const mockKeyStore = {
       group: {
         listSync: () => ['a'],
-        get: () => trial_keys
+        get: () => ({
+          readKeys: trial_keys
+        })
       },
       dm: {
         has: () => true,

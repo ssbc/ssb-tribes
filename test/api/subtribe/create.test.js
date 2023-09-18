@@ -38,12 +38,14 @@ test('tribes.subtribe.create', t => {
         server.tribes.get(subGroupId, (err, group) => {
           t.error(err, 'get subGroup')
 
+          const groupKey = { key : subGroupKey,
+              scheme: 'envelope-large-symmetric-group'}
           t.deepEqual(
             group,
             {
-              key: subGroupKey,
+              writeKey: groupKey,
+              readKeys: [groupKey],
               root: groupInitMsg.key,
-              scheme: 'envelope-large-symmetric-group',
               groupId: subGroupId,
               parentGroupId
             },
