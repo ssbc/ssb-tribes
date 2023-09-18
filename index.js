@@ -25,6 +25,7 @@ module.exports = {
     list: 'async',
 
     invite: 'async',
+    excludeMembers: 'async',
     listAuthors: 'async',
 
     link: {
@@ -310,6 +311,7 @@ function init (ssb, config) {
         cb(null, data)
       })
     },
+    excludeMembers: scuttle.group.excludeMembers,
     listAuthors (groupId, cb) {
       scuttle.group.listAuthors(groupId, cb)
     },

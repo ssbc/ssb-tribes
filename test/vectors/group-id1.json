@@ -1,0 +1,23 @@
+{
+  "type": "group_id",
+  "description": "determine the group_id (remember group_id is derived from read_key of init msg)",
+  "input": {
+    "group_key": "TEZX9k0Rb+RDmcJ3qsn6ezNJuXogKsg30wM+7eQeKg0=",
+    "group_init_msg": {
+      "key": "%tvqtJASIMYGGboo/MWTPElsSx0iARbFiEnlledQC8EY=.sha256",
+      "value": {
+        "previous": "%iK1LJXnjY9aIWGkdgzsEYMPmYMkRqR1PT0ExFZSHzqY=.sha256",
+        "sequence": 2,
+        "author": "@T9bytuo/+Kq8JcVhWmb5Fe4ErijGOt6WKBAoCKPcaO4=.ed25519",
+        "timestamp": 1592534932584,
+        "hash": "sha256",
+        "content": "7Zmi3ZtJa8rGmOMCMC6KuJ7sTlad7gog9YqDBAJVrZ0vPhxhoav8aCdIz71oGn4avEdOW6gTuLbPdn6Cv3aLymtFYqp+wiyScADsV4CmprVrW8I+XmslbrmDVBbPKR7UZ+xdP4WuW5JvWFUi2TTuAaUGwSMESQjbOpCXC/B8DP9Nhc+WcbotvKCVJOth9JgyPFfiPUbPzg==.box2",
+        "signature": "PRtXKVYqsf3a19ymZzUQXtQC+rUck9h/r1tH2BImaZnZ8mMKzc3qh8LTnrWPyeadcYMX2wVt4XtxIxkkhMciDA==.sig.ed25519"
+      },
+      "timestamp": 1592534932584.001
+    }
+  },
+  "output": {
+    "group_id": "%6kFEq9AaVS/uhnKGARmPAIQdXcGkex8f1l//UFGZtSg=.cloaked"
+  }
+}
