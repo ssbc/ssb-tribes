@@ -152,7 +152,12 @@ function init (ssb, config) {
   pull(
     listen.excludeMember(ssb),
     pull.drain((msg) => {
-      console.log('got exclude member msg:', msg.value.content)
+      const excludes = msg.value.content.excludes
+      const groupId = msg.value.content.recps[0]
+
+      if (excludes.includes(ssb.id)) {
+        keystore.group.exclude(groupId)
+      }
     }, err => {
       if (err) console.error('Listening for new excludeMembers errored:', err)
     })
