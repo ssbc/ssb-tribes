@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run test:js && npm run test:only && npm run lint",
-    "test:js": "NODE_ENV=test tape 'test/**/*.test.js'",
+    "test:js": "NODE_ENV=test tape 'test/**/*.test.js' | tap-arc",
     "test:only": "if grep -r --exclude-dir=node_modules --exclude-dir=.git --color 'test\\.only' ; then exit 1; fi",
     "lint": "standard --fix",
     "test:windows": "cross-env NODE_ENV=test tape test/**/*.test.js",
