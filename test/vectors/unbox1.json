@@ -1,0 +1,42 @@
+{
+  "type": "unbox",
+  "description": "open envelope (group_keys + previous === null)",
+  "input": {
+    "msgs": [
+      {
+        "key": "%iPTskfm08k9sfg/i8aXwXbdefCzBuUeaNey507slX/I=.sha256",
+        "value": {
+          "previous": null,
+          "sequence": 1,
+          "author": "@GU3nw+rEjXOEKEXFxqf1WeVUZX42bHrJRUJfwrhW+bg=.ed25519",
+          "timestamp": 1592534932480,
+          "hash": "sha256",
+          "content": "PGHe5NpkJJgv71rhqa+tLNGy2K/cvnWpPVFpKJEllWweHfXvq4+rbdwbw3e1ax5RLMP+708zpulqy/Y/TvlYe6D4cT7cqiLhRD8NzdM0W28t9YGNJWbJpjW2NccdSRBPD0ZIuwAkXyshosUrxi8CrbmW+4XfFmGPXu8DzHTqpN+j56kyKFd//SfVd8Dy5GwZLpKZPYf62dpInTQlJkPb6NcJQ3+lUe1hhi97iOtIhsB/8jtOPjF/V6qUXrSu/nCs/g==.box2",
+          "signature": "416FiLEtLG+CvbqE1OlrF9Py18WA/sVMgbN2Od2jRIiReqowzOTEp8wmiN+1wCDx7k+kU+ZRb5/nzaxiwDbKBg==.sig.ed25519"
+        },
+        "timestamp": 1592534932480.001
+      }
+    ],
+    "trial_keys": [
+      {
+        "key": "tXD0fgOUVKj4qnhYdgB/B2wjq/9YM7tBydIBYzY8wl8=",
+        "scheme": "envelope-large-symmetric-group"
+      },
+      {
+        "key": "Is0U1U121chtepf0QcnF0JREhp9NNUgqsPE/1ODGV4Q=",
+        "scheme": "envelope-large-symmetric-group"
+      }
+    ]
+  },
+  "output": {
+    "msgsContent": [
+      {
+        "type": "alert",
+        "text": "get ready to scuttle!",
+        "recps": [
+          "%VTmwWB0ou53Tj99NPyu2iomZuzhVwp0CIiovdeZCKRg=.cloaked"
+        ]
+      }
+    ]
+  }
+}
