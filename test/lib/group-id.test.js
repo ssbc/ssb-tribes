@@ -2,7 +2,7 @@
 
 const test = require('tape')
 const vectors = [
-  require('private-group-spec/vectors/group-id1.json')
+  require('../vectors/group-id1.json')
 ]
 const { keySchemes } = require('private-group-spec')
 const { unboxKey, DeriveSecret } = require('envelope-js')

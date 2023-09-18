@@ -124,6 +124,17 @@ Listens for when new authors are added to a tribe, and fires a given function
     - `groupId` *String* - the id of the tribe
     - `newAuthors` *Array* - array of new authors added to the tribe
 
+### `ssb.tribes.excludeMembers(groupId, [authorId], cb)`
+
+Excludes an author from a group you belong to. 
+This publishes a message that both this new author AND the group can see. 
+**NOTE** :warning:  this only politely asks the author to leave the group, we don't rotate keys (yet)
+
+where:
+- `groupId` *String* - is a cloaked id for a group you're a part of
+- `[authorId]` *Array* - is a collection of the feed ids of authors you're going to exclude
+- `cb` *Function* - is a callback with signature `cb(err, exclusion)`
+
 ### `ssb.tribes.list(cb)`
 
 Returns a list of all known group IDs.
