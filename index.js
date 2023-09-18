@@ -152,7 +152,7 @@ function init (ssb, config) {
   pull(
     listen.excludeMember(ssb),
     pull.drain((msg) => {
-      console.log('got exclude member msg:', msg)
+      console.log('got exclude member msg:', msg.value.content)
     }, err => {
       if (err) console.error('Listening for new excludeMembers errored:', err)
     })
