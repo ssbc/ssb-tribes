@@ -45,6 +45,9 @@ test('tribes.excludeMembers', async t => {
     }
     t.deepEqual(exclude.content, expected, 'kaitiaki excluded everyone')
 
+    const authors = await p(kaitiaki.tribes.listAuthors)(groupId)
+    t.deepEqual(authors, [kaitiaki.id], 'kaitiaki removed the others from the group')
+
     await p(replicate)({ from: kaitiaki, to: newPerson, live: false, name })
 
     const newPersonExcludedGroup = await p(newPerson.tribes.get)(groupId)
