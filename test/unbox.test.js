@@ -3,9 +3,9 @@
 const test = require('tape')
 const pull = require('pull-stream')
 const { promisify: p } = require('util')
+const { decodeLeaves, Server, Run } = require('./helpers')
 
 const envelope = require('../envelope')
-const { decodeLeaves, Server, Run } = require('./helpers')
 
 const vectors = [
   require('./vectors/unbox1.json'),
@@ -78,14 +78,15 @@ test('unbox - test vectors', async t => {
     const { msgs, trial_keys } = vector.input
 
     const mockKeyStore = {
-      author: {
-        groupKeys: () => trial_keys,
-        sharedDMKey: () => ({ key: Buffer.alloc(32), scheme: 'junk' }) // just here to stop code choking
-      },
       group: {
         list: () => ['a'],
         get: () => trial_keys
-      }
+      },
+      decryptionKeys: () => ({
+        dm: [
+          { key: Buffer.alloc(32), scheme: 'junk' } // just here to stop code choking
+        ]
+      })
     }
 
     const mockState = {

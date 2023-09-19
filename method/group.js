@@ -33,7 +33,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       const msgKey = new SecretKey().toBuffer()
       const recipientKeys = [
         { key: groupKey.toBuffer(), scheme: keySchemes.private_group },
-        keystore.ownKeys()[0] // sneak this in so can decrypt it ourselves without rebuild!
+        keystore.self.get() // sneak this in so can decrypt it ourselves without rebuild!
       ]
 
       // TODO
@@ -58,7 +58,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
             groupInitMsg
           }
 
-          keystore.group.register(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
+          keystore.group.add(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
             if (err) return cb(err)
             cb(null, data)
           })
@@ -147,7 +147,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
 
       const { id: poBoxId, secret } = poBoxKeys.generate()
 
-      keystore.poBox.register(poBoxId, { key: secret }, (err) => {
+      keystore.poBox.add(poBoxId, { key: secret }, (err) => {
         if (err) return cb(err)
 
         const props = {

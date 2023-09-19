@@ -6,7 +6,7 @@ test('addNewAuthorListener', async t => {
   t.plan(6)
 
   const admin = Server({ name: 'admin', debug: false }) // me
-  const newPerson = Server({ name: 'newPerson' }) // some friend
+  const newPerson = Server({ name: 'newPerson', debug: false }) // some friend
 
   const name = id => {
     if (id === admin.id) return 'admin'
@@ -46,7 +46,6 @@ test('addNewAuthorListener', async t => {
 
   try {
     const groupData = await p(admin.tribes.create)({})
-    console.log('group ready!')
     // this makes a group, but also in the background, alerts the newAuthorListeners
     // so the above listener can get called *before* we have access to the groupId
     groupId = groupData.groupId

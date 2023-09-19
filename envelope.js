@@ -34,8 +34,8 @@ module.exports = function Envelope (keystore, state) {
         return keyInfo
       }
       if (isFeed(recp)) {
-        if (recp === state.keys.id) return keystore.ownKeys(recp)[0] // use a special key for your own feedId
-        else return keystore.author.sharedDMKey(recp)
+        if (recp === state.keys.id) return keystore.self.get() // use a special key for your own feedId
+        else return keystore.encryptionKeys(state.keys.id, [recp])[0]
       }
       if (isPoBox(recp)) return easyPoBoxKey(recp)
 
@@ -64,11 +64,11 @@ module.exports = function Envelope (keystore, state) {
 
     /* check my DM keys (self, other) */
     if (author === state.keys.id) {
-      const trial_own_keys = keystore.ownKeys()
+      const trial_own_keys = [keystore.self.get()]
       readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_own_keys, { maxAttempts: 16 })
       if (readKey) return readKey
     } else {
-      const trial_dm_keys = [keystore.author.sharedDMKey(author)]
+      const trial_dm_keys = keystore.decryptionKeys(author).dm
       readKey = unboxKey(envelope, feed_id, prev_msg_id, trial_dm_keys, { maxAttempts: 16 })
       if (readKey) return readKey
     }
