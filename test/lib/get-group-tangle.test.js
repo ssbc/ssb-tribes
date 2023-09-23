@@ -1,3 +1,4 @@
+const { promisify: p } = require('util')
 const test = require('tape')
 const { Server, replicate } = require('../helpers')
 const pull = require('pull-stream')
@@ -285,4 +286,37 @@ test('get-group-tangle with branch', t => {
       } else fn()
     })
   }
+})
+
+test('members tangle', async t => {
+  const alice = Server()
+  const bob = Server()
+
+  const { groupId, root } = await p(alice.tribes.create)({})
+  const bobInvite = await p(alice.tribes.invite)(groupId, [bob.id], {})
+
+  const keystore = { group: { get: () => ({ root }) } }
+
+  const getGroupTangle = p(GetGroupTangle(alice, keystore))
+
+  const firstGroup = await getGroupTangle(groupId, 'group')
+  const firstMembers = await getGroupTangle(groupId, 'members')
+
+  t.deepEqual(firstGroup, { root, previous: [bobInvite.key] }, 'group tangle generated after add msg is correct')
+  t.deepEqual(firstMembers, { root, previous: [bobInvite.key] })
+
+  const {key: bobExcludeKey} = await p(alice.tribes.excludeMembers)(groupId, [bob.id])
+  const bobExclude = await p(alice.get)({id:bobExcludeKey, private:true})
+  
+  t.deepEqual(bobExclude.content.tangles, {group: firstGroup, members: firstMembers}, 'exclude message gets tangles')
+
+  const secondGroup = await getGroupTangle(groupId, 'group')
+  const secondMembers = await getGroupTangle(groupId, 'members')
+
+  t.deepEqual(secondGroup, { root, previous: [bobExclude.key] })
+  t.deepEqual(secondMembers, { root, previous: [bobExclude.key] })
+
+  await Promise.all([p(alice.close)(), p(bob.close)()])
+
+  t.end()
 })
