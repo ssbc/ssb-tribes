@@ -99,13 +99,9 @@ module.exports = function GroupMethods (ssb, keystore, state) {
         type: 'group/exclude-member',
         excludes: authorIds,
         tangles: {
-          members: {
-            root,
-            previous: [root] // TODO calculate previous for members tangle
-          },
-
+          members: { root, previous: [root] },
           group: { root, previous: [root] }
-          // NOTE: this is a dummy entry which is over-written in publish hook
+          // NOTE: these are dummy entries which are over-written in the publish hook
         },
         recps: [groupId]
       }
