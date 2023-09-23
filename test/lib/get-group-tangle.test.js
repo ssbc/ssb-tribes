@@ -303,7 +303,7 @@ test('members tangle', async t => {
   const firstMembers = await getGroupTangle(groupId, 'members')
 
   t.deepEqual(firstGroup, { root, previous: [bobInvite.key] }, 'group tangle generated after add msg is correct')
-  t.deepEqual(firstMembers, { root, previous: [bobInvite.key] })
+  t.deepEqual(firstMembers, { root, previous: [bobInvite.key] }, 'members tangle generated after add msg is correct')
 
   const {key: bobExcludeKey} = await p(alice.tribes.excludeMembers)(groupId, [bob.id])
   const bobExclude = await p(alice.get)({id:bobExcludeKey, private:true})
@@ -313,8 +313,8 @@ test('members tangle', async t => {
   const secondGroup = await getGroupTangle(groupId, 'group')
   const secondMembers = await getGroupTangle(groupId, 'members')
 
-  t.deepEqual(secondGroup, { root, previous: [bobExclude.key] })
-  t.deepEqual(secondMembers, { root, previous: [bobExclude.key] })
+  t.deepEqual(secondGroup, { root, previous: [bobExcludeKey] }, 'group tangle generated after exclude msg is correct')
+  t.deepEqual(secondMembers, { root, previous: [bobExcludeKey] }, 'members tangle generated after exclude msg is correct')
 
   await Promise.all([p(alice.close)(), p(bob.close)()])
 
