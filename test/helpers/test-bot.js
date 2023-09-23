@@ -58,7 +58,11 @@ module.exports = function TestBot (opts = {}) {
     })
   })
   ssb.close.hook((close, args) => {
-    if (state.isReadyToClose) return close(...args)
+    if (state.isReadyToClose) {
+      return setTimeout(() => {
+        close(...args)
+      }, 150)
+    }
 
     console.log('... (waiting rebuild)')
 
