@@ -219,11 +219,11 @@ function init (ssb, config) {
           if (err) return publish.apply(this, args)
 
           set(content, 'tangles.group', groupTangle)
+          tanglePrune(content) // prune the group tangle down if needed
           if (content.type === 'group/add-member' || content.type === 'group/exclude-member') {
             set(content, 'tangles.members', membersTangle)
+            tanglePrune(content, 'members')
           }
-          tanglePrune(content) // prune the group tangle down if needed
-          // TODO: prune members tangle too?
 
           publish.call(this, content, cb)
         })
