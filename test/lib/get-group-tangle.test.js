@@ -142,7 +142,7 @@ test(`get-group-tangle-${n}-publishes`, t => {
 test('get-group-tangle', t => {
   const tests = [
     {
-      plan: 4,
+      plan: 5,
       test: (t) => {
         const DESCRIPTION = 'auto adds group tangle'
         // this is an integration test, as we've hooked get-group-tangle into ssb.publish
@@ -151,27 +151,31 @@ test('get-group-tangle', t => {
         ssb.tribes.create(null, (err, data) => {
           t.error(err, 'create group')
 
-          const groupRoot = data.groupInitMsg.key
-          const groupId = data.groupId
+          ssb.getLatest(ssb.id, (err, selfAdd) => {
+            t.error(err, 'get self invite')
 
-          const content = {
-            type: 'yep',
-            recps: [groupId]
-          }
+            const groupRoot = data.groupInitMsg.key
+            const groupId = data.groupId
 
-          ssb.publish(content, (err, msg) => {
-            t.error(err, 'publish a message')
+            const content = {
+              type: 'yep',
+              recps: [groupId]
+            }
 
-            ssb.get({ id: msg.key, private: true }, (err, A) => {
-              t.error(err, 'get that message back')
+            ssb.publish(content, (err, msg) => {
+              t.error(err, 'publish a message')
 
-              t.deepEqual(
-                A.content.tangles.group, // actual
-                { root: groupRoot, previous: [groupRoot] }, // expected
-                DESCRIPTION + ' (auto added tangles.group)'
-              )
+              ssb.get({ id: msg.key, private: true }, (err, A) => {
+                t.error(err, 'get that message back')
 
-              ssb.close()
+                t.deepEqual(
+                  A.content.tangles.group, // actual
+                  { root: groupRoot, previous: [selfAdd.key] }, // expected
+                  DESCRIPTION + ' (auto added tangles.group)'
+                )
+
+                ssb.close()
+              })
             })
           })
         })

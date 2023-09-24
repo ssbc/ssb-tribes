@@ -8,6 +8,8 @@ test('tribes.invite', async t => {
   const { groupId, groupKey, groupInitMsg } = await p(kaitiaki.tribes.create)({})
   t.true(groupId, 'creates group')
 
+  const selfAdd = await p(kaitiaki.getLatest)(kaitiaki.id)
+
   const authorIds = [
     newPerson.id,
     FeedId()
@@ -28,8 +30,8 @@ test('tribes.invite', async t => {
     recps: [groupId, ...authorIds],
 
     tangles: {
-      group: { root: groupInitMsg.key, previous: [groupInitMsg.key] },
-      members: { root: groupInitMsg.key, previous: [groupInitMsg.key] }
+      group: { root: groupInitMsg.key, previous: [selfAdd.key] },
+      members: { root: groupInitMsg.key, previous: [selfAdd.key] }
     }
   }
   t.deepEqual(invite.content, expected, 'kaitiaki sent invite')
