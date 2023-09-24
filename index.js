@@ -207,16 +207,12 @@ function init (ssb, config) {
     if (!isGroup(content.recps[0])) return publish.apply(this, args)
 
     onKeystoreReady(() => {
-      getGroupTangle(content.recps[0], 'group', (err, groupTangle) => {
-        if (err) return publish.apply(this, args)
-        getGroupTangle(content.recps[0], 'members', (err, membersTangle) => {
-          // NOTE there are two ways an err can occur in getGroupTangle
-          // 1. recps is not a groupId
-          // 2. unknown groupId,
+      if (!keystore.group.has(content.recps[0])) return cb(Error('unknown groupId'))
 
-          // Rather than cb(err) here we we pass it on to boxers to see if an err is needed
-          // TODO: why do we skip adding the tangles if we err? we should skip publishing in that case
-          if (err) return publish.apply(this, args)
+      getGroupTangle(content.recps[0], 'group', (err, groupTangle) => {
+        if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
+        getGroupTangle(content.recps[0], 'members', (err, membersTangle) => {
+          if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
 
           set(content, 'tangles.group', groupTangle)
           tanglePrune(content) // prune the group tangle down if needed
