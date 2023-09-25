@@ -28,7 +28,7 @@ test('tribes.excludeMembers', async t => {
     await p(setTimeout)(100)
 
     const newPersonGotGroup = await p(newPerson.tribes.get)(groupId)
-    t.false(!!newPersonGotGroup.excluded, 'new person is not excluded yet')
+    t.equal(newPersonGotGroup.excluded, false, 'new person is not excluded yet')
 
     let exclude = await p(kaitiaki.tribes.excludeMembers)(groupId, authorIds).catch(err => t.error(err, err.message))
 
