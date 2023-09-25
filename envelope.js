@@ -16,17 +16,17 @@ function isEnvelope (ciphertext) {
 module.exports = function Envelope (keystore, state) {
   const easyPoBoxKey = poBoxKey.easy(state.keys)
 
-  function getDmKey (theirId) {
-    function addDMPairSync (myKeys, theirId) {
-      const myId = myKeys.id
-      const myDhKeys = new DHKeys(myKeys, { fromEd25519: true })
-      const theirKeys = { public: bfe.encode(theirId).slice(2) }
-      const theirDhKeys = new DHKeys(theirKeys, { fromEd25519: true })
-      return keystore.dm.add(myId, theirId, myDhKeys, theirDhKeys, (err) => {
-        if (err) console.error(err)
-      })
-    }
+  function addDMPairSync (myKeys, theirId) {
+    const myId = myKeys.id
+    const myDhKeys = new DHKeys(myKeys, { fromEd25519: true })
+    const theirKeys = { public: bfe.encode(theirId).slice(2) }
+    const theirDhKeys = new DHKeys(theirKeys, { fromEd25519: true })
+    return keystore.dm.add(myId, theirId, myDhKeys, theirDhKeys, (err) => {
+      if (err) console.error(err)
+    })
+  }
 
+  function getDmKey (theirId) {
     if (!keystore.dm.has(state.keys.id, theirId)) addDMPairSync(state.keys, theirId)
     return keystore.dm.get(state.keys.id, theirId)
   }
