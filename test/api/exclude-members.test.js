@@ -28,7 +28,7 @@ test('tribes.excludeMembers', async t => {
     await p(setTimeout)(100)
 
     const newPersonGotGroup = await p(newPerson.tribes.get)(groupId)
-    t.equal(newPersonGotGroup.excluded, false, 'new person is not excluded yet')
+    t.equal(newPersonGotGroup.excluded, undefined, 'new person is not excluded yet')
 
     let exclude = await p(kaitiaki.tribes.excludeMembers)(groupId, authorIds).catch(err => t.error(err, err.message))
 
@@ -51,7 +51,7 @@ test('tribes.excludeMembers', async t => {
     await p(replicate)({ from: kaitiaki, to: newPerson, live: false, name })
 
     const newPersonExcludedGroup = await p(newPerson.tribes.get)(groupId)
-    t.true(!!newPersonExcludedGroup.excluded, 'new person is excluded now')
+    t.equal(newPersonExcludedGroup.excluded, true, 'new person is excluded now')
 
     const excludedList = await p(newPerson.tribes.list)()
     t.deepEqual(excludedList, [], "new person can't list any groups anymore")
