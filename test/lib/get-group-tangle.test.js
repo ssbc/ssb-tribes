@@ -90,13 +90,14 @@ test('get-group-tangle (cache)', t => {
   server.tribes.create(null, (err, data) => {
     if (err) throw err
 
-    t.equal(queryCalls, 1, 'no cache for publishing of group/add-member, a backlink query was run')
+    // 1 for group tangle, 1 for members tangle
+    t.equal(queryCalls, 2, 'no cache for publishing of group/add-member, a backlink query was run')
     const content = { type: 'memo', recps: [data.groupId] }
 
     server.publish(content, (err, msg) => {
       if (err) throw err
 
-      t.equal(queryCalls, 1, 'cache used for publishing next message')
+      t.equal(queryCalls, 2, 'cache used for publishing next message')
 
       server.close()
       t.end()
@@ -301,10 +302,11 @@ test('members tangle', async t => {
 
   const keystore = { group: { get: () => ({ root }) } }
 
-  const getGroupTangle = p(GetGroupTangle(alice, keystore))
+  const getGroupTangle = p(GetGroupTangle(alice, keystore, 'group'))
+  const getMembersTangle = p(GetGroupTangle(alice, keystore, 'members'))
 
-  const firstGroup = await getGroupTangle(groupId, 'group')
-  const firstMembers = await getGroupTangle(groupId, 'members')
+  const firstGroup = await getGroupTangle(groupId)
+  const firstMembers = await getMembersTangle(groupId)
 
   t.deepEqual(firstGroup, { root, previous: [bobInvite.key] }, 'group tangle generated after add msg is correct')
   t.deepEqual(firstMembers, { root, previous: [bobInvite.key] }, 'members tangle generated after add msg is correct')
@@ -314,8 +316,8 @@ test('members tangle', async t => {
 
   t.deepEqual(bobExclude.content.tangles, { group: firstGroup, members: firstMembers }, 'exclude message gets tangles')
 
-  const secondGroup = await getGroupTangle(groupId, 'group')
-  const secondMembers = await getGroupTangle(groupId, 'members')
+  const secondGroup = await getGroupTangle(groupId)
+  const secondMembers = await getMembersTangle(groupId)
 
   t.deepEqual(secondGroup, { root, previous: [bobExcludeKey] }, 'group tangle generated after exclude msg is correct')
   t.deepEqual(secondMembers, { root, previous: [bobExcludeKey] }, 'members tangle generated after exclude msg is correct')

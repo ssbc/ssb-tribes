@@ -215,7 +215,8 @@ function init (ssb, config) {
    */
 
   /* Tangle: auto-add tangles.group info to all private-group messages */
-  const getGroupTangle = GetGroupTangle(ssb, keystore)
+  const getGroupTangle = GetGroupTangle(ssb, keystore, 'group')
+  const getMembersTangle = GetGroupTangle(ssb, keystore, 'members')
   ssb.publish.hook(function (publish, args) {
     const [content, cb] = args
     if (!content.recps) return publish.apply(this, args)
@@ -225,9 +226,9 @@ function init (ssb, config) {
     onKeystoreReady(() => {
       if (!keystore.group.has(content.recps[0])) return cb(Error('unknown groupId'))
 
-      getGroupTangle(content.recps[0], 'group', (err, groupTangle) => {
+      getGroupTangle(content.recps[0], (err, groupTangle) => {
         if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
-        getGroupTangle(content.recps[0], 'members', (err, membersTangle) => {
+        getMembersTangle(content.recps[0], (err, membersTangle) => {
           if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
 
           set(content, 'tangles.group', groupTangle)

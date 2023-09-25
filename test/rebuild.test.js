@@ -27,6 +27,10 @@ test('rebuild (I am added to a group)', t => {
   me.rebuild.hook(function (rebuild, [cb]) {
     t.pass('I automatically call a rebuild')
 
+    console.log('about to debugger')
+    console.log('about to debugger other')
+    console.log('new line')
+    debugger
     rebuild(() => {
       cb && cb()
       t.true(me.status().sync.sync, 'all indexes updated') // 2
