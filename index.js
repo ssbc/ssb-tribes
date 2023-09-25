@@ -149,6 +149,20 @@ function init (ssb, config) {
     })
   )
 
+  pull(
+    listen.excludeMember(ssb),
+    pull.drain((msg) => {
+      const excludes = msg.value.content.excludes
+      const groupId = msg.value.content.recps[0]
+
+      if (excludes.includes(ssb.id)) {
+        keystore.group.exclude(groupId)
+      }
+    }, err => {
+      if (err) console.error('Listening for new excludeMembers errored:', err)
+    })
+  )
+
   listen.poBox(ssb, m => {
     const { poBoxId, key: poBoxKey } = m.value.content.keys.set
     keystore.poBox.add(poBoxId, { key: poBoxKey }, (err) => {
