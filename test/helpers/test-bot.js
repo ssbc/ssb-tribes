@@ -58,11 +58,12 @@ module.exports = function TestBot (opts = {}) {
     })
   })
   ssb.close.hook((close, args) => {
-    //if (state.isReadyToClose) {
-      return setTimeout(() => {
-        close(...args)
-      }, 15*1000)
-    //}
+    // if (state.isReadyToClose) {
+    return setTimeout(() => {
+      close(...args)
+    }, 15 * 1000)
+    // }
+    /* eslint-disable no-unreachable */
 
     console.log('... (waiting rebuild)')
 
