@@ -18,10 +18,20 @@ test('tribes.list + tribes.get', (t) => {
       server.tribes.get(data.groupId, (err, actualGroup) => {
         if (err) throw err
 
+        const key = data.groupKey
+        const scheme = 'envelope-large-symmetric-group'
         const expectedGroup = {
-          key: data.groupKey,
+          writeKey: {
+            key,
+            scheme
+          },
+          readKeys: [
+            {
+              key,
+              scheme
+            }
+          ],
           root: data.groupInitMsg.key,
-          scheme: 'envelope-large-symmetric-group',
           groupId: data.groupId
         }
         t.deepEqual(actualGroup, expectedGroup, 'gets group data')
