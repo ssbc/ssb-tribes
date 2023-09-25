@@ -57,11 +57,8 @@ test('listen.addMember', async t => {
 
   setTimeout(() => {
     t.equal(aliceHeard, 2, 'alice: heard add-members [[alice], [bob]]')
-    t.equal(bobHeard, 3, 'bob heard add-members [[bob], ...rebuild..., [admin], [bob (again)]]')
-    // this happens twice:
-    // - 1st one is the group/add-member that is DM'd to them, this leads to a rebuild
-    // - 2nd happens after the rebuild is complete and the pull-stream is restarted, now seeing
-    //   all the group messages (including the group/add-member which added them
+    t.equal(bobHeard, 2, 'bob heard add-members [[bob], [admin]]')
+
     alice.close()
     bob.close()
     t.end()
@@ -85,12 +82,8 @@ test('listen.poBox', async t => {
 
   setTimeout(() => {
     t.equal(aliceHeard, 1, 'alice heard own po-box')
-    t.equal(bobHeard, 2, 'bob heard po-box')
-    // seen twice:
-    // - first rebuild triggered when find `group/add-member`
-    // - second rebuild triggered when see `group/po-box`
-    //
-    // listen stream starts again after each rebuild
+    t.equal(bobHeard, 1, 'bob heard po-box')
+
     alice.close()
     bob.close()
     t.end()

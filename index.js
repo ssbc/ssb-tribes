@@ -70,10 +70,12 @@ function init (ssb, config) {
   KeyRing(join(config.path, 'tribes/keystore'), (err, api) => {
     if (err) throw err
 
-    api.dm.addFromSSBKeys(ssb.keys)
+    api.signing.addNamed(ssb.keys.id, ssb.keys, (err) => {
+      if (err) throw err
 
-    Object.assign(keystore, api) // merging into existing reference
-    state.loading.keystore.set(false)
+      Object.assign(keystore, api) // merging into existing reference
+      state.loading.keystore.set(false)
+    })
   })
   ssb.close.hook(function (close, args) {
     const next = () => close.apply(this, args)
@@ -167,7 +169,7 @@ function init (ssb, config) {
 
       state.loading.keystore.once(() => {
         pull(
-          pull.values(keystore.group.list()),
+          pull.values(keystore.group.listSync()),
           paraMap(
             (groupId, cb) => scuttle.group.listAuthors(groupId, (err, feedIds) => {
               if (err) return cb(new Error('error listing authors to replicate on start'))
@@ -284,7 +286,7 @@ function init (ssb, config) {
 
     onKeystoreReady(() => {
       pull(
-        pull.values(keystore.group.list()),
+        pull.values(keystore.group.listSync()),
         paraMap(tribeGet, 4),
         opts.subtribes
           ? null

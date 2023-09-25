@@ -8,7 +8,10 @@ test('tribes.poBox.get', async t => {
 
   let group
 
-  group = await p(server.tribes.create)({ addPOBox: true })
+  group = await p(server.tribes.create)({ addPOBox: true }).catch(err => {
+    console.error('failed creating tribe with pobox:', err)
+    t.fail(err)
+  })
   const keys = await p(server.tribes.poBox.get)(group.groupId)
   t.equal(keys.poBoxId, group.poBoxId, 'fetch poBoxId by groupId')
 
