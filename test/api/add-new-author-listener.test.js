@@ -40,7 +40,6 @@ test('addNewAuthorListener', async t => {
     setTimeout(() => {
       admin.close()
       newPerson.close()
-      t.end()
     }, 1000)
   })
 
