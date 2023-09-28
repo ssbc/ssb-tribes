@@ -2,7 +2,7 @@ const test = require('tape')
 const { promisify: p } = require('util')
 const { Server, replicate } = require('../helpers')
 
-test('addNewAuthorListener', async t => {
+test('addNewAuthorListener', t => {
   t.plan(6)
 
   const admin = Server({ name: 'admin', debug: false }) // me
@@ -43,23 +43,21 @@ test('addNewAuthorListener', async t => {
     }, 1000)
   })
 
-  try {
-    const groupData = await p(admin.tribes.create)({}).catch(t.fail)
-    // this makes a group, but also in the background, alerts the newAuthorListeners
-    // so the above listener can get called *before* we have access to the groupId
+  // this makes a group, but also in the background, alerts the newAuthorListeners
+  // so the above listener can get called *before* we have access to the groupId
+  p(admin.tribes.create)({}).then((groupData) => {
     groupId = groupData.groupId
-    await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' }).catch(err => {
-      console.error('invite failed:', err)
-      t.fail(err)
-    })
-
-    await p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy again' }).catch(t.fail)
+    return p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy' })
+  }).then(() => {
+    return p(admin.tribes.invite)(groupId, [newPerson.id], { text: 'ahoy again' })
+  }).then(() => {
     // we want to test that duplicate adds dont fire the addNewAuthorListener multiple times,
     // unfortunately there are race conditions around calculating the new authors, so
     // we have added a small delay here
+    // later note: no we haven't?
 
-    p(replicate)({ from: admin, to: newPerson, name })
-  } catch (err) {
+    return p(replicate)({ from: admin, to: newPerson, name })
+  }).catch((err) => {
     t.fail(err)
-  }
+  })
 })
