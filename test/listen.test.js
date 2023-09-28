@@ -8,7 +8,7 @@ const listen = require('../listen')
 // TODO this is... not listen any more
 // we may need to rename this
 
-test('listen.addMember', async t => {
+test('listen.addMember', t => {
   const alice = Server()
   const bob = Server()
 
@@ -50,22 +50,24 @@ test('listen.addMember', async t => {
     })
   )
 
-  const groupData = await p(alice.tribes.create)({})
+  p(alice.tribes.create)({}).then((groupData) => {
   groupId = groupData.groupId // eslint-disable-line
-  await p(alice.tribes.invite)(groupId, [bob.id], {})
-  await p(replicate)({ from: alice, to: bob })
+    return p(alice.tribes.invite)(groupId, [bob.id], {})
+  }).then(() => {
+    return p(replicate)({ from: alice, to: bob })
+  }).then(() => {
+    setTimeout(() => {
+      t.equal(aliceHeard, 2, 'alice: heard add-members [[alice], [bob]]')
+      t.equal(bobHeard, 2, 'bob heard add-members [[bob], [admin]]')
 
-  setTimeout(() => {
-    t.equal(aliceHeard, 2, 'alice: heard add-members [[alice], [bob]]')
-    t.equal(bobHeard, 2, 'bob heard add-members [[bob], [admin]]')
-
-    alice.close()
-    bob.close()
-    t.end()
-  }, 500)
+      alice.close()
+      bob.close()
+      t.end()
+    }, 500)
+  })
 })
 
-test('listen.poBox', async t => {
+test('listen.poBox', t => {
   const alice = Server()
   const bob = Server()
 
@@ -75,17 +77,18 @@ test('listen.poBox', async t => {
   listen.poBox(alice, m => aliceHeard++)
   listen.poBox(bob, m => bobHeard++)
 
-  const { groupId } = await p(alice.tribes.create)({ addPOBox: true })
-  await p(alice.tribes.invite)(groupId, [bob.id], {})
+  p(alice.tribes.create)({ addPOBox: true }).then(({ groupId }) => {
+    return p(alice.tribes.invite)(groupId, [bob.id], {})
+  }).then(() => {
+    return p(replicate)({ from: alice, to: bob })
+  }).then(() => {
+    setTimeout(() => {
+      t.equal(aliceHeard, 1, 'alice heard own po-box')
+      t.equal(bobHeard, 1, 'bob heard po-box')
 
-  await p(replicate)({ from: alice, to: bob })
-
-  setTimeout(() => {
-    t.equal(aliceHeard, 1, 'alice heard own po-box')
-    t.equal(bobHeard, 1, 'bob heard po-box')
-
-    alice.close()
-    bob.close()
-    t.end()
-  }, 500) // wait for bob to do two rebuilds
+      alice.close()
+      bob.close()
+      t.end()
+    }, 500) // wait for bob to do two rebuilds
+  })
 })
