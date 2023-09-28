@@ -302,8 +302,14 @@ test('members tangle', async t => {
 
   const keystore = { group: { get: () => ({ root }) } }
 
-  const getGroupTangle = p(GetGroupTangle(alice, keystore, 'group'))
-  const getMembersTangle = p(GetGroupTangle(alice, keystore, 'members'))
+  const _getGroupTangle = p(GetGroupTangle(alice, keystore, 'group'))
+  const _getMembersTangle = p(GetGroupTangle(alice, keystore, 'members'))
+  const getGroupTangle = p((id, cb) => {
+    setTimeout(() => _getGroupTangle(id, cb), 300)
+  })
+  const getMembersTangle = p((id, cb) => {
+    setTimeout(() => _getMembersTangle(id, cb), 300)
+  })
 
   const firstGroup = await getGroupTangle(groupId)
   const firstMembers = await getMembersTangle(groupId)
