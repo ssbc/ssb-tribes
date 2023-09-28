@@ -56,9 +56,9 @@ test('groupId', t => {
   })
 })
 
-  // -----------------------------------------------------------
+// -----------------------------------------------------------
 
-test('groupId vectors', t=> {
+test('groupId vectors', t => {
   /* testing against shared test-vectors */
   vectors.forEach(vector => {
     decodeLeaves(vector)

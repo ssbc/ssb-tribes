@@ -31,81 +31,81 @@ async function setup () {
   return ssb
 }
 
-test('rebuild-manager', async t => {
+test('rebuild-manager', t => {
   t.plan(3)
-  const ssb = await setup()
-
+  setup().then(ssb => {
   // we wrap ssb.rebuild once to know exactly what goes through to the db
-  // we expect only one call to come through from the rebuildManager
-  // AFTER indexing is complete
-  let rebuildCount = 0
-  ssb.rebuild.hook((rebuild, [cb]) => {
-    t.true(ssb.status().sync.sync, 'rebuild only gets called once indexing is done')
-    rebuildCount++
-    rebuild(cb)
-  })
+    // we expect only one call to come through from the rebuildManager
+    // AFTER indexing is complete
+    let rebuildCount = 0
+    ssb.rebuild.hook((rebuild, [cb]) => {
+      t.true(ssb.status().sync.sync, 'rebuild only gets called once indexing is done')
+      rebuildCount++
+      rebuild(cb)
+    })
 
-  // this wraps ssb.rebuild again
-  const manager = new Manager(ssb)
+    // this wraps ssb.rebuild again
+    const manager = new Manager(ssb)
 
-  manager.rebuild('my dog')
-  manager.rebuild('my cat', () => t.pass('callback in the middle'))
-  manager.rebuild('my fish', () => {
-    t.equal(rebuildCount, 1, 'db rebuild only gets called once')
+    manager.rebuild('my dog')
+    manager.rebuild('my cat', () => t.pass('callback in the middle'))
+    manager.rebuild('my fish', () => {
+      t.equal(rebuildCount, 1, 'db rebuild only gets called once')
 
-    ssb.close()
-  })
-})
-
-test('rebuild-manager (rebuild called during rebuild with EXISTING reason)', async t => {
-  t.plan(4)
-  const ssb = await setup()
-
-  let rebuildCount = 0
-  ssb.rebuild.hook((rebuild, [cb]) => {
-    t.true(ssb.status().sync.sync, 'rebuild only gets called once indexing is done')
-    rebuildCount++
-    rebuild.call(ssb, cb)
-    manager.rebuild('my cat', () => { // << 'my cat' already cited as EXISTING reason for rebuild
-      t.equal(rebuildCount, 1, 'existing reason and cb folded into current run')
+      ssb.close()
     })
   })
+})
 
-  const manager = new Manager(ssb)
+test('rebuild-manager (rebuild called during rebuild with EXISTING reason)', t => {
+  t.plan(4)
+  setup().then(ssb => {
+    let rebuildCount = 0
+    ssb.rebuild.hook((rebuild, [cb]) => {
+      t.true(ssb.status().sync.sync, 'rebuild only gets called once indexing is done')
+      rebuildCount++
+      rebuild.call(ssb, cb)
+      manager.rebuild('my cat', () => { // << 'my cat' already cited as EXISTING reason for rebuild
+        t.equal(rebuildCount, 1, 'existing reason and cb folded into current run')
+      })
+    })
 
-  manager.rebuild('my fish')
-  manager.rebuild('my dog', () => t.pass('callback in the middle'))
-  manager.rebuild('my cat', () => {
-    t.equal(rebuildCount, 1, 'db rebuild only gets called once')
+    const manager = new Manager(ssb)
 
-    ssb.close()
+    manager.rebuild('my fish')
+    manager.rebuild('my dog', () => t.pass('callback in the middle'))
+    manager.rebuild('my cat', () => {
+      t.equal(rebuildCount, 1, 'db rebuild only gets called once')
+
+      ssb.close()
+    })
   })
 })
 
-test('rebuild-manager (rebuild called during rebuild with NEW reason)', async t => {
+test('rebuild-manager (rebuild called during rebuild with NEW reason)', t => {
   t.plan(5)
-  const ssb = await setup()
+  setup().then(ssb => {
+    let rebuildCount = 0
+    ssb.rebuild.hook((rebuild, [cb]) => {
+      t.true(ssb.status().sync.sync, 'rebuild only gets called once indexing is done') // see this twice
+      rebuildCount++
+      rebuild.call(ssb, cb)
 
-  let rebuildCount = 0
-  ssb.rebuild.hook((rebuild, [cb]) => {
-    t.true(ssb.status().sync.sync, 'rebuild only gets called once indexing is done') // see this twice
-    rebuildCount++
-    rebuild.call(ssb, cb)
+      if (rebuildCount === 1) {
+        manager.rebuild('my pig', () => { // << 'my pig' is a NEW reason for rebuilding!
+          t.equal(rebuildCount, 2, 'rebuild called second time')
 
-    if (rebuildCount === 1) {
-      manager.rebuild('my pig', () => { // << 'my pig' is a NEW reason for rebuilding!
-        t.equal(rebuildCount, 2, 'rebuild called second time')
+          ssb.close()
+        })
+      }
+    })
 
-        ssb.close()
-      })
-    }
-  })
+    const manager = new Manager(ssb)
 
-  const manager = new Manager(ssb)
-
-  manager.rebuild('my fish')
-  manager.rebuild('my dog', () => t.pass('callback in the middle'))
-  manager.rebuild('my cat', () => {
-    t.equal(rebuildCount, 1, 'first rebuild completed')
+    manager.rebuild('my fish')
+    manager.rebuild('my dog', () => t.pass('callback in the middle'))
+    manager.rebuild('my cat', () => {
+      t.equal(rebuildCount, 1, 'first rebuild completed')
+    })
   })
 })
