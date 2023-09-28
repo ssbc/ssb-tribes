@@ -214,6 +214,8 @@ function init (ssb, config) {
    * (because they can't post messages to the group before then)
    */
 
+  const memberType = (type) => type === 'group/add-member' || type === 'group/exclude-member'
+
   /* Tangle: auto-add tangles.group info to all private-group messages */
   const getGroupTangle = GetGroupTangle(ssb, keystore, 'group')
   const getMembersTangle = GetGroupTangle(ssb, keystore, 'members')
@@ -228,12 +230,18 @@ function init (ssb, config) {
 
       getGroupTangle(content.recps[0], (err, groupTangle) => {
         if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
-        getMembersTangle(content.recps[0], (err, membersTangle) => {
+
+        // we only want to have to calculate the members tangle if it's gonna be used
+        const maybeMembersTangle = memberType(content.type)
+          ? getMembersTangle
+          : (_, cb) => cb()
+
+        maybeMembersTangle(content.recps[0], (err, membersTangle) => {
           if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
 
           set(content, 'tangles.group', groupTangle)
           tanglePrune(content) // prune the group tangle down if needed
-          if (content.type === 'group/add-member' || content.type === 'group/exclude-member') {
+          if (memberType(content.type)) {
             set(content, 'tangles.members', membersTangle)
             tanglePrune(content, 'members')
           }
