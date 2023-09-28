@@ -298,6 +298,7 @@ test('members tangle', async t => {
   const bob = Server()
 
   const { groupId, root } = await p(alice.tribes.create)({})
+  await p(setTimeout)(300)
   const bobInvite = await p(alice.tribes.invite)(groupId, [bob.id], {})
 
   const keystore = { group: { get: () => ({ root }) } }
