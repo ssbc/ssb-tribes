@@ -52,10 +52,13 @@ test('groupId', t => {
     t.equal(groupId({ groupInitMsg, groupKey }), data.groupId, 'can calculate groupId with groupKey')
 
     server.close()
+    t.end()
   })
+})
 
-  // -----------------------------------------------------------
+// -----------------------------------------------------------
 
+test('groupId vectors', t => {
   /* testing against shared test-vectors */
   vectors.forEach(vector => {
     decodeLeaves(vector)

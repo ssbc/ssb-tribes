@@ -3,7 +3,7 @@ const { promisify: p } = require('util')
 const Keys = require('ssb-keys')
 const { Server, replicate } = require('./helpers')
 
-test('replicate group members', async t => {
+test('replicate group members', t => {
   t.plan(7)
   // 3 calls to request
   // 1 successful shutdown
@@ -50,15 +50,15 @@ test('replicate group members', async t => {
     if (i === expected.length) testPersistence()
   })
 
-  try {
-    const { groupId: aliceGroup } = await p(alice.tribes.create)({})
-    await p(alice.tribes.invite)(aliceGroup, [bob.id], {})
-
-    const { groupId: bobGroup } = await p(bob.tribes.create)({})
-    await p(bob.tribes.invite)(bobGroup, [alice.id, celId, ericId], {})
-  } catch (err) {
+  p(alice.tribes.create)({}).then(({ groupId: aliceGroup }) => {
+    return p(alice.tribes.invite)(aliceGroup, [bob.id], {})
+  }).then(() => {
+    return p(bob.tribes.create)({})
+  }).then(({ groupId: bobGroup }) => {
+    return p(bob.tribes.invite)(bobGroup, [alice.id, celId, ericId], {})
+  }).catch((err) => {
     t.fail(err)
-  }
+  })
 
   function testPersistence () {
     // NOTE: Currently we do not persist membership because it's simpler.
