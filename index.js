@@ -231,20 +231,19 @@ function init (ssb, config) {
       getGroupTangle(content.recps[0], (err, groupTangle) => {
         if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
 
-        // we only want to have to calculate the members tangle if it's gonna be used
-        const maybeMembersTangle = isMemberType(content.type)
-          ? getMembersTangle
-          : (_, cb) => cb()
+        set(content, 'tangles.group', groupTangle)
+        tanglePrune(content) // prune the group tangle down if needed
 
-        maybeMembersTangle(content.recps[0], (err, membersTangle) => {
+        // we only want to have to calculate the members tangle if it's gonna be used
+        if (!isMemberType(content.type)) {
+          return publish.call(this, content, cb)
+        }
+
+        getMembersTangle(content.recps[0], (err, membersTangle) => {
           if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
 
-          set(content, 'tangles.group', groupTangle)
-          tanglePrune(content) // prune the group tangle down if needed
-          if (isMemberType(content.type)) {
-            set(content, 'tangles.members', membersTangle)
-            tanglePrune(content, 'members')
-          }
+          set(content, 'tangles.members', membersTangle)
+          tanglePrune(content, 'members')
 
           publish.call(this, content, cb)
         })
