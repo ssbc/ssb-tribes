@@ -38,7 +38,7 @@ test('tribes.excludeMembers', async t => {
       excludes: authorIds,
 
       tangles: {
-        members: { root: groupInitMsg.key, previous: [groupInitMsg.key] },
+        members: { root: groupInitMsg.key, previous: [...exclude.content.tangles.members.previous] },
         group: { root: groupInitMsg.key, previous: [...exclude.content.tangles.group.previous] }
       },
       recps: [groupId]

@@ -214,8 +214,11 @@ function init (ssb, config) {
    * (because they can't post messages to the group before then)
    */
 
+  const isMemberType = (type) => type === 'group/add-member' || type === 'group/exclude-member'
+
   /* Tangle: auto-add tangles.group info to all private-group messages */
-  const getGroupTangle = GetGroupTangle(ssb, keystore)
+  const getGroupTangle = GetGroupTangle(ssb, keystore, 'group')
+  const getMembersTangle = GetGroupTangle(ssb, keystore, 'members')
   ssb.publish.hook(function (publish, args) {
     const [content, cb] = args
     if (!content.recps) return publish.apply(this, args)
@@ -223,18 +226,27 @@ function init (ssb, config) {
     if (!isGroup(content.recps[0])) return publish.apply(this, args)
 
     onKeystoreReady(() => {
-      getGroupTangle(content.recps[0], (err, tangle) => {
-        // NOTE there are two ways an err can occur in getGroupTangle
-        // 1. recps is not a groupId
-        // 2. unknown groupId,
+      if (!keystore.group.has(content.recps[0])) return cb(Error('unknown groupId'))
 
-        // Rather than cb(err) here we we pass it on to boxers to see if an err is needed
-        if (err) return publish.apply(this, args)
+      getGroupTangle(content.recps[0], (err, groupTangle) => {
+        if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
 
-        set(content, 'tangles.group', tangle)
+        set(content, 'tangles.group', groupTangle)
         tanglePrune(content) // prune the group tangle down if needed
 
-        publish.call(this, content, cb)
+        // we only want to have to calculate the members tangle if it's gonna be used
+        if (!isMemberType(content.type)) {
+          return publish.call(this, content, cb)
+        }
+
+        getMembersTangle(content.recps[0], (err, membersTangle) => {
+          if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
+
+          set(content, 'tangles.members', membersTangle)
+          tanglePrune(content, 'members')
+
+          publish.call(this, content, cb)
+        })
       })
     })
   })

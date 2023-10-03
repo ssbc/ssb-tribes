@@ -1,3 +1,4 @@
+const { promisify: p } = require('util')
 const test = require('tape')
 const { Server, replicate } = require('../helpers')
 const pull = require('pull-stream')
@@ -89,13 +90,14 @@ test('get-group-tangle (cache)', t => {
   server.tribes.create(null, (err, data) => {
     if (err) throw err
 
-    t.equal(queryCalls, 1, 'no cache for publishing of group/add-member, a backlink query was run')
+    // 1 for group tangle, 1 for members tangle
+    t.equal(queryCalls, 2, 'no cache for publishing of group/add-member, a backlink query was run')
     const content = { type: 'memo', recps: [data.groupId] }
 
     server.publish(content, (err, msg) => {
       if (err) throw err
 
-      t.equal(queryCalls, 1, 'cache used for publishing next message')
+      t.equal(queryCalls, 2, 'cache used for publishing next message')
 
       server.close()
       t.end()
@@ -141,7 +143,7 @@ test(`get-group-tangle-${n}-publishes`, t => {
 test('get-group-tangle', t => {
   const tests = [
     {
-      plan: 4,
+      plan: 5,
       test: (t) => {
         const DESCRIPTION = 'auto adds group tangle'
         // this is an integration test, as we've hooked get-group-tangle into ssb.publish
@@ -150,27 +152,31 @@ test('get-group-tangle', t => {
         ssb.tribes.create(null, (err, data) => {
           t.error(err, 'create group')
 
-          const groupRoot = data.groupInitMsg.key
-          const groupId = data.groupId
+          ssb.getLatest(ssb.id, (err, selfAdd) => {
+            t.error(err, 'get self invite')
 
-          const content = {
-            type: 'yep',
-            recps: [groupId]
-          }
+            const groupRoot = data.groupInitMsg.key
+            const groupId = data.groupId
 
-          ssb.publish(content, (err, msg) => {
-            t.error(err, 'publish a message')
+            const content = {
+              type: 'yep',
+              recps: [groupId]
+            }
 
-            ssb.get({ id: msg.key, private: true }, (err, A) => {
-              t.error(err, 'get that message back')
+            ssb.publish(content, (err, msg) => {
+              t.error(err, 'publish a message')
 
-              t.deepEqual(
-                A.content.tangles.group, // actual
-                { root: groupRoot, previous: [groupRoot] }, // expected
-                DESCRIPTION + ' (auto added tangles.group)'
-              )
+              ssb.get({ id: msg.key, private: true }, (err, A) => {
+                t.error(err, 'get that message back')
 
-              ssb.close()
+                t.deepEqual(
+                  A.content.tangles.group, // actual
+                  { root: groupRoot, previous: [selfAdd.key] }, // expected
+                  DESCRIPTION + ' (auto added tangles.group)'
+                )
+
+                ssb.close()
+              })
             })
           })
         })
@@ -285,4 +291,45 @@ test('get-group-tangle with branch', t => {
       } else fn()
     })
   }
+})
+
+test('members tangle', async t => {
+  const alice = Server()
+  const bob = Server()
+
+  const { groupId, root } = await p(alice.tribes.create)({})
+  await p(setTimeout)(300)
+  const bobInvite = await p(alice.tribes.invite)(groupId, [bob.id], {})
+
+  const keystore = { group: { get: () => ({ root }) } }
+
+  const _getGroupTangle = p(GetGroupTangle(alice, keystore, 'group'))
+  const _getMembersTangle = p(GetGroupTangle(alice, keystore, 'members'))
+  const getGroupTangle = p((id, cb) => {
+    setTimeout(() => _getGroupTangle(id, cb), 300)
+  })
+  const getMembersTangle = p((id, cb) => {
+    setTimeout(() => _getMembersTangle(id, cb), 300)
+  })
+
+  const firstGroup = await getGroupTangle(groupId)
+  const firstMembers = await getMembersTangle(groupId)
+
+  t.deepEqual(firstGroup, { root, previous: [bobInvite.key] }, 'group tangle generated after add msg is correct')
+  t.deepEqual(firstMembers, { root, previous: [bobInvite.key] }, 'members tangle generated after add msg is correct')
+
+  const { key: bobExcludeKey } = await p(alice.tribes.excludeMembers)(groupId, [bob.id])
+  const bobExclude = await p(alice.get)({ id: bobExcludeKey, private: true })
+
+  t.deepEqual(bobExclude.content.tangles, { group: firstGroup, members: firstMembers }, 'exclude message gets tangles')
+
+  const secondGroup = await getGroupTangle(groupId)
+  const secondMembers = await getMembersTangle(groupId)
+
+  t.deepEqual(secondGroup, { root, previous: [bobExcludeKey] }, 'group tangle generated after exclude msg is correct')
+  t.deepEqual(secondMembers, { root, previous: [bobExcludeKey] }, 'members tangle generated after exclude msg is correct')
+
+  await Promise.all([p(alice.close)(), p(bob.close)()])
+
+  t.end()
 })
