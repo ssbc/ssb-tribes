@@ -129,7 +129,6 @@ module.exports = function GroupMethods (ssb, keystore, state) {
         ),
         pull.map(msg => msg.value.content.recps.slice(1)),
         pull.flatten(),
-        pull.unique(),
         pull.collect((err, addedMembers) => {
           if (err) return cb(err)
 
@@ -151,13 +150,34 @@ module.exports = function GroupMethods (ssb, keystore, state) {
             ),
             pull.map(msg => msg.value.content.excludes),
             pull.flatten(),
-            pull.unique(),
             pull.collect((err, excludedMembers) => {
               if (err) return cb(err)
 
-              // NOTE: this currently prevents people who've been removed from being re-added
-              // https://github.com/ssbc/ssb-tribes/issues/79
-              const members = addedMembers.filter(addedMember => !excludedMembers.includes(addedMember))
+              // calculate if the person has been added more times than they've been removed
+              // this is kind of basic but works. although lol people can add themselves back
+              //a fancier version would check the members tangle and maybe the author of the additions/exclusions
+              const numAdded = {}
+
+              addedMembers.forEach(addedMember => {
+                if (numAdded[addedMember] === undefined) {
+                  numAdded[addedMember] = 0
+                }
+                numAdded[addedMember]++
+              })
+
+              excludedMembers.forEach(excludedMember => {
+                if (numAdded[excludedMember] !== undefined) {
+                  numAdded[excludedMember]--
+                }
+              })
+
+              Object.keys(numAdded).forEach(member => {
+                if (numAdded[member] < 1) {
+                  delete numAdded[member]
+                }
+              })
+
+              const members = Object.keys(numAdded)
 
               return cb(null, members)
             })
