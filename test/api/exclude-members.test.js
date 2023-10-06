@@ -3,8 +3,8 @@ const { promisify: p } = require('util')
 const { Server, replicate, FeedId } = require('../helpers')
 
 test('tribes.excludeMembers', async t => {
-  const kaitiaki = Server()
-  const newPerson = Server()
+  const kaitiaki = Server({ name: 'kaitiaki' })
+  const newPerson = Server({ name: 'newPerson' })
 
   const name = id => {
     if (id === kaitiaki.id) return 'kaitiaki '

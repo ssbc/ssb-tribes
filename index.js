@@ -132,16 +132,12 @@ function init (ssb, config) {
           ...m.value.content.recps.filter(isFeed)
         ])
 
-        const record = keystore.group.get(groupId)
-        // if we haven't been in the group since before, register the group
-        if (record == null) {
-          return keystore.group.add(groupId, { key: groupKey, root }, (err) => {
-            if (err) return cb(err)
-            processAuthors(groupId, authors, m.value.author, cb)
-          })
-        } else {
+        // TODO: only add if we're one of the people being added by this msg
+        // TODO: i think getting re-added might not work atm, since the keyring might only mark you un-excluded if you add a *new* key, but we're just adding the same one. so prob need to patch keyring
+        return keystore.group.add(groupId, { key: groupKey, root }, (err) => {
+          if (err) return cb(err)
           processAuthors(groupId, authors, m.value.author, cb)
-        }
+        })
       })
     }),
     pull.drain(() => {}, (err) => {
