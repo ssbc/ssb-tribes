@@ -55,6 +55,18 @@ test('tribes.excludeMembers', async t => {
 
     const excludedList = await p(newPerson.tribes.list)()
     t.deepEqual(excludedList, [], "new person can't list any groups anymore")
+
+    await p(kaitiaki.tribes.invite)(
+      groupId, [newPerson.id], {}
+    )
+
+    const reAddedAuthors = await p(kaitiaki.tribes.listAuthors)(groupId)
+    t.deepEqual(reAddedAuthors.sort(), [kaitiaki.id, newPerson.id].sort(), 're-added person is listed as a member')
+
+    await p(replicate)({ from: kaitiaki, to: newPerson, live: false, name })
+
+    const newPersonBackInGroup = await p(newPerson.tribes.get)(groupId)
+    t.equal(newPersonBackInGroup.excluded, undefined, 'new person is not excluded anymore')
   } catch (err) {
     t.fail(err)
   }
