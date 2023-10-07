@@ -121,7 +121,9 @@ function init (ssb, config) {
   pull(
     listen.addMember(ssb),
     pull.asyncMap((m, cb) => {
-      const { root, groupKey } = m.value.content
+      const { root, groupKey, recps } = m.value.content
+      const membersAdded = recps.slice(1)
+
       ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
         if (err) throw err
 
@@ -132,12 +134,15 @@ function init (ssb, config) {
           ...m.value.content.recps.filter(isFeed)
         ])
 
-        // TODO: only add if we're one of the people being added by this msg
         // TODO: i think getting re-added might not work atm, since the keyring might only mark you un-excluded if you add a *new* key, but we're just adding the same one. so prob need to patch keyring
-        return keystore.group.add(groupId, { key: groupKey, root }, (err) => {
-          if (err) return cb(err)
+        if (membersAdded.includes(ssb.id)) {
+          return keystore.group.add(groupId, { key: groupKey, root }, (err) => {
+            if (err) return cb(err)
+            processAuthors(groupId, authors, m.value.author, cb)
+          })
+        } else {
           processAuthors(groupId, authors, m.value.author, cb)
-        })
+        }
       })
     }),
     pull.drain(() => {}, (err) => {
