@@ -68,22 +68,23 @@ test('tribes.excludeMembers', async t => {
     const newPersonBackInGroup = await p(newPerson.tribes.get)(groupId)
     t.equal(newPersonBackInGroup.excluded, undefined, 'new person is not excluded anymore')
 
-  await p(setTimeout)(500)
+    await p(setTimeout)(500)
 
-  await Promise.all([
-    p(kaitiaki.close)(true),
-    p(newPerson.close)(true)
-  ])
-    .then(() => t.pass('clients close'))
-    .catch((err) => t.error(err))
-  
-  const newPerson2 = Server({ name: 'kaitiaki', startUnclean: true })
+    await Promise.all([
+      p(kaitiaki.close)(true),
+      p(newPerson.close)(true)
+    ])
+      .then(() => t.pass('clients close'))
+      .catch((err) => t.error(err))
 
-  const stillInGroup = await p(newPerson2.tribes.get)(groupId)
-  t.equal(stillInGroup.excluded, undefined, 'new person is still not excluded after client restart')
+    const newPerson2 = Server({ name: 'newPerson', startUnclean: true })
 
-  await p(newPerson2.close)(true)
+    const stillInGroup = await p(newPerson2.tribes.get)(groupId)
+    t.equal(stillInGroup.excluded, undefined, 'new person is still not excluded after client restart')
 
+    await p(setTimeout)(500)
+
+    await p(newPerson2.close)(true)
   } catch (err) {
     t.fail(err)
   }

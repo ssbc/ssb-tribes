@@ -10,24 +10,21 @@ const mockSSB = { backlinks: true, query: true }
 const { isUpdate: isPOBox } = new CRUT(mockSSB, poBoxSpec).spec
 
 module.exports = {
-  addMember (ssb) {
+  mutateMembers (ssb) {
+    const query = [{
+      $filter: {
+        value: {
+          content: {
+            type: { $in: ['group/add-member', 'group/exclude-member'] }
+          }
+        }
+      }
+    }]
+
     return pull(
-      ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
-      // NOTE this will run through all messages on each startup, which will help guarentee
-      // all messages have been emitted AND processed
-      // (same not true if we used a dummy flume-view)
+      ssb.query.read({ query, old: true, live: true }),
       pull.filter(m => m.sync !== true),
-      pull.filter(isAddMember),
-      pull.unique('key')
-      // NOTE we DO NOT filter our own messages out
-      // this is important for rebuilding indexes and keystore state if we have to restore our feed
-    )
-  },
-  excludeMember (ssb) {
-    return pull(
-      ssb.messagesByType({ type: 'group/exclude-member', private: true, live: true }),
-      pull.filter(m => m.sync !== true),
-      pull.filter(isExcludeMember),
+      pull.filter(msg => isAddMember(msg) || isExcludeMember(msg)),
       pull.unique('key')
     )
   },

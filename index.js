@@ -119,48 +119,47 @@ function init (ssb, config) {
   }
 
   pull(
-    listen.addMember(ssb),
+    // combined listeners so we process them in a deterministic order on client restarts
+    listen.mutateMembers(ssb),
     pull.asyncMap((m, cb) => {
-      const { root, groupKey, recps } = m.value.content
-      const membersAdded = recps.slice(1)
+      if (m.value.content.type === 'group/add-member') {
+        const { root, groupKey, recps } = m.value.content
+        const membersAdded = recps.slice(1)
 
-      ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
-        if (err) throw err
+        ssb.get({ id: root, meta: true }, (err, groupInitMsg) => {
+          if (err) throw err
 
-        const groupId = buildGroupId({ groupInitMsg, groupKey })
-        const authors = unique([
-          groupInitMsg.value.author,
-          m.value.author,
-          ...m.value.content.recps.filter(isFeed)
-        ])
+          const groupId = buildGroupId({ groupInitMsg, groupKey })
+          const authors = unique([
+            groupInitMsg.value.author,
+            m.value.author,
+            ...m.value.content.recps.filter(isFeed)
+          ])
 
-        // TODO: i think getting re-added might not work atm, since the keyring might only mark you un-excluded if you add a *new* key, but we're just adding the same one. so prob need to patch keyring
-        if (membersAdded.includes(ssb.id)) {
-          return keystore.group.add(groupId, { key: groupKey, root }, (err) => {
-            if (err) return cb(err)
+          if (membersAdded.includes(ssb.id)) {
+            return keystore.group.add(groupId, { key: groupKey, root }, (err) => {
+              if (err) return cb(err)
+              processAuthors(groupId, authors, m.value.author, cb)
+            })
+          } else {
             processAuthors(groupId, authors, m.value.author, cb)
-          })
+          }
+        })
+      } else {
+        // if exclude member msg
+
+        const excludes = m.value.content.excludes
+        const groupId = m.value.content.recps[0]
+
+        if (excludes.includes(ssb.id)) {
+          keystore.group.exclude(groupId, cb)
         } else {
-          processAuthors(groupId, authors, m.value.author, cb)
+          cb()
         }
-      })
+      }
     }),
     pull.drain(() => {}, (err) => {
-      if (err) console.error('Listening for new addMembers errored:', err)
-    })
-  )
-
-  pull(
-    listen.excludeMember(ssb),
-    pull.drain((msg) => {
-      const excludes = msg.value.content.excludes
-      const groupId = msg.value.content.recps[0]
-
-      if (excludes.includes(ssb.id)) {
-        keystore.group.exclude(groupId)
-      }
-    }, err => {
-      if (err) console.error('Listening for new excludeMembers errored:', err)
+      if (err) console.error('Listening for new addMember and excludeMember messages errored:', err)
     })
   )
 

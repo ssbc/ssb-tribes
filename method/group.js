@@ -155,7 +155,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
 
               // calculate if the person has been added more times than they've been removed
               // this is kind of basic but works. although lol people can add themselves back
-              //a fancier version would check the members tangle and maybe the author of the additions/exclusions
+              // a fancier version would check the members tangle and maybe the author of the additions/exclusions
               const numAdded = {}
 
               addedMembers.forEach(addedMember => {
