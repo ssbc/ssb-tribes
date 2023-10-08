@@ -136,7 +136,10 @@ function init (ssb, config) {
             ...m.value.content.recps.filter(isFeed)
           ])
 
-          if (membersAdded.includes(ssb.id)) {
+          //const record = keystore.group.get(groupId)
+          //const inGroup = record && record.excluded === undefined
+
+          if (membersAdded.includes(ssb.id)){// && !inGroup) {
             return keystore.group.add(groupId, { key: groupKey, root }, (err) => {
               if (err) return cb(err)
               processAuthors(groupId, authors, m.value.author, cb)
