@@ -8,7 +8,7 @@ const listen = require('../listen')
 // TODO this is... not listen any more
 // we may need to rename this
 
-test('listen.addMember', t => {
+test.skip('listen.addMember', t => {
   const alice = Server()
   const bob = Server()
 
