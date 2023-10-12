@@ -58,7 +58,8 @@ test('tribes.excludeMembers', async t => {
     const excludedList = await p(newPerson.tribes.list)()
     t.deepEqual(excludedList, [], "new person can't list any groups anymore")
 
-    // TODO: exclude again to make us use the tangle to check membership
+    // excluding again to make us use the members tangle to calculate membership
+    await p(kaitiaki.tribes.excludeMembers)(groupId, [newPerson.id]).catch(err => t.error(err, err.message))
 
     await p(kaitiaki.tribes.invite)(
       groupId, [newPerson.id], {}
