@@ -3,8 +3,6 @@ const { promisify: p } = require('util')
 const { Server, replicate } = require('../helpers')
 
 test('addNewAuthorListener', t => {
-  t.plan(6)
-
   const admin = Server({ name: 'admin', debug: false }) // me
   const newPerson = Server({ name: 'newPerson', debug: false }) // some friend
 
@@ -38,8 +36,13 @@ test('addNewAuthorListener', t => {
     t.equal(_groupId, groupId, 'newPerson, returns expected groupId')
 
     setTimeout(() => {
-      admin.close()
-      newPerson.close()
+      Promise.all([
+        p(admin.close)(true),
+        p(newPerson.close)(true)
+      ]).then(()=>{
+        if(numAdded === 2) t.end()
+        else t.fail("didn't get all listener events")
+      })
     }, 1000)
   })
 

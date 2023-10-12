@@ -1,5 +1,6 @@
 const test = require('tape')
 const pull = require('pull-stream')
+const { promisify: p } = require('util')
 
 const { Server, replicate, FeedId } = require('./helpers')
 
@@ -166,9 +167,11 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
           (err) => {
             if (seenMine === 20) t.equal(seenMine, 20, 'bob saw 20 messages from me')
             if (err) throw err
-            bob.close()
-            admin.close()
-            t.end()
+
+            Promise.all([
+              p(bob.close)(true),
+              p(admin.close)(true)
+            ]).then(()=>t.end())
           }
         )
       )
