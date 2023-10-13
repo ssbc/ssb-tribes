@@ -12,8 +12,9 @@ module.exports = function TestBot (opts = {}) {
   // }
 
   let stack = Server // eslint-disable-line
-    .use(require('ssb-backlinks'))
-    .use(require('ssb-query'))
+    //.use(require('ssb-backlinks'))
+    //.use(require('ssb-query'))
+    .use(require('ssb-db2/compat'))
     .use(require('../..')) // ssb-tribes - NOTE load it after ssb-backlinks
 
   if (opts.installReplicate === true) {
@@ -22,10 +23,7 @@ module.exports = function TestBot (opts = {}) {
 
   if (opts.name) opts.name = 'ssb-tribes/' + opts.name
 
-  const ssb = stack({
-    db1: true,
-    ...opts
-  })
+  const ssb = stack(opts)
 
   if (opts.debug) {
     ssb.post(m => {
