@@ -28,10 +28,10 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       /* enveloping */
       // we have to do it manually this one time, because the auto-boxing checks for a known groupId
       // but the groupId is derived from the messageId of this message (which does not exist yet
-      const plain = Buffer.from(JSON.stringify(content), 'utf8')
+      //const plain = Buffer.from(JSON.stringify(content), 'utf8')
 
-      const msgKey = new SecretKey().toBuffer()
-      const recipientKeys = [
+      //const msgKey = new SecretKey().toBuffer()
+      const recps = [
         { key: groupKey.toBuffer(), scheme: keySchemes.private_group },
         keystore.self.get() // sneak this in so can decrypt it ourselves without rebuild!
       ]
@@ -40,28 +40,26 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       // consider making sure creator can always open the group (even if lose keystore)
       // would also require adding groupKey to this message
 
-      ssb.getFeedState(ssb.id, (err, previousFeedState) => {
+      ssb.db.create({
+        content,
+        recps,
+        encryptionFormat: 'box2',
+      }, (err, groupInitMsg) => {
         if (err) return cb(err)
 
-        const previousMessageId = bfe.encode(previousFeedState.id)
+        const data = {
+          groupId: buildGroupId({
+            groupInitMsg,
+            groupKey: groupKey.toBuffer()
+          }),
+          groupKey: groupKey.toBuffer(),
+          root: groupInitMsg.key,
+          groupInitMsg
+        }
 
-        const envelope = box(plain, state.feedId, previousMessageId, msgKey, recipientKeys)
-        const ciphertext = envelope.toString('base64') + '.box2'
-
-        ssb.publish(ciphertext, (err, groupInitMsg) => {
+        keystore.group.add(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
           if (err) return cb(err)
-
-          const data = {
-            groupId: buildGroupId({ groupInitMsg, msgKey }),
-            groupKey: groupKey.toBuffer(),
-            root: groupInitMsg.key,
-            groupInitMsg
-          }
-
-          keystore.group.add(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
-            if (err) return cb(err)
-            cb(null, data)
-          })
+          cb(null, data)
         })
       })
     },

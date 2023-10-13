@@ -219,37 +219,38 @@ function init (ssb, config) {
   /* Tangle: auto-add tangles.group info to all private-group messages */
   const getGroupTangle = GetGroupTangle(ssb, keystore, 'group')
   const getMembersTangle = GetGroupTangle(ssb, keystore, 'members')
-  ssb.publish.hook(function (publish, args) {
-    const [content, cb] = args
-    if (!content.recps) return publish.apply(this, args)
+  // TODO: make this a ssb.tribes.publish function instead of a hook
+  //ssb.publish.hook(function (publish, args) {
+  //  const [content, cb] = args
+  //  if (!content.recps) return publish.apply(this, args)
 
-    if (!isGroup(content.recps[0])) return publish.apply(this, args)
+  //  if (!isGroup(content.recps[0])) return publish.apply(this, args)
 
-    onKeystoreReady(() => {
-      if (!keystore.group.has(content.recps[0])) return cb(Error('unknown groupId'))
+  //  onKeystoreReady(() => {
+  //    if (!keystore.group.has(content.recps[0])) return cb(Error('unknown groupId'))
 
-      getGroupTangle(content.recps[0], (err, groupTangle) => {
-        if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
+  //    getGroupTangle(content.recps[0], (err, groupTangle) => {
+  //      if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
 
-        set(content, 'tangles.group', groupTangle)
-        tanglePrune(content) // prune the group tangle down if needed
+  //      set(content, 'tangles.group', groupTangle)
+  //      tanglePrune(content) // prune the group tangle down if needed
 
-        // we only want to have to calculate the members tangle if it's gonna be used
-        if (!isMemberType(content.type)) {
-          return publish.call(this, content, cb)
-        }
+  //      // we only want to have to calculate the members tangle if it's gonna be used
+  //      if (!isMemberType(content.type)) {
+  //        return publish.call(this, content, cb)
+  //      }
 
-        getMembersTangle(content.recps[0], (err, membersTangle) => {
-          if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
+  //      getMembersTangle(content.recps[0], (err, membersTangle) => {
+  //        if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
 
-          set(content, 'tangles.members', membersTangle)
-          tanglePrune(content, 'members')
+  //        set(content, 'tangles.members', membersTangle)
+  //        tanglePrune(content, 'members')
 
-          publish.call(this, content, cb)
-        })
-      })
-    })
-  })
+  //        publish.call(this, content, cb)
+  //      })
+  //    })
+  //  })
+  //})
 
   /* API */
   const scuttle = Method(ssb, keystore, state) // ssb db methods
