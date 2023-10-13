@@ -85,8 +85,8 @@ function init (ssb, config) {
 
   /* register the boxer / unboxer */
   const { boxer, unboxer } = Envelope(keystore, state)
-  ssb.addBoxer({ init: onKeystoreReady, value: boxer })
-  ssb.addUnboxer({ init: onKeystoreReady, ...unboxer })
+  //ssb.addBoxer({ init: onKeystoreReady, value: boxer })
+  //ssb.addUnboxer({ init: onKeystoreReady, ...unboxer })
 
   function onKeystoreReady (done) {
     if (state.closed === true) return

@@ -15,6 +15,7 @@ module.exports = function TestBot (opts = {}) {
     //.use(require('ssb-backlinks'))
     //.use(require('ssb-query'))
     .use(require('ssb-db2/compat'))
+    .use(require('ssb-box2'))
     .use(require('../..')) // ssb-tribes - NOTE load it after ssb-backlinks
 
   if (opts.installReplicate === true) {
@@ -23,7 +24,13 @@ module.exports = function TestBot (opts = {}) {
 
   if (opts.name) opts.name = 'ssb-tribes/' + opts.name
 
-  const ssb = stack(opts)
+  const ssb = stack({
+    box2: {
+      legacyMode: true,
+      ...opts.box2
+    },
+    ...opts
+  })
 
   if (opts.debug) {
     ssb.post(m => {

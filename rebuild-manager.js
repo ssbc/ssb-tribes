@@ -21,6 +21,7 @@ module.exports = class RebuildManager {
     this.requests = new Requests()
     this.nextRequests = new Requests()
 
+    return
     ssb.rebuild.hook((rebuild, [cb]) => {
       log('(ﾉ´ヮ´)ﾉ*:･ﾟ✧')
       // log('reasons', JSON.stringify(this.requests.reasons, null, 2))

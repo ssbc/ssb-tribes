@@ -1,6 +1,7 @@
 // const flumeView = require('flumeview-reduce')
 const pull = require('pull-stream')
 const CRUT = require('ssb-crut')
+const { where, and, type, isDecrypted, live: dbLive, toPullStream } = require('ssb-db2/operators')
 
 const { isValid: isAddMember } = require('./spec/group/add-member')
 const { isValid: isExcludeMember } = require('./spec/group/exclude-member')
@@ -12,7 +13,16 @@ const { isUpdate: isPOBox } = new CRUT(mockSSB, poBoxSpec).spec
 module.exports = {
   addMember (ssb) {
     return pull(
-      ssb.messagesByType({ type: 'group/add-member', private: true, live: true }),
+      ssb.db.query(
+        where(
+          and(
+            isDecrypted('box2'),
+            type('group/add-member'),
+          )
+        ),
+        dbLive({ old: true }),
+        toPullStream()
+      ),
       // NOTE this will run through all messages on each startup, which will help guarentee
       // all messages have been emitted AND processed
       // (same not true if we used a dummy flume-view)
@@ -25,7 +35,16 @@ module.exports = {
   },
   excludeMember (ssb) {
     return pull(
-      ssb.messagesByType({ type: 'group/exclude-member', private: true, live: true }),
+      ssb.db.query(
+        where(
+          and(
+            isDecrypted('box2'),
+            type('group/exclude-member'),
+          )
+        ),
+        dbLive({ old: true }),
+        toPullStream()
+      ),
       pull.filter(m => m.sync !== true),
       pull.filter(isExcludeMember),
       pull.unique('key')
@@ -33,7 +52,16 @@ module.exports = {
   },
   poBox (ssb, emit) {
     pull(
-      ssb.messagesByType({ type: 'group/po-box', private: true, live: true }),
+      ssb.db.query(
+        where(
+          and(
+            isDecrypted('box2'),
+            type('group/po-box'),
+          )
+        ),
+        dbLive({ old: true }),
+        toPullStream()
+      ),
       // NOTE this will run through all messages on each startup, which will help guarentee
       // all messages have been emitted AND processed
       // (same not true if we used a dummy flume-view)
