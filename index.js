@@ -269,9 +269,11 @@ function init (ssb, config) {
         const readKey = unboxer.key(initValue.content, initValue)
         if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
 
+        console.log('about to addMember')
         // addMember the admin
         scuttle.group.addMember(data.groupId, [ssb.id], {}, (err) => {
           if (err) return cb(err)
+        console.log('added member')
 
           // add a P.O. Box to the group (maybe)
           if (!opts.addPOBox) return cb(null, data)
@@ -325,6 +327,12 @@ function init (ssb, config) {
   }
 
   return {
+    publish (content, cb) {
+      ssb.db.create({
+        content,
+        encryptionFormat: 'box2',
+      }, cb)
+    },
     register (groupId, info, cb) {
       keystore.group.add(groupId, info, cb)
     },

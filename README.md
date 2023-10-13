@@ -34,7 +34,7 @@ ssb.tribes.create({}, (err, info) => {
     test: 'kia ora, e te whānau',
     recps: [groupId] // <<< you can now put a groupId in the recps
   }
-  ssb.publish(content, (err, msg) => {
+  ssb.tribes.publish(content, (err, msg) => {
     // tada msg is encrypted to group!
 
     const cookie = '@YXkE3TikkY4GFMX3lzXUllRkNTbj5E+604AkaO1xbz8=.ed25519'

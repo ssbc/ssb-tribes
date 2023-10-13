@@ -27,7 +27,7 @@ test('unbox', async t => {
     }
     const msg = await run(
       `publish with recps: ${recps}`,
-      p(ssb.publish)(content)
+      p(ssb.tribes.publish)(content)
     )
     t.true(msg.value.content.endsWith('.box2'), 'box')
 

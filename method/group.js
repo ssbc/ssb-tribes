@@ -88,7 +88,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
 
       if (!addMemberSpec.isValid(content)) return cb(new Error(addMemberSpec.isValid.errorsString))
 
-      ssb.publish(content, cb)
+      ssb.tribes.publish(content, cb)
     },
     excludeMembers (groupId, authorIds, cb) {
       const { root } = keystore.group.get(groupId)
@@ -106,7 +106,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
 
       if (!excludeMemberSpec.isValid(content)) return cb(new Error(excludeMemberSpec.isValid.errorsString))
 
-      ssb.publish(content, cb)
+      ssb.tribes.publish(content, cb)
     },
     listAuthors (groupId, cb) {
       const query = [{

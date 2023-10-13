@@ -53,14 +53,14 @@ test('get-group-tangle unit test', t => {
             recps: [data.groupId]
           })
 
-          server.publish(content(), (err, msg) => {
+          server.tribes.publish(content(), (err, msg) => {
             if (err) throw err
 
             getGroupTangle(data.groupId, (err, { root, previous }) => {
               if (err) throw err
               t.deepEqual({ root, previous }, { root: data.groupInitMsg.key, previous: [msg.key] }, 'adding message to root')
 
-              server.publish(content(), (err, msg) => {
+              server.tribes.publish(content(), (err, msg) => {
                 if (err) throw err
                 getGroupTangle(data.groupId, (err, { root, previous }) => {
                   if (err) throw err
@@ -94,7 +94,7 @@ test('get-group-tangle (cache)', t => {
     t.equal(queryCalls, 2, 'no cache for publishing of group/add-member, a backlink query was run')
     const content = { type: 'memo', recps: [data.groupId] }
 
-    server.publish(content, (err, msg) => {
+    server.tribes.publish(content, (err, msg) => {
       if (err) throw err
 
       t.equal(queryCalls, 2, 'cache used for publishing next message')
@@ -117,7 +117,7 @@ test(`get-group-tangle-${n}-publishes`, t => {
     pull(
       pull.values(publishArray),
       paraMap(
-        (value, cb) => server.publish({ type: 'memo', value, recps: [groupId] }, cb),
+        (value, cb) => server.tribes.publish({ type: 'memo', value, recps: [groupId] }, cb),
         4
       ),
       paraMap(
@@ -146,7 +146,7 @@ test('get-group-tangle', t => {
       plan: 5,
       test: (t) => {
         const DESCRIPTION = 'auto adds group tangle'
-        // this is an integration test, as we've hooked get-group-tangle into ssb.publish
+        // this is an integration test, as we've hooked get-group-tangle into ssb.tribes.publish
         const ssb = Server()
 
         ssb.tribes.create(null, (err, data) => {
@@ -163,7 +163,7 @@ test('get-group-tangle', t => {
               recps: [groupId]
             }
 
-            ssb.publish(content, (err, msg) => {
+            ssb.tribes.publish(content, (err, msg) => {
               t.error(err, 'publish a message')
 
               ssb.get({ id: msg.key, private: true }, (err, A) => {
@@ -251,13 +251,13 @@ test('get-group-tangle with branch', t => {
               recps: [data.groupId]
             })
 
-            alice.publish(content(), (err, msg) => {
+            alice.tribes.publish(content(), (err, msg) => {
               t.error(err, 'alice publishes a new message')
 
               // NOTE With the content.recps we are adding we are asking Bob to know about a group before he's
               // found out about it for himself
               whenBobHasGroup(data.groupId, () => {
-                bob.publish(content(), (err, msg) => {
+                bob.tribes.publish(content(), (err, msg) => {
                   if (err) throw err
                   // Then Bob shares his message with Alice
                   replicate({ from: bob, to: alice, name }, (err) => {

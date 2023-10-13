@@ -44,7 +44,7 @@ test('tribes.invite', async t => {
   }
   const { key: greetingKey } = await run(
     'kaitiaki published message',
-    p(kaitiaki.publish)(greetingContent)
+    p(kaitiaki.tribes.publish)(greetingContent)
   )
 
   let numberRebuilds = 0
@@ -87,7 +87,7 @@ test('tribes.invite', async t => {
     text: 'Thank you kaitiaki',
     recps: [groupId]
   }
-  const { key: replyKey } = await p(newPerson.publish)(replyContent)
+  const { key: replyKey } = await p(newPerson.tribes.publish)(replyContent)
   await p(replicate)({ from: newPerson, to: kaitiaki, live: false })
   const replyMsg = await Getter(kaitiaki)(replyKey)
   t.deepEqual(replyMsg.value.content, replyContent, 'kaitiaki can read things from new person')

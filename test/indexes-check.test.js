@@ -34,7 +34,7 @@ function createRecords (server, t, cb) {
           : { type, count: count++, parent: server.id, child: lastMsgId, recps }
       }),
       pull.asyncMap((content, cb) => {
-        server.publish(content, (err, msg) => {
+        server.tribes.publish(content, (err, msg) => {
           if (err) return cb(err)
           const label = typeof msg.value.content === 'string' ? 'encrypted' : 'public'
           t.ok(true, `${label} (${content.count}, ${content.type})`)
@@ -92,7 +92,7 @@ function testSuite (indexName, createSource) {
               type: 'doop',
               recps: [groupId]
             }
-            server.publish(anything, (err) => {
+            server.tribes.publish(anything, (err) => {
               t.error(err, 'publish anything')
               const keys = server.keys
               server.close(err => {

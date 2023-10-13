@@ -21,7 +21,7 @@ test('publish (to groupId)', t => {
     console.log('NODE_ENV', process.env.NODE_ENV)
     Object.freeze(content.recps)
 
-    server.publish(content, (err, msg) => {
+    server.tribes.publish(content, (err, msg) => {
       t.error(err, 'msg published to group')
       t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
       const cipherTextSize = Buffer.from(msg.value.content.replace('.box2', ''), 'base64').length
@@ -55,7 +55,7 @@ test('publish (to groupId we dont have key for)', t => {
     recps: [groupId]
   }
 
-  server.publish(content, (err) => {
+  server.tribes.publish(content, (err) => {
     t.match(err.message, /unknown groupId/, 'returns error')
     server.close(t.end)
   })
@@ -76,7 +76,7 @@ test('publish (group + feedId)', t => {
       recps: [groupId, feedId]
     }
 
-    server.publish(content, (err, msg) => {
+    server.tribes.publish(content, (err, msg) => {
       t.error(err)
 
       t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
@@ -106,8 +106,8 @@ test('publish (DMs: myFeedId + feedId)', async t => {
   }
 
   try {
-    const msg = await p(alice.publish)(content)
-    await p(alice.publish)({ type: 'doop' })
+    const msg = await p(alice.tribes.publish)(content)
+    await p(alice.tribes.publish)({ type: 'doop' })
     t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
 
     const aliceGet = await p(alice.get)({ id: msg.key, private: true, meta: true })
@@ -134,7 +134,7 @@ test('publish (bulk)', t => {
       .map(() => ({ type: 'test', recps: [groupId] }))
 
     bulk.forEach((content, i) => {
-      server.publish(content, (err, msg) => {
+      server.tribes.publish(content, (err, msg) => {
         if (err) t.error(err, `${i + 1} published`)
         if (typeof msg.value.content !== 'string') t.fail(`${i + 1} encrypted`)
 
@@ -152,7 +152,7 @@ test('publish (bulk)', t => {
     /* works fine */
     // pull(
     //   pull.values(bulk),
-    //   pull.asyncMap(server.publish),
+    //   pull.asyncMap(server.tribes.publish),
     //   pull.drain(
     //     () => process.stdout.write('✓'),
     //     (err) => {

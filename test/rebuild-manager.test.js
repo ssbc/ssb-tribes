@@ -12,8 +12,8 @@ async function setup () {
   // ssb.post(console.log)
 
   // NOTE - We cannot rebuild an empty DB ?!
-  await p(ssb.publish)({ type: 'filler', text: new Array(1000).fill('dog').join() })
-  await p(ssb.publish)({ type: 'filler', text: new Array(1000).fill('cat').join() })
+  await p(ssb.tribes.publish)({ type: 'filler', text: new Array(1000).fill('dog').join() })
+  await p(ssb.tribes.publish)({ type: 'filler', text: new Array(1000).fill('cat').join() })
 
   // we fake indexing taking some time to be done
   const TIME_TILL_INDEX_DONE = 1000

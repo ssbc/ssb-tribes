@@ -102,7 +102,7 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
         // I publish 20 messages to the group
         pull(
           pull.values(nMessages(20, { type: 'me', recps: [groupId] })),
-          pull.asyncMap(me.publish),
+          pull.asyncMap(me.tribes.publish),
           pull.collect((err) => {
             t.error(err, 'I publish 20 messages to the group')
 

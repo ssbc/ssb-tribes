@@ -4,7 +4,7 @@ const generators = [
   (i) => {
     const server = Server()
 
-    server.publish({ type: 'first' }, (err, msg) => {
+    server.tribes.publish({ type: 'first' }, (err, msg) => {
       if (err) throw err
 
       server.tribes.create('3 musketeers', (err, data) => {
