@@ -15,6 +15,7 @@ module.exports = function TestBot (opts = {}) {
     //.use(require('ssb-backlinks'))
     //.use(require('ssb-query'))
     .use(require('ssb-db2/compat'))
+    .use(require('ssb-db2/compat/feedstate'))
     //.use(require('ssb-box2'))
     .use(require('../..')) // ssb-tribes - NOTE load it after ssb-backlinks
 

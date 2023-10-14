@@ -7,8 +7,6 @@ const { isValid: isAddMember } = require('./spec/group/add-member')
 const { isValid: isExcludeMember } = require('./spec/group/exclude-member')
 
 const poBoxSpec = require('./spec/group/po-box')
-const mockSSB = { backlinks: true, query: true }
-const { isUpdate: isPOBox } = new CRUT(mockSSB, poBoxSpec).spec
 
 module.exports = {
   addMember (ssb) {
@@ -51,6 +49,8 @@ module.exports = {
     )
   },
   poBox (ssb, emit) {
+    const { isUpdate: isPOBox } = new CRUT(ssb, poBoxSpec).spec
+
     pull(
       ssb.db.query(
         where(
