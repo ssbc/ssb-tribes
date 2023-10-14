@@ -2,6 +2,7 @@ const test = require('tape')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
 const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
 const pull = require('pull-stream')
+const { where, and, author, isDecrypted, toPullStream, descending } = require('ssb-db2/operators')
 
 const { Server } = require('../helpers')
 
@@ -33,7 +34,16 @@ test('tribes.create', t => {
 
       // check I published a group/add-member to myself
       pull(
-        server.createUserStream({ id: server.id, private: true, reverse: true }),
+        server.db.query(
+          where(
+            and(
+              isDecrypted('box2'),
+              author(server.id)
+            )
+          ),
+          descending(),
+          toPullStream()
+        ),
         pull.map(msg => msg.value.content),
         pull.collect((err, msgContents) => {
           if (err) throw err

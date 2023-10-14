@@ -1,6 +1,7 @@
 const Crut = require('ssb-crut')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const pull = require('pull-stream')
+const { where, and, type: dbType, author, slowEqual, toPullStream } = require('ssb-db2/operators')
 const FeedGroupLink = require('../spec/link/feed-group')
 const GroupSubGroupLink = require('../spec/link/group-subgroup')
 
@@ -15,25 +16,19 @@ module.exports = function Link (ssb) {
     if (child && !isGroup(child)) return cb(new Error(`findLinks expected a groupId for child, got ${child} instead.`))
     if (!parent && !child) return cb(new Error('findLinks expects a parent or child id to be given'))
 
-    const query = [{
-      $filter: {
-        value: {
-          content: {
-            type,
-            ...opts,
-            tangles: {
-              link: { root: null, previous: null }
-            }
-          }
-        }
-      }
-    }]
-
     pull(
-      // NOTE: using ssb-query instead of ssb-backlinks
-      // because the backlinks query will get EVERY message which contains the groupId in it, which will be a LOT for a group
-      // then filters that massive amount down to the ones which have the dest in the right place
-      ssb.query.read({ query }),
+      ssb.db.query(
+        where(
+          and(
+            dbType(type),
+            parent && slowEqual('value.content.parent', parent),
+            child && slowEqual('value.content.child', child),
+            slowEqual('value.content.tangles.link.root', null),
+            slowEqual('value.content.tangles.link.previous', null),
+          )
+        ),
+        toPullStream()
+      ),
       pull.unique(link => {
         if (parent) return link.value.content.child
         else return link.value.content.parent
@@ -89,26 +84,19 @@ module.exports = function Link (ssb) {
     findGroupByFeedId (feedId, cb) {
       if (!isFeed(feedId)) return cb(new Error('requires a valid feedId'))
 
-      const query = [{
-        $filter: {
-          value: {
-            author: feedId, // link published by this person
-            content: {
-              type: 'link/feed-group',
-              parent: feedId, // and linking from that feedId
-              tangles: {
-                link: { root: null, previous: null }
-              }
-            }
-          }
-        }
-      }]
-
       pull(
-        // NOTE: using ssb-query instead of ssb-backlinks
-        // because the backlinks query will get EVERY message which contains the groupId in it, which will be a LOT for a group
-        // then filters that massive amount down to the ones which have the dest in the right place
-        ssb.query.read({ query }),
+        ssb.db.query(
+          where(
+            and(
+              author(feedId),
+              dbType('link/feed-group'),
+              slowEqual('value.content.parent', feedId),
+              slowEqual('value.content.tangles.link.root', null),
+              slowEqual('value.content.tangles.link.previous', null),
+            )
+          ),
+          toPullStream()
+        ),
         pull.filter(feedGroupLink.spec.isRoot),
         pull.filter(link => {
           return link.value.content.child === link.value.content.recps[0]
