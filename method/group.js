@@ -12,7 +12,14 @@ const excludeMemberSpec = require('../spec/group/exclude-member')
 const groupPoBoxSpec = require('../spec/group/po-box')
 
 module.exports = function GroupMethods (ssb, keystore, state) {
-  const groupPoBoxCrut = new Crut(ssb, groupPoBoxSpec)
+  const groupPoBoxCrut = new Crut(
+    ssb,
+    groupPoBoxSpec,
+    {
+      publish: (...args) => ssb.tribes.publish(...args),
+      feedId: ssb.id
+    }
+  )
 
   return {
     init (cb) {

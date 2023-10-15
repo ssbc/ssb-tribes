@@ -6,7 +6,14 @@ const FeedGroupLink = require('../spec/link/feed-group')
 const GroupSubGroupLink = require('../spec/link/group-subgroup')
 
 module.exports = function Link (ssb) {
-  const feedGroupLink = new Crut(ssb, FeedGroupLink)
+  const feedGroupLink = new Crut(
+    ssb,
+    FeedGroupLink,
+    {
+      publish: (...args) => ssb.tribes.publish(...args),
+      feedId: ssb.id
+    }
+  )
   const groupSubGroupLink = new Crut(ssb, GroupSubGroupLink)
 
   // NOTE this is not generalised to all links, it's about group links
