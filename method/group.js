@@ -194,10 +194,8 @@ module.exports = function GroupMethods (ssb, keystore, state) {
           }
         }
 
-        console.log('about to update group pobox crut', groupId)
         groupPoBoxCrut.updateGroup(groupId, props, (err) => {
           if (err) return cb(err)
-          console.log('updated group pobox crut')
 
           cb(null, poBoxId)
         })

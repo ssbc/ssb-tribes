@@ -269,10 +269,8 @@ function init (ssb, config) {
           // add a P.O. Box to the group (maybe)
           if (!opts.addPOBox) return cb(null, data)
           else {
-            console.log('adding pobox')
             scuttle.group.addPOBox(data.groupId, (err, poBoxId) => {
               if (err) cb(err)
-              console.log('added pobox')
               cb(null, { ...data, poBoxId })
             })
           }
