@@ -67,6 +67,7 @@ function init (ssb, config) {
 
   /* secret keys store / helper */
   const keystore = {} // HACK we create an Object so we have a reference to merge into
+  // TODO: ssb-box2 stores the keyring at config.path/keyring. we're gonna have to merge this right?
   KeyRing(join(config.path, 'tribes/keystore'), (err, api) => {
     if (err) throw err
 
@@ -135,7 +136,7 @@ function init (ssb, config) {
         const record = keystore.group.get(groupId)
         // if we haven't been in the group since before, register the group
         if (record == null) {
-          return keystore.group.add(groupId, { key: groupKey, root }, (err) => {
+          return ssb.box2.addGroupInfo(groupId, { key: groupKey, root }, (err) => {
             if (err) return cb(err)
             processAuthors(groupId, authors, m.value.author, cb)
           })
@@ -269,17 +270,17 @@ function init (ssb, config) {
         const readKey = unboxer.key(initValue.content, initValue)
         if (!readKey) return cb(new Error('tribes.group.init failed, please try again while not publishing other messages'))
 
-        console.log('about to addMember')
         // addMember the admin
         scuttle.group.addMember(data.groupId, [ssb.id], {}, (err) => {
           if (err) return cb(err)
-        console.log('added member')
 
           // add a P.O. Box to the group (maybe)
           if (!opts.addPOBox) return cb(null, data)
           else {
+            console.log('adding pobox')
             scuttle.group.addPOBox(data.groupId, (err, poBoxId) => {
               if (err) cb(err)
+              console.log('added pobox')
               cb(null, { ...data, poBoxId })
             })
           }
@@ -334,7 +335,7 @@ function init (ssb, config) {
       }, cb)
     },
     register (groupId, info, cb) {
-      keystore.group.add(groupId, info, cb)
+      ssb.box2.addGroupInfo(groupId, info, cb)
     },
     create: tribeCreate,
     list: tribeList,

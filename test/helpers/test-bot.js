@@ -14,9 +14,11 @@ module.exports = function TestBot (opts = {}) {
   let stack = Server // eslint-disable-line
     //.use(require('ssb-backlinks'))
     //.use(require('ssb-query'))
+    .use(require('ssb-db2/core'))
+    .use(require('ssb-classic'))
     .use(require('ssb-db2/compat'))
     .use(require('ssb-db2/compat/feedstate'))
-    //.use(require('ssb-box2'))
+    .use(require('ssb-box2'))
     .use(require('../..')) // ssb-tribes - NOTE load it after ssb-backlinks
 
   if (opts.installReplicate === true) {
@@ -30,6 +32,8 @@ module.exports = function TestBot (opts = {}) {
       legacyMode: true,
       ...opts.box2
     },
+    // we don't want testbot to import db2 for us, we want more granularity and control of dep versions
+    db1: true,
     ...opts
   })
 

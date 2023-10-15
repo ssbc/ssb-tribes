@@ -40,7 +40,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       //const msgKey = new SecretKey().toBuffer()
       const recps = [
         { key: groupKey.toBuffer(), scheme: keySchemes.private_group },
-        keystore.self.get() // sneak this in so can decrypt it ourselves without rebuild!
+        ssb.id // sneak this in so can decrypt it ourselves without rebuild!
       ]
 
       // TODO
@@ -64,8 +64,11 @@ module.exports = function GroupMethods (ssb, keystore, state) {
           groupInitMsg
         }
 
-        keystore.group.add(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
+        console.log('about to add group info on init', ssb.box2.addGroupInfo, ssb.box2)
+        ssb.box2.addGroupInfo(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
+          console.log('added group info on init before err')
           if (err) return cb(err)
+          console.log('added group info on init')
           cb(null, data)
         })
       })
@@ -186,8 +189,10 @@ module.exports = function GroupMethods (ssb, keystore, state) {
           }
         }
 
+        console.log('about to update group pobox crut', groupId)
         groupPoBoxCrut.updateGroup(groupId, props, (err) => {
           if (err) return cb(err)
+          console.log('updated group pobox crut')
 
           cb(null, poBoxId)
         })
