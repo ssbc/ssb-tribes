@@ -14,7 +14,14 @@ module.exports = function Link (ssb) {
       feedId: ssb.id
     }
   )
-  const groupSubGroupLink = new Crut(ssb, GroupSubGroupLink)
+  const groupSubGroupLink = new Crut(
+    ssb,
+    GroupSubGroupLink,
+    {
+      publish: (...args) => ssb.tribes.publish(...args),
+      feedId: ssb.id
+    }
+  )
 
   // NOTE this is not generalised to all links, it's about group links
   function findLinks (type, opts = {}, cb) {
