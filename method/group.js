@@ -179,7 +179,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       )
     },
     addPOBox (groupId, cb) {
-      const info = keystore.group.get(groupId)
+      const info = ssb.box2.getGroupInfo(groupId)
       if (!info) return cb(new Error('unknown groupId: ' + groupId))
 
       const { id: poBoxId, secret } = poBoxKeys.generate()

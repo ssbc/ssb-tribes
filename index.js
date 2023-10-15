@@ -282,8 +282,8 @@ function init (ssb, config) {
   }
 
   const tribeGet = (id, cb) => {
-    onKeystoreReady(() => {
-      const data = keystore.group.get(id)
+    ssb.box2.getGroupInfo(id, (err, data) => {
+      if (err) return cb(err)
       if (!data) return cb(new Error(`unknown groupId ${id})`))
 
       scuttle.link.findParentGroupLinks(id, (err, parentGroupLinks) => {
@@ -306,17 +306,15 @@ function init (ssb, config) {
   function tribeList (opts, cb) {
     if (typeof opts === 'function') return tribeList({}, opts)
 
-    onKeystoreReady(() => {
-      pull(
-        pull.values(keystore.group.listSync()),
-        paraMap(tribeGet, 4),
-        opts.subtribes
-          ? null
-          : pull.filter(tribe => tribe.parentGroupId === undefined),
-        pull.map(tribe => tribe.groupId),
-        pull.collect(cb)
-      )
-    })
+    pull(
+      ssb.box2.listGroupIds(),
+      paraMap(tribeGet, 4),
+      opts.subtribes
+        ? null
+        : pull.filter(tribe => tribe.parentGroupId === undefined),
+      pull.map(tribe => tribe.groupId),
+      pull.collect(cb)
+    )
   }
 
   return {
