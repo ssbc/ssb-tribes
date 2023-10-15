@@ -51,54 +51,59 @@ module.exports = function GroupMethods (ssb, keystore, state) {
         content,
         recps,
         encryptionFormat: 'box2',
-      }, (err, groupInitMsg) => {
+      }, (err, initMsg) => {
         if (err) return cb(err)
 
-        const data = {
-          groupId: buildGroupId({
-            groupInitMsg,
-            groupKey: groupKey.toBuffer()
-          }),
-          groupKey: groupKey.toBuffer(),
-          root: groupInitMsg.key,
-          groupInitMsg
-        }
-
-        console.log('about to add group info on init', ssb.box2.addGroupInfo, ssb.box2)
-        ssb.box2.addGroupInfo(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
-          console.log('added group info on init before err')
+        ssb.get({ id: initMsg.key, meta: true }, (err, groupInitMsg) => {
           if (err) return cb(err)
-          console.log('added group info on init')
-          cb(null, data)
+
+          const data = {
+            groupId: buildGroupId({
+              groupInitMsg,
+              groupKey: groupKey.toBuffer()
+            }),
+            groupKey: groupKey.toBuffer(),
+            root: groupInitMsg.key,
+            groupInitMsg
+          }
+
+          ssb.box2.addGroupInfo(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
+            if (err) return cb(err)
+            cb(null, data)
+          })
         })
       })
     },
 
     addMember (groupId, authorIds, opts = {}, cb) {
-      const { writeKey, root } = keystore.group.get(groupId)
+      ssb.box2.getGroupInfo(groupId, (err, groupInfo) => {
+        if (err) return cb(err)
 
-      const content = {
-        type: 'group/add-member',
-        version: 'v1',
-        groupKey: writeKey.key.toString('base64'),
-        root,
-        tangles: {
-          members: {
-            root,
-            previous: [root] // TODO calculate previous for members tangle
+        const { writeKey, root } = groupInfo
+
+        const content = {
+          type: 'group/add-member',
+          version: 'v1',
+          groupKey: writeKey.key.toString('base64'),
+          root,
+          tangles: {
+            members: {
+              root,
+              previous: [root] // TODO calculate previous for members tangle
+            },
+
+            group: { root, previous: [root] }
+            // NOTE: this is a dummy entry which is over-written in publish hook
           },
+          recps: [groupId, ...authorIds]
+        }
 
-          group: { root, previous: [root] }
-          // NOTE: this is a dummy entry which is over-written in publish hook
-        },
-        recps: [groupId, ...authorIds]
-      }
+        if (opts.text) content.text = opts.text
 
-      if (opts.text) content.text = opts.text
+        if (!addMemberSpec.isValid(content)) return cb(new Error(addMemberSpec.isValid.errorsString))
 
-      if (!addMemberSpec.isValid(content)) return cb(new Error(addMemberSpec.isValid.errorsString))
-
-      ssb.tribes.publish(content, cb)
+        ssb.tribes.publish(content, cb)
+      })
     },
     excludeMembers (groupId, authorIds, cb) {
       const { root } = keystore.group.get(groupId)

@@ -16,7 +16,7 @@ test('tribes.create', t => {
     const { groupId, groupKey, groupInitMsg } = data
     t.true(isGroup(groupId), 'returns group identifier - groupId')
     t.true(Buffer.isBuffer(groupKey) && groupKey.length === 32, 'returns group symmetric key - groupKey')
-    t.match(groupInitMsg.value.content, /^[a-zA-Z0-9/+]+=*\.box2$/, 'encrypted init msg')
+    t.match(groupInitMsg.meta.originalContent, /^[a-zA-Z0-9/+]+=*\.box2$/, 'encrypted init msg')
 
     server.get({ id: groupInitMsg.key, private: true }, (err, value) => {
       if (err) throw err
