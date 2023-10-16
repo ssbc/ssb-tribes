@@ -1,3 +1,5 @@
+const pull = require('pull-stream')
+const { where, author, toPromise, descending } = require('ssb-db2/operators')
 const { test, p, Run, Server, replicate, FeedId } = require('../helpers')
 
 test('tribes.invite', async t => {
@@ -8,7 +10,15 @@ test('tribes.invite', async t => {
   const { groupId, groupKey, groupInitMsg } = await p(kaitiaki.tribes.create)({})
   t.true(groupId, 'creates group')
 
-  const selfAdd = await p(kaitiaki.getLatest)(kaitiaki.id)
+  const selfAdd = (await pull(
+      kaitiaki.db.query(
+        where(author(kaitiaki.id)),
+        descending(),
+        toPromise()
+      ),
+    ))[0]
+
+  t.true(selfAdd, 'got addition of self')
 
   const authorIds = [
     newPerson.id,
