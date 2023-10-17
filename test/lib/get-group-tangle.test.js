@@ -82,34 +82,6 @@ test('get-group-tangle unit test', t => {
   })
 })
 
-test.skip('get-group-tangle (cache)', t => {
-  const name = `get-group-tangle-cache-${Date.now()}`
-  const server = Server({ name })
-
-  let queryCalls = 0
-  server.backlinks.read.hook(function (read, args) {
-    queryCalls += 1
-
-    return read(...args)
-  })
-  server.tribes.create(null, (err, data) => {
-    if (err) throw err
-
-    // 1 for group tangle, 1 for members tangle
-    t.equal(queryCalls, 2, 'no cache for publishing of group/add-member, a backlink query was run')
-    const content = { type: 'memo', recps: [data.groupId] }
-
-    server.tribes.publish(content, (err, msg) => {
-      if (err) throw err
-
-      t.equal(queryCalls, 2, 'cache used for publishing next message')
-
-      server.close()
-      t.end()
-    })
-  })
-})
-
 const n = 100
 test(`get-group-tangle-${n}-publishes`, t => {
   const publishArray = new Array(n).fill().map((item, i) => i)
@@ -134,7 +106,6 @@ test(`get-group-tangle-${n}-publishes`, t => {
           count += (m.value.content.tangles.group.previous.length)
         },
         () => {
-          // t.equal(count, n, 'We expect there to be no branches in our groupTangle')
           t.true(count < n * 8, 'We expect bounded branching with fast publishing')
 
           server.close()
