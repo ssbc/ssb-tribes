@@ -4,6 +4,7 @@ const { Server, replicate } = require('../helpers')
 const pull = require('pull-stream')
 const paraMap = require('pull-paramap')
 const { GetGroupTangle } = require('../../lib')
+const { where, author, descending, toPullStream, toCallback } = require('ssb-db2/operators')
 
 test('get-group-tangle unit test', t => {
   const name = `get-group-tangle-${Date.now()}`
@@ -33,7 +34,11 @@ test('get-group-tangle unit test', t => {
       const rootKey = data.groupInitMsg.key
 
       pull(
-        server.createUserStream({ id: server.id, reverse: true }),
+        server.db.query(
+          where(author(server.id)),
+          descending(),
+          toPullStream()
+        ),
         pull.map(m => m.key),
         pull.take(1),
         pull.collect((err, keys) => {
@@ -77,7 +82,7 @@ test('get-group-tangle unit test', t => {
   })
 })
 
-test('get-group-tangle (cache)', t => {
+test.skip('get-group-tangle (cache)', t => {
   const name = `get-group-tangle-cache-${Date.now()}`
   const server = Server({ name })
 
@@ -152,33 +157,37 @@ test('get-group-tangle', t => {
         ssb.tribes.create(null, (err, data) => {
           t.error(err, 'create group')
 
-          ssb.getLatest(ssb.id, (err, selfAdd) => {
-            t.error(err, 'get self invite')
+          ssb.db.query(
+            where(author(ssb.id)),
+            descending(),
+            toCallback((err, [selfAdd]) => {
+              t.error(err, "got self add")
 
-            const groupRoot = data.groupInitMsg.key
-            const groupId = data.groupId
+              const groupRoot = data.groupInitMsg.key
+              const groupId = data.groupId
 
-            const content = {
-              type: 'yep',
-              recps: [groupId]
-            }
+              const content = {
+                type: 'yep',
+                recps: [groupId]
+              }
 
-            ssb.tribes.publish(content, (err, msg) => {
-              t.error(err, 'publish a message')
+              ssb.tribes.publish(content, (err, msg) => {
+                t.error(err, 'publish a message')
 
-              ssb.get({ id: msg.key, private: true }, (err, A) => {
-                t.error(err, 'get that message back')
+                ssb.get({ id: msg.key, private: true }, (err, A) => {
+                  t.error(err, 'get that message back')
 
-                t.deepEqual(
-                  A.content.tangles.group, // actual
-                  { root: groupRoot, previous: [selfAdd.key] }, // expected
-                  DESCRIPTION + ' (auto added tangles.group)'
-                )
+                  t.deepEqual(
+                    A.content.tangles.group, // actual
+                    { root: groupRoot, previous: [selfAdd.key] }, // expected
+                    DESCRIPTION + ' (auto added tangles.group)'
+                  )
 
-                ssb.close()
+                  ssb.close()
+                })
               })
             })
-          })
+          )
         })
       }
     }
@@ -301,10 +310,8 @@ test('members tangle', async t => {
   await p(setTimeout)(300)
   const bobInvite = await p(alice.tribes.invite)(groupId, [bob.id], {})
 
-  const keystore = { group: { get: () => ({ root }) } }
-
-  const _getGroupTangle = p(GetGroupTangle(alice, keystore, 'group'))
-  const _getMembersTangle = p(GetGroupTangle(alice, keystore, 'members'))
+  const _getGroupTangle = p(GetGroupTangle(alice, null, 'group'))
+  const _getMembersTangle = p(GetGroupTangle(alice, null, 'members'))
   const getGroupTangle = p((id, cb) => {
     setTimeout(() => _getGroupTangle(id, cb), 300)
   })

@@ -221,37 +221,6 @@ function init (ssb, config) {
   const getGroupTangle = GetGroupTangle(ssb, keystore, 'group')
   const getMembersTangle = GetGroupTangle(ssb, keystore, 'members')
   // TODO: make this a ssb.tribes.publish function instead of a hook
-  //ssb.publish.hook(function (publish, args) {
-  //  const [content, cb] = args
-  //  if (!content.recps) return publish.apply(this, args)
-
-  //  if (!isGroup(content.recps[0])) return publish.apply(this, args)
-
-  //  onKeystoreReady(() => {
-  //    if (!keystore.group.has(content.recps[0])) return cb(Error('unknown groupId'))
-
-  //    getGroupTangle(content.recps[0], (err, groupTangle) => {
-  //      if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
-
-  //      set(content, 'tangles.group', groupTangle)
-  //      tanglePrune(content) // prune the group tangle down if needed
-
-  //      // we only want to have to calculate the members tangle if it's gonna be used
-  //      if (!isMemberType(content.type)) {
-  //        return publish.call(this, content, cb)
-  //      }
-
-  //      getMembersTangle(content.recps[0], (err, membersTangle) => {
-  //        if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
-
-  //        set(content, 'tangles.members', membersTangle)
-  //        tanglePrune(content, 'members')
-
-  //        publish.call(this, content, cb)
-  //      })
-  //    })
-  //  })
-  //})
 
   /* API */
   const scuttle = Method(ssb, keystore, state) // ssb db methods
@@ -317,10 +286,42 @@ function init (ssb, config) {
 
   return {
     publish (content, cb) {
-      ssb.db.create({
-        content,
-        encryptionFormat: 'box2',
-      }, cb)
+      if (!content.recps) return cb(Error('recps missing in content'))
+
+      if (!isGroup(content.recps[0])) return cb(Error('first recp in recps needs to be a group id'))
+
+      ssb.box2.getGroupInfo(content.recps[0], (err, groupInfo) => {
+        if (err) return cb(Error('error on getting group info in publish', { cause: err }))
+
+        if (!groupInfo) return cb(Error('unknown groupId'))
+
+        getGroupTangle(content.recps[0], (err, groupTangle) => {
+          if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
+
+          set(content, 'tangles.group', groupTangle)
+          tanglePrune(content) // prune the group tangle down if needed
+
+          // we only want to have to calculate the members tangle if it's gonna be used
+          if (!isMemberType(content.type)) {
+            return ssb.db.create({
+              content,
+              encryptionFormat: 'box2',
+            }, cb)
+          }
+
+          getMembersTangle(content.recps[0], (err, membersTangle) => {
+            if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
+
+            set(content, 'tangles.members', membersTangle)
+            tanglePrune(content, 'members')
+
+            ssb.db.create({
+              content,
+              encryptionFormat: 'box2',
+            }, cb)
+          })
+        })
+      })
     },
     register (groupId, info, cb) {
       ssb.box2.addGroupInfo(groupId, info, cb)

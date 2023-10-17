@@ -106,22 +106,26 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       })
     },
     excludeMembers (groupId, authorIds, cb) {
-      const { root } = keystore.group.get(groupId)
+      ssb.box2.getGroupInfo(groupId, (err, groupInfo) => {
+        if (err) return cb(Error("Couldn't get group info when excluding", { cause: err }))
 
-      const content = {
-        type: 'group/exclude-member',
-        excludes: authorIds,
-        tangles: {
-          members: { root, previous: [root] },
-          group: { root, previous: [root] }
-          // NOTE: these are dummy entries which are over-written in the publish hook
-        },
-        recps: [groupId]
-      }
+        const { root } = groupInfo
 
-      if (!excludeMemberSpec.isValid(content)) return cb(new Error(excludeMemberSpec.isValid.errorsString))
+        const content = {
+          type: 'group/exclude-member',
+          excludes: authorIds,
+          tangles: {
+            members: { root, previous: [root] },
+            group: { root, previous: [root] }
+            // NOTE: these are dummy entries which are over-written in the publish hook
+          },
+          recps: [groupId]
+        }
 
-      ssb.tribes.publish(content, cb)
+        if (!excludeMemberSpec.isValid(content)) return cb(new Error(excludeMemberSpec.isValid.errorsString))
+
+        ssb.tribes.publish(content, cb)
+      })
     },
     listAuthors (groupId, cb) {
       const query = [{

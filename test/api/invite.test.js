@@ -7,7 +7,10 @@ test('tribes.invite', async t => {
   const kaitiaki = Server({ name: 'kaitiaki' })
   const newPerson = Server({ name: 'new-person', debug: !true })
 
-  const { groupId, groupKey, groupInitMsg } = await p(kaitiaki.tribes.create)({})
+  const { groupId, groupKey, groupInitMsg } = await p(kaitiaki.tribes.create)({}).catch(err=> {
+    console.error(err)
+    t.fail(err)
+  })
   t.true(groupId, 'creates group')
 
   const selfAdd = (await pull(
