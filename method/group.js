@@ -1,9 +1,8 @@
-const { box } = require('envelope-js')
 const { keySchemes } = require('private-group-spec')
 const { SecretKey } = require('ssb-private-group-keys')
-const bfe = require('ssb-bfe')
 const Crut = require('ssb-crut')
 const pull = require('pull-stream')
+const { where, type: dbType, toPullStream } = require('ssb-db2/operators')
 
 const { groupId: buildGroupId, poBoxKeys } = require('../lib')
 const initSpec = require('../spec/group/init')
@@ -128,18 +127,11 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       })
     },
     listAuthors (groupId, cb) {
-      const query = [{
-        $filter: {
-          value: {
-            content: {
-              type: 'group/add-member'
-            }
-          }
-        }
-      }]
-
       pull(
-        ssb.query.read({ query }),
+        ssb.db.query(
+          where(dbType('group/add-member')),
+          toPullStream()
+        ),
         pull.filter(addMemberSpec.isValid),
         pull.filter(msg =>
           groupId === msg.value.content.recps[0]
@@ -150,18 +142,11 @@ module.exports = function GroupMethods (ssb, keystore, state) {
         pull.collect((err, addedMembers) => {
           if (err) return cb(err)
 
-          const excludedQuery = [{
-            $filter: {
-              value: {
-                content: {
-                  type: 'group/exclude-member'
-                }
-              }
-            }
-          }]
-
           pull(
-            ssb.query.read({ query: excludedQuery }),
+            ssb.db.query(
+              where(dbType('group/exclude-member')),
+              toPullStream()
+            ),
             pull.filter(excludeMemberSpec.isValid),
             pull.filter(msg =>
               groupId === msg.value.content.recps[0]
