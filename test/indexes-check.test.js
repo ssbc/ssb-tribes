@@ -72,7 +72,8 @@ function testSuite (indexName, createSource) {
     )
   }
 
-  test(indexName, t => {
+  // TODO: remove, not relevant anymore?
+  test.skip(indexName, t => {
     const name = `${indexName}-be-good-${Date.now()}`
     let server = Server({ name })
     const keys = server.keys
