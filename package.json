@@ -37,7 +37,7 @@
     "pull-stream": "^3.7.0",
     "sodium-native": "^3.4.1",
     "ssb-bfe": "^3.7.0",
-    "ssb-box2": "^7.1.0",
+    "ssb-box2": "ssbc/ssb-box2#pobox",
     "ssb-crut": "^5.1.0",
     "ssb-keyring": "^5.6.0",
     "ssb-keys": "^8.5.0",

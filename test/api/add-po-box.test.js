@@ -1,6 +1,7 @@
 const test = require('tape')
 const pull = require('pull-stream')
 const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
+const { where, and, author, isDecrypted, descending, toPullStream } = require('ssb-db2/operators')
 
 const { Server } = require('../helpers')
 
@@ -17,7 +18,15 @@ test('tribes.addPOBox', t => {
       t.true(isPoBox(poBoxId), 'adding P.O. Box to group returns poBoxId')
 
       pull(
-        server.createUserStream({ id: server.id, reverse: true, limit: 1, private: true }),
+        server.db.query(
+          where(and(
+            author(server.id), 
+            isDecrypted('box2'),
+          )),
+          descending(),
+          toPullStream()
+        ),
+        pull.take(1),
         pull.drain(m => {
           const { type, recps, keys } = m.value.content
           t.equal(type, 'group/po-box', 'po-box type msg')
@@ -27,6 +36,8 @@ test('tribes.addPOBox', t => {
 
           server.close()
           t.end()
+        }, err => {
+          if (err) t.fail(err)
         })
       )
     })

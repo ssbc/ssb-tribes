@@ -383,12 +383,10 @@ function init (ssb, config) {
       create (opts, cb) {
         const { id: poBoxId, secret } = poBoxKeys.generate()
 
-        onKeystoreReady(() => {
-          keystore.poBox.add(poBoxId, { key: secret }, (err) => {
-            if (err) return cb(err)
+        ssb.box2.addPoBox(poBoxId, { key: secret }, (err) => {
+          if (err) return cb(err)
 
-            cb(null, { poBoxId, poBoxKey: secret })
-          })
+          cb(null, { poBoxId, poBoxKey: secret })
         })
       },
       get: scuttle.group.getPOBox
