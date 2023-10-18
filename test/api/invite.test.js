@@ -60,33 +60,11 @@ test('tribes.invite', async t => {
     p(kaitiaki.tribes.publish)(greetingContent)
   )
 
-  let numberRebuilds = 0
-  const rebuildPromise = new Promise((resolve, reject) => {
-    // hook ssb.rebuild - this way we can piggyback the "done" callback of that
-    // and know when the get requests "should" work by
-    newPerson.rebuild.hook(function (rebuild, args) {
-      const [cb] = args
-      rebuild.call(this, (err) => {
-        numberRebuilds++
-        if (typeof cb === 'function') cb(err)
-        if (numberRebuilds === 1) resolve()
-      })
-    })
-  })
-
   await run(
     'replicated',
     p(replicate)({ from: kaitiaki, to: newPerson, live: false })
   )
-  await rebuildPromise
-
-  // const pull = require('pull-stream')
-  // const msgs = await pull(
-  //   newPerson.createLogStream({ private: true }),
-  //   pull.map(m => m.value.content),
-  //   pull.collectAsPromise()
-  // )
-  // console.log(msgs)
+  await p(setTimeout)(500)
 
   const greetingMsg = await run(
     'new-person can get message',
