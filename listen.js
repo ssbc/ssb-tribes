@@ -1,5 +1,6 @@
 // const flumeView = require('flumeview-reduce')
 const pull = require('pull-stream')
+const pullMany = require('pull-many')
 const CRUT = require('ssb-crut')
 const { where, and, type, isDecrypted, live: dbLive, toPullStream } = require('ssb-db2/operators')
 
@@ -11,16 +12,24 @@ const poBoxSpec = require('./spec/group/po-box')
 module.exports = {
   addMember (ssb) {
     return pull(
-      ssb.db.query(
-        where(
-          and(
-            isDecrypted('box2'),
-            type('group/add-member'),
-          )
+      pullMany([
+        ssb.db.query(
+          where(
+            and(
+              isDecrypted('box2'),
+              type('group/add-member'),
+            )
+          ),
+          dbLive({ old: true }),
+          toPullStream()
         ),
-        dbLive({ old: true }),
-        toPullStream()
-      ),
+        pull(
+          ssb.db.reindexed(),
+          pull.filter((msg) => {
+            return msg.value.content.type === 'group/add-member'
+          })
+        )
+      ]),
       // NOTE this will run through all messages on each startup, which will help guarentee
       // all messages have been emitted AND processed
       // (same not true if we used a dummy flume-view)
@@ -33,16 +42,24 @@ module.exports = {
   },
   excludeMember (ssb) {
     return pull(
-      ssb.db.query(
-        where(
-          and(
-            isDecrypted('box2'),
-            type('group/exclude-member'),
-          )
+      pullMany([
+        ssb.db.query(
+          where(
+            and(
+              isDecrypted('box2'),
+              type('group/exclude-member'),
+            )
+          ),
+          dbLive({ old: true }),
+          toPullStream()
         ),
-        dbLive({ old: true }),
-        toPullStream()
-      ),
+        pull(
+          ssb.db.reindexed(),
+          pull.filter((msg) => {
+            return msg.value.content.type === 'group/exclude-member'
+          })
+        )
+      ]),
       pull.filter(m => m.sync !== true),
       pull.filter(isExcludeMember),
       pull.unique('key')
@@ -52,16 +69,24 @@ module.exports = {
     const { isUpdate: isPOBox } = new CRUT(ssb, poBoxSpec).spec
 
     pull(
-      ssb.db.query(
-        where(
-          and(
-            isDecrypted('box2'),
-            type('group/po-box'),
-          )
+      pullMany([
+        ssb.db.query(
+          where(
+            and(
+              isDecrypted('box2'),
+              type('group/po-box'),
+            )
+          ),
+          dbLive({ old: true }),
+          toPullStream()
         ),
-        dbLive({ old: true }),
-        toPullStream()
-      ),
+        pull(
+          ssb.db.reindexed(),
+          pull.filter((msg) => {
+            return msg.value.content.type === 'group/po-box'
+          })
+        )
+      ]),
       // NOTE this will run through all messages on each startup, which will help guarentee
       // all messages have been emitted AND processed
       // (same not true if we used a dummy flume-view)

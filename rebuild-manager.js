@@ -1,3 +1,5 @@
+// TODO: remove this file?
+
 const Obz = require('obz')
 
 /*
@@ -48,37 +50,42 @@ module.exports = class RebuildManager {
   }
 
   rebuild (reason, cb) {
-    if (this.isRebuilding) {
-      // if the current rebuild was already kicked off by a reason we're not registering, it's safe to
-      // add it to the current rebuild process (so long as the "reasons" was specific enough)
-      if (this.requests.has(reason)) this.requests.add(reason, cb)
-      // otherwise, queue it up for the next round of rebuilds - this is because we may have added new things to
-      // the keystore which would justify re-trying decrypting all messages
-      else this.nextRequests.add(reason, cb)
+    this.ssb.db.reindexEncrypted((err) => {
+      if (err) return cb(Error("reindexencrypted failed in rebuild-manager", { cause: err }))
+      if (cb) return cb()
+    })
 
-      return
-    }
+    //if (this.isRebuilding) {
+    //  // if the current rebuild was already kicked off by a reason we're not registering, it's safe to
+    //  // add it to the current rebuild process (so long as the "reasons" was specific enough)
+    //  if (this.requests.has(reason)) this.requests.add(reason, cb)
+    //  // otherwise, queue it up for the next round of rebuilds - this is because we may have added new things to
+    //  // the keystore which would justify re-trying decrypting all messages
+    //  else this.nextRequests.add(reason, cb)
 
-    this.requests.add(reason, cb)
-    this.initiateRebuild()
+    //  return
+    //}
+
+    //this.requests.add(reason, cb)
+    //this.initiateRebuild()
   }
 
-  initiateRebuild () {
-    if (this.isInitializing) return
+  //initiateRebuild () {
+  //  if (this.isInitializing) return
 
-    this.isInitializing = true
-    const interval = setInterval(
-      () => {
-        if (this.isIndexing) return
+  //  this.isInitializing = true
+  //  const interval = setInterval(
+  //    () => {
+  //      if (this.isIndexing) return
 
-        this.ssb.rebuild()
-        this.isInitializing = false
+  //      this.ssb.rebuild()
+  //      this.isInitializing = false
 
-        clearInterval(interval)
-      },
-      100
-    )
-  }
+  //      clearInterval(interval)
+  //    },
+  //    100
+  //  )
+  //}
 
   get isIndexing () {
     return this.ssb.status().sync.sync !== true

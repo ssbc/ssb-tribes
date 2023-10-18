@@ -33,6 +33,7 @@
     "obz": "^1.1.0",
     "private-group-spec": "^8.0.0",
     "pull-level": "^2.0.4",
+    "pull-many": "^1.0.9",
     "pull-paramap": "^1.2.2",
     "pull-stream": "^3.7.0",
     "sodium-native": "^3.4.1",

@@ -113,7 +113,10 @@ function init (ssb, config) {
     // we don't rebuild if we're the person who added them
     if (adder !== ssb.id) {
       const reason = ['add-member', ...newAuthors].join('+')
-      rebuildManager.rebuild(reason)
+      //rebuildManager.rebuild(reason)
+      ssb.db.reindexEncrypted((err) => {
+        if (err) console.error("error reindexing encrypted after new members found", err)
+      })
     }
     newAuthors.forEach(author => processedNewAuthors[groupId].add(author))
     cb()
@@ -173,7 +176,10 @@ function init (ssb, config) {
       if (err) throw err
 
       const reason = ['po-box', poBoxId].join()
-      rebuildManager.rebuild(reason)
+      //rebuildManager.rebuild(reason)
+      ssb.db.reindexEncrypted((err) => {
+        if (err) console.error("error reindexing encrypted after pobox found", err)
+      })
     })
   })
 
