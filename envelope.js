@@ -1,3 +1,4 @@
+// TODO: remove this file? if it's replaced by box2
 /* eslint-disable camelcase */
 
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')

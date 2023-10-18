@@ -173,10 +173,8 @@ module.exports = function GroupMethods (ssb, keystore, state) {
 
       const { id: poBoxId, secret } = poBoxKeys.generate()
 
-      console.log('gonna add pobox')
       ssb.box2.addPoBox(poBoxId, { key: secret }, (err) => {
-        if (err) return cb("Couldn't add pbox to box2 when adding pobox", { cause: err })
-        console.log('added pobox')
+        if (err) return cb(Error("Couldn't add pbox to box2 when adding pobox", { cause: err }))
 
         const props = {
           keys: {

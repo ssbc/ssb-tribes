@@ -133,16 +133,19 @@ function init (ssb, config) {
           ...m.value.content.recps.filter(isFeed)
         ])
 
-        const record = keystore.group.get(groupId)
-        // if we haven't been in the group since before, register the group
-        if (record == null) {
-          return ssb.box2.addGroupInfo(groupId, { key: groupKey, root }, (err) => {
-            if (err) return cb(err)
+        ssb.box2.getGroupInfo(groupId, (err, record) => {
+          if (err) return cb(Error("Couldn't get group info when add-member msg was found", { cause: err }))
+
+          // if we haven't been in the group since before, register the group
+          if (record == null) {
+            return ssb.box2.addGroupInfo(groupId, { key: groupKey, root }, (err) => {
+              if (err) return cb(err)
+              processAuthors(groupId, authors, m.value.author, cb)
+            })
+          } else {
             processAuthors(groupId, authors, m.value.author, cb)
-          })
-        } else {
-          processAuthors(groupId, authors, m.value.author, cb)
-        }
+          }
+        })
       })
     }),
     pull.drain(() => {}, (err) => {
@@ -157,7 +160,7 @@ function init (ssb, config) {
       const groupId = msg.value.content.recps[0]
 
       if (excludes.includes(ssb.id)) {
-        keystore.group.exclude(groupId)
+        ssb.box2.excludeGroupInfo(groupId)
       }
     }, err => {
       if (err) console.error('Listening for new excludeMembers errored:', err)
@@ -166,7 +169,7 @@ function init (ssb, config) {
 
   listen.poBox(ssb, m => {
     const { poBoxId, key: poBoxKey } = m.value.content.keys.set
-    keystore.poBox.add(poBoxId, { key: poBoxKey }, (err) => {
+    ssb.box2.addPoBox(poBoxId, { key: poBoxKey }, (err) => {
       if (err) throw err
 
       const reason = ['po-box', poBoxId].join()
