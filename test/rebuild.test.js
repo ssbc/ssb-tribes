@@ -204,7 +204,7 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
   })
 })
 
-test('rebuild (not called when I invite another member)', t => {
+test('rebuild (not called when I invite another member)', async t => {
   const server = Server()
 
   let rebuildCalled = false
@@ -214,22 +214,18 @@ test('rebuild (not called when I invite another member)', t => {
     rebuild(...args)
   })
 
-  server.tribes.create(null, (err, data) => {
-    t.error(err, 'I create a group')
+  const data = await p(server.tribes.create)(null)
+  const { groupId } = data
 
-    const { groupId } = data
-    const feedId = FeedId()
+  const feedId = FeedId()
 
-    server.tribes.invite(groupId, [feedId], {}, (err) => {
-      t.error(err, 'I add someone to the group')
+  await p(server.tribes.invite)(groupId, [feedId], {})
 
-      setTimeout(() => {
-        t.false(rebuildCalled, 'I did not rebuild my indexes')
-        server.close()
-        t.end()
-      }, 1e3)
-    })
-  })
+  await p(setTimeout)(1000)
+
+  t.false(rebuildCalled, 'I did not rebuild my indexes')
+
+  await p(server.close)()
 })
 
 test('rebuild from listen.addMember', t => {
