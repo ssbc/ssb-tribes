@@ -11,8 +11,6 @@ const Obz = require('obz')
  * After the rebuild is complete the RebuildManager ensures all callbacks passed to it are then run
  */
 
-const log = (...str) => console.info('db.rebuild', ...str)
-
 module.exports = class RebuildManager {
   constructor (ssb) {
     this.ssb = ssb
@@ -22,31 +20,6 @@ module.exports = class RebuildManager {
 
     this.requests = new Requests()
     this.nextRequests = new Requests()
-
-    return
-    ssb.rebuild.hook((rebuild, [cb]) => {
-      log('(ﾉ´ヮ´)ﾉ*:･ﾟ✧')
-      // log('reasons', JSON.stringify(this.requests.reasons, null, 2))
-      this.isRebuilding = true
-
-      rebuild(err => {
-        log('finished', ssb.id)
-        // rebuild done
-        this.requests.callback(err)
-
-        this.requests = this.nextRequests
-        this.nextRequests = new Requests()
-        this.isRebuilding = false
-
-        if (typeof cb === 'function') cb(err)
-        else err && console.error(err)
-
-        // if there are outstanding rebuild requests, start a new rebuild
-        if (this.requests.hasRequests()) {
-          this.initiateRebuild()
-        }
-      })
-    })
   }
 
   rebuild (reason, cb) {

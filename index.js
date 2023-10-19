@@ -7,12 +7,10 @@ const Obz = require('obz')
 const pull = require('pull-stream')
 const paraMap = require('pull-paramap')
 
-const Envelope = require('./envelope')
 const listen = require('./listen')
 const { GetGroupTangle, tanglePrune, groupId: buildGroupId, poBoxKeys } = require('./lib')
 
 const Method = require('./method')
-const RebuildManager = require('./rebuild-manager')
 
 module.exports = {
   name: 'tribes',
@@ -84,11 +82,6 @@ function init (ssb, config) {
     state.closed = true // NOTE must be after onKeystoreReady call
   })
 
-  /* register the boxer / unboxer */
-  const { boxer, unboxer } = Envelope(keystore, state)
-  // ssb.addBoxer({ init: onKeystoreReady, value: boxer })
-  // ssb.addUnboxer({ init: onKeystoreReady, ...unboxer })
-
   function onKeystoreReady (done) {
     if (state.closed === true) return
     if (state.loading.keystore.value === false) return done()
@@ -96,8 +89,6 @@ function init (ssb, config) {
     state.loading.keystore.once(done)
   }
 
-  /* start listeners */
-  const rebuildManager = new RebuildManager(ssb)
   const processedNewAuthors = {}
 
   function processAuthors (groupId, authors, adder, cb) {
@@ -112,8 +103,6 @@ function init (ssb, config) {
     state.newAuthorListeners.forEach(fn => fn({ groupId, newAuthors: [...newAuthors] }))
     // we don't rebuild if we're the person who added them
     if (adder !== ssb.id) {
-      const reason = ['add-member', ...newAuthors].join('+')
-      // rebuildManager.rebuild(reason)
       ssb.db.reindexEncrypted((err) => {
         if (err) console.error('error reindexing encrypted after new members found', err)
       })
@@ -121,6 +110,8 @@ function init (ssb, config) {
     newAuthors.forEach(author => processedNewAuthors[groupId].add(author))
     cb()
   }
+
+  /* start listeners */
 
   pull(
     listen.addMember(ssb),
@@ -175,8 +166,6 @@ function init (ssb, config) {
     ssb.box2.addPoBox(poBoxId, { key: poBoxKey }, (err) => {
       if (err) throw err
 
-      const reason = ['po-box', poBoxId].join()
-      // rebuildManager.rebuild(reason)
       ssb.db.reindexEncrypted((err) => {
         if (err) console.error('error reindexing encrypted after pobox found', err)
       })
