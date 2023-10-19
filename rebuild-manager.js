@@ -51,11 +51,11 @@ module.exports = class RebuildManager {
 
   rebuild (reason, cb) {
     this.ssb.db.reindexEncrypted((err) => {
-      if (err) return cb(Error("reindexencrypted failed in rebuild-manager", { cause: err }))
+      if (err) return cb(Error('reindexencrypted failed in rebuild-manager', { cause: err }))
       if (cb) return cb()
     })
 
-    //if (this.isRebuilding) {
+    // if (this.isRebuilding) {
     //  // if the current rebuild was already kicked off by a reason we're not registering, it's safe to
     //  // add it to the current rebuild process (so long as the "reasons" was specific enough)
     //  if (this.requests.has(reason)) this.requests.add(reason, cb)
@@ -64,13 +64,13 @@ module.exports = class RebuildManager {
     //  else this.nextRequests.add(reason, cb)
 
     //  return
-    //}
+    // }
 
-    //this.requests.add(reason, cb)
-    //this.initiateRebuild()
+    // this.requests.add(reason, cb)
+    // this.initiateRebuild()
   }
 
-  //initiateRebuild () {
+  // initiateRebuild () {
   //  if (this.isInitializing) return
 
   //  this.isInitializing = true
@@ -85,7 +85,7 @@ module.exports = class RebuildManager {
   //    },
   //    100
   //  )
-  //}
+  // }
 
   get isIndexing () {
     return this.ssb.status().sync.sync !== true

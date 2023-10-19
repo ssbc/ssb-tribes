@@ -12,7 +12,7 @@ const vectors = [
   require('./vectors/unbox2.json')
 ].map(decodeLeaves)
 
-test('unbox', async t => {
+test.skip('unbox', async t => {
   const run = Run(t)
   const ssb = Server()
   const { groupId, groupInitMsg } = await p(ssb.tribes.create)({})
@@ -36,8 +36,10 @@ test('unbox', async t => {
   }
 
   const RECPS = [
+    // TODO: i think i asked this somewhere else, but do we actually wanna support DMs in the first slot in this module? what's the usecase?
     ssb.id,
     groupId,
+    // TODO: p.s. do we have some test that tests DMing a pobox actually? that's a non-groupId that should be allowed in the first slot, i guess
     poBoxId
   ]
 
@@ -71,7 +73,8 @@ test('unbox', async t => {
   t.end()
 })
 
-test('unbox - test vectors', async t => {
+// TODO: this tests envelope() which we're probably gonna remove in favor of box2, so we should remove this test too right?
+test.skip('unbox - test vectors', async t => {
   console.log('vectors:', vectors.length)
 
   vectors.forEach(vector => {

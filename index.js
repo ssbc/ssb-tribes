@@ -86,8 +86,8 @@ function init (ssb, config) {
 
   /* register the boxer / unboxer */
   const { boxer, unboxer } = Envelope(keystore, state)
-  //ssb.addBoxer({ init: onKeystoreReady, value: boxer })
-  //ssb.addUnboxer({ init: onKeystoreReady, ...unboxer })
+  // ssb.addBoxer({ init: onKeystoreReady, value: boxer })
+  // ssb.addUnboxer({ init: onKeystoreReady, ...unboxer })
 
   function onKeystoreReady (done) {
     if (state.closed === true) return
@@ -113,9 +113,9 @@ function init (ssb, config) {
     // we don't rebuild if we're the person who added them
     if (adder !== ssb.id) {
       const reason = ['add-member', ...newAuthors].join('+')
-      //rebuildManager.rebuild(reason)
+      // rebuildManager.rebuild(reason)
       ssb.db.reindexEncrypted((err) => {
-        if (err) console.error("error reindexing encrypted after new members found", err)
+        if (err) console.error('error reindexing encrypted after new members found', err)
       })
     }
     newAuthors.forEach(author => processedNewAuthors[groupId].add(author))
@@ -176,9 +176,9 @@ function init (ssb, config) {
       if (err) throw err
 
       const reason = ['po-box', poBoxId].join()
-      //rebuildManager.rebuild(reason)
+      // rebuildManager.rebuild(reason)
       ssb.db.reindexEncrypted((err) => {
-        if (err) console.error("error reindexing encrypted after pobox found", err)
+        if (err) console.error('error reindexing encrypted after pobox found', err)
       })
     })
   })
@@ -314,7 +314,7 @@ function init (ssb, config) {
           if (!isMemberType(content.type)) {
             return ssb.db.create({
               content,
-              encryptionFormat: 'box2',
+              encryptionFormat: 'box2'
             }, cb)
           }
 
@@ -326,7 +326,7 @@ function init (ssb, config) {
 
             ssb.db.create({
               content,
-              encryptionFormat: 'box2',
+              encryptionFormat: 'box2'
             }, cb)
           })
         })

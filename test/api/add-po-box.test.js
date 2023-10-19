@@ -20,8 +20,8 @@ test('tribes.addPOBox', t => {
       pull(
         server.db.query(
           where(and(
-            author(server.id), 
-            isDecrypted('box2'),
+            author(server.id),
+            isDecrypted('box2')
           )),
           descending(),
           toPullStream()

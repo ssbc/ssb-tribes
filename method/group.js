@@ -34,9 +34,9 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       /* enveloping */
       // we have to do it manually this one time, because the auto-boxing checks for a known groupId
       // but the groupId is derived from the messageId of this message (which does not exist yet
-      //const plain = Buffer.from(JSON.stringify(content), 'utf8')
+      // const plain = Buffer.from(JSON.stringify(content), 'utf8')
 
-      //const msgKey = new SecretKey().toBuffer()
+      // const msgKey = new SecretKey().toBuffer()
       const recps = [
         { key: groupKey.toBuffer(), scheme: keySchemes.private_group },
         ssb.id // sneak this in so can decrypt it ourselves without rebuild!
@@ -49,7 +49,7 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       ssb.db.create({
         content,
         recps,
-        encryptionFormat: 'box2',
+        encryptionFormat: 'box2'
       }, (err, initMsg) => {
         if (err) return cb(err)
 

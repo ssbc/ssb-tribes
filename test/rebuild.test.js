@@ -39,8 +39,8 @@ test('rebuild (I am added to a group)', async t => {
   const msgs = await pull(
     me.db.query(
       where(and(
-        author(admin.id), 
-        isDecrypted('box2'),
+        author(admin.id),
+        isDecrypted('box2')
       )),
       toPullStream()
     ),
@@ -51,11 +51,11 @@ test('rebuild (I am added to a group)', async t => {
     pull.collectAsPromise()
   )
 
-  t.equal(msgs.length, 3, "we got 3 messages to auto unbox")
+  t.equal(msgs.length, 3, 'we got 3 messages to auto unbox')
 
   await Promise.all([
     p(admin.close)(),
-    p(me.close)(),
+    p(me.close)()
   ])
 })
 
@@ -167,11 +167,11 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
           (err) => {
             if (seenMine === 20) t.equal(seenMine, 20, 'bob saw 20 messages from me')
             if (err) throw err
-            
+
             Promise.all([
               p(bob.close)(),
               p(admin.close)()
-            ]).then(()=>t.end())
+            ]).then(() => t.end())
           }
         )
       )
@@ -336,9 +336,8 @@ test('rebuild (I learn about a new PO Box)', t => {
     if (err) throw err
     groupId = data.groupId
 
-    replicate({ from: admin, to: me, name }, (err)=> {
+    replicate({ from: admin, to: me, name }, (err) => {
       t.error(err, 'replicated after group create')
-
 
       admin.tribes.invite(data.groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
         t.error(err, 'admin adds me to group')

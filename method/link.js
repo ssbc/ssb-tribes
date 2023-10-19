@@ -38,7 +38,7 @@ module.exports = function Link (ssb) {
             parent && slowEqual('value.content.parent', parent),
             child && slowEqual('value.content.child', child),
             slowEqual('value.content.tangles.link.root', null),
-            slowEqual('value.content.tangles.link.previous', null),
+            slowEqual('value.content.tangles.link.previous', null)
           )
         ),
         toPullStream()
@@ -106,7 +106,7 @@ module.exports = function Link (ssb) {
               dbType('link/feed-group'),
               slowEqual('value.content.parent', feedId),
               slowEqual('value.content.tangles.link.root', null),
-              slowEqual('value.content.tangles.link.previous', null),
+              slowEqual('value.content.tangles.link.previous', null)
             )
           ),
           toPullStream()

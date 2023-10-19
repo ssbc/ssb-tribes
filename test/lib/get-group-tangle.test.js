@@ -132,7 +132,7 @@ test('get-group-tangle', t => {
             where(author(ssb.id)),
             descending(),
             toCallback((err, [selfAdd]) => {
-              t.error(err, "got self add")
+              t.error(err, 'got self add')
 
               const groupRoot = data.groupInitMsg.key
               const groupId = data.groupId

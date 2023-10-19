@@ -17,7 +17,7 @@ module.exports = {
           where(
             and(
               isDecrypted('box2'),
-              type('group/add-member'),
+              type('group/add-member')
             )
           ),
           dbLive({ old: true }),
@@ -47,7 +47,7 @@ module.exports = {
           where(
             and(
               isDecrypted('box2'),
-              type('group/exclude-member'),
+              type('group/exclude-member')
             )
           ),
           dbLive({ old: true }),
@@ -74,7 +74,7 @@ module.exports = {
           where(
             and(
               isDecrypted('box2'),
-              type('group/po-box'),
+              type('group/po-box')
             )
           ),
           dbLive({ old: true }),
