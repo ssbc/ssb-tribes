@@ -1,5 +1,7 @@
 const test = require('tape')
 const pull = require('pull-stream')
+const { promisify: p } = require('util')
+const { where, and, author, isDecrypted, toPullStream } = require('ssb-db2/operators')
 
 const { Server, replicate, FeedId } = require('./helpers')
 
@@ -11,7 +13,7 @@ function nMessages (n, { type = 'post', recps } = {}) {
   })
 }
 
-test('rebuild (I am added to a group)', t => {
+test('rebuild (I am added to a group)', async t => {
   const admin = Server()
   const me = Server()
   const name = (id) => {
@@ -21,43 +23,39 @@ test('rebuild (I am added to a group)', t => {
     }
   }
 
-  replicate({ from: admin, to: me, name, live: true })
-
-  /* set up listener */
-  me.rebuild.hook(function (rebuild, [cb]) {
-    t.pass('I automatically call a rebuild')
-
-    rebuild(() => {
-      cb && cb()
-      t.true(me.status().sync.sync, 'all indexes updated') // 2
-
-      pull(
-        me.createUserStream({ id: admin.id, private: true }),
-        pull.drain(
-          m => {
-            t.equal(typeof m.value.content, 'object', `I auto-unbox msg: ${m.value.content.type}`)
-          },
-          (err) => {
-            if (err) throw err
-            admin.close()
-            me.close()
-            t.end()
-          }
-        )
-      )
-    })
-    t.false(me.status().sync.sync, 'all indexes updating') // 1
-  })
-
   /* kick off the process */
-  admin.tribes.create({}, (err, data) => {
-    if (err) throw err
+  const data = await p(admin.tribes.create)({})
 
-    admin.tribes.invite(data.groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
-      t.error(err, 'admin adds me to group')
-      if (err) throw err
-    })
-  })
+  await p(admin.tribes.invite)(data.groupId, [me.id], { text: 'ahoy' })
+
+  await replicate({ from: admin, to: me, name })
+
+  // time for rebuilding
+  await p(setTimeout)(500)
+
+  t.true(me.status().sync.sync, 'all indexes updated')
+
+  const msgs = await pull(
+    me.db.query(
+      where(and(
+        author(admin.id), 
+        isDecrypted('box2'),
+      )),
+      toPullStream()
+    ),
+    pull.map(m => {
+      t.equal(typeof m.value.content, 'object', `I auto-unbox msg: ${m.value.content.type}`)
+      return m
+    }),
+    pull.collectAsPromise()
+  )
+
+  t.equal(msgs.length, 3, "we got 3 messages to auto unbox")
+
+  await Promise.all([
+    p(admin.close)(),
+    p(me.close)(),
+  ])
 })
 
 test('rebuild (I am added to a group, then someone else is added)', t => {

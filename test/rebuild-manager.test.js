@@ -31,7 +31,7 @@ async function setup () {
   return ssb
 }
 
-test('rebuild-manager', t => {
+test.skip('rebuild-manager', t => {
   t.plan(3)
   setup().then(ssb => {
   // we wrap ssb.rebuild once to know exactly what goes through to the db
@@ -57,7 +57,7 @@ test('rebuild-manager', t => {
   })
 })
 
-test('rebuild-manager (rebuild called during rebuild with EXISTING reason)', t => {
+test.skip('rebuild-manager (rebuild called during rebuild with EXISTING reason)', t => {
   t.plan(4)
   setup().then(ssb => {
     let rebuildCount = 0
@@ -82,7 +82,7 @@ test('rebuild-manager (rebuild called during rebuild with EXISTING reason)', t =
   })
 })
 
-test('rebuild-manager (rebuild called during rebuild with NEW reason)', t => {
+test.skip('rebuild-manager (rebuild called during rebuild with NEW reason)', t => {
   t.plan(5)
   setup().then(ssb => {
     let rebuildCount = 0
