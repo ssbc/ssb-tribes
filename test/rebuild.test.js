@@ -59,7 +59,6 @@ test('rebuild (I am added to a group)', async t => {
 })
 
 test('rebuild (I am added to a group, then someone else is added)', t => {
-  // t.plan(9)
   const admin = Server()
   const me = Server()
   const bob = Server()
@@ -74,19 +73,14 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
   }
   let groupId
 
-  // Setting up listeners ready for initial action
-
-  replicate({ from: admin, to: me, name, live: true })
-  replicate({ from: admin, to: bob, name, live: true })
-
-  admin.rebuild.hook(function (rebuild, [cb]) {
+  admin.db.reindexEncrypted.hook(function (rebuild, [cb]) {
     t.fail('admin should not rebuild')
     throw new Error('stop')
   })
 
   /* after I am added, admin adds bob */
   let myRebuildCount = 0
-  me.rebuild.hook(function (rebuild, [cb]) {
+  me.db.reindexEncrypted.hook(function (rebuild, [cb]) {
     myRebuildCount++
     if (myRebuildCount > 2) throw new Error('I should only rebuild twice!')
     // 1st time - I realise I've been added to a group, and re-index
@@ -99,9 +93,10 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
       if (myRebuildCount === 2) {
         // I publish 20 messages to the group
         pull(
-          pull.values(nMessages(20, { type: 'me', recps: [groupId] })),
+          pull.values(nMessages(20, { type: 'itsame', recps: [groupId] })),
           pull.asyncMap(me.tribes.publish),
           pull.collect((err) => {
+            if (err) console.error('publish 20 err', err)
             t.error(err, 'I publish 20 messages to the group')
 
             replicate({ from: me, to: bob, name, live: false }, (err) => {
@@ -113,6 +108,7 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
                 t.error(err, 'I shut down')
                 admin.tribes.invite(groupId, [bob.id], { text: 'hi!' }, (err) => {
                   t.error(err, 'admin adds bob to the group')
+                  replicate({ from: admin, to: bob, name, live: false })
                 })
               })
             })
@@ -123,7 +119,7 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
   })
 
   let rebuildCount = 0
-  bob.rebuild.hook(function (rebuild, [cb]) {
+  bob.db.reindexEncrypted.hook(function (rebuild, [cb]) {
     const _count = ++rebuildCount
 
     switch (_count) {
@@ -133,18 +129,24 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
       case 2:
         t.pass('bob calls rebuild (realises me + zelf are in group)')
         break
+      case 3:
+        t.pass('bob calls rebuild again i guess')
+        break
       default:
         t.fail(`rebuild called too many times: ${_count}`)
     }
 
     rebuild(() => {
       cb && cb()
-      if (_count !== 2) return
+      if (_count !== 3) return
 
       /* check can see all of my group messages */
       let seenMine = 0
       pull(
-        bob.createLogStream({ private: true }),
+        bob.db.query(
+          where(isDecrypted('box2')),
+          toPullStream()
+        ),
         pull.map(m => m.value.content),
         pull.drain(
           ({ type, count, recps }) => {
@@ -153,7 +155,7 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
             if (type === 'group/add-member') {
               comment += `: ${recps.filter(r => r[0] === '@').map(name)}`
             }
-            if (type === 'me') {
+            if (type === 'itsame') {
               seenMine++
               if (count === 0 || count === 19) comment += `(${count})`
               else if (count === 1) comment += '...'
@@ -164,9 +166,11 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
           (err) => {
             if (seenMine === 20) t.equal(seenMine, 20, 'bob saw 20 messages from me')
             if (err) throw err
-            bob.close()
-            admin.close()
-            t.end()
+            
+            Promise.all([
+              p(bob.close)(),
+              p(admin.close)()
+            ]).then(()=>t.end())
           }
         )
       )
@@ -176,22 +180,26 @@ test('rebuild (I am added to a group, then someone else is added)', t => {
   // Action which kicks everthing off starts here
 
   /* admin adds alice + zelf to a group */
-  admin.tribes.create({}, (err, data) => {
-    if (err) throw err
-
+  Promise.resolve().then(async () => {
+    const data = await p(admin.tribes.create)({})
     groupId = data.groupId
-    admin.tribes.invite(groupId, [me.id], { text: 'ahoy' }, (err) => {
-      t.error(err, 'admin adds alice to group')
 
-      setTimeout(() => {
-        // we do this seperately to test if rebuild gets called 2 or 3 times
-        // should wait till indexing done before rebuilding again
-        admin.tribes.invite(groupId, [zelfId], { text: 'ahoy' }, (err) => {
-          t.error(err, 'admin adds zelf to group')
-          if (err) throw err
-        })
-      }, 1000)
-    })
+    await replicate({ from: admin, to: me, name })
+    await replicate({ from: admin, to: bob, name })
+
+    await p(admin.tribes.invite)(groupId, [me.id], { text: 'ahoy' })
+
+    await replicate({ from: admin, to: me, name })
+    await replicate({ from: admin, to: bob, name })
+
+    await p(setTimeout)(1000)
+
+    // we do this seperately to test if rebuild gets called 2 or 3 times
+    // should wait till indexing done before rebuilding again
+    await p(admin.tribes.invite)(groupId, [zelfId], { text: 'ahoy' })
+
+    await replicate({ from: admin, to: me, name })
+    await replicate({ from: admin, to: bob, name })
   })
 })
 
