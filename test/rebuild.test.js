@@ -4,6 +4,7 @@ const { promisify: p } = require('util')
 const { where, and, author, isDecrypted, toPullStream } = require('ssb-db2/operators')
 
 const { Server, replicate, FeedId } = require('./helpers')
+const listen = require('../listen')
 
 function nMessages (n, { type = 'post', recps } = {}) {
   return new Array(20).fill(type).map((val, i) => {
@@ -207,7 +208,7 @@ test('rebuild (not called when I invite another member)', t => {
   const server = Server()
 
   let rebuildCalled = false
-  server.rebuild.hook(function (rebuild, args) {
+  server.db.reindexEncrypted.hook(function (rebuild, args) {
     rebuildCalled = true
 
     rebuild(...args)
@@ -253,7 +254,7 @@ test('rebuild from listen.addMember', t => {
     setTimeout(() => checkRebuildDone(done), 500)
   }
   pull(
-    A.messagesByType({ type: 'group/add-member', private: true, live: true }),
+    listen.addMember(A),
     pull.filter(m => !m.sync),
     pull.drain(m => {
       t.equal(m.value.content.root, root, `listened + heard the group/add-member: ${++heardCount}`)
@@ -301,11 +302,10 @@ test('rebuild (I learn about a new PO Box)', t => {
   }
 
   let groupId
-  replicate({ from: admin, to: me, name, live: true })
 
   /* set up listener */
   let rebuildCount = 0
-  me.rebuild.hook((rebuild, [cb]) => {
+  me.db.reindexEncrypted.hook((rebuild, [cb]) => {
     rebuildCount++
     const run = rebuildCount
     if (rebuildCount === 1) t.pass('rebuild started (group/add-member)')
@@ -317,7 +317,10 @@ test('rebuild (I learn about a new PO Box)', t => {
 
       if (run === 1) {
         t.error(err, 'rebuild finished (group/add-member)')
-        admin.tribes.addPOBox(groupId, (err) => t.error(err, 'admin adds po-box'))
+        admin.tribes.addPOBox(groupId, (err) => {
+          t.error(err, 'admin adds po-box')
+          replicate({ from: admin, to: me, name })
+        })
       } // eslint-disable-line
       else if (run === 2) {
         t.error(err, 'rebuild finished (group/po-box)')
@@ -333,9 +336,16 @@ test('rebuild (I learn about a new PO Box)', t => {
     if (err) throw err
     groupId = data.groupId
 
-    admin.tribes.invite(data.groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
-      t.error(err, 'admin adds me to group')
-      if (err) throw err
+    replicate({ from: admin, to: me, name }, (err)=> {
+      t.error(err, 'replicated after group create')
+
+
+      admin.tribes.invite(data.groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
+        t.error(err, 'admin adds me to group')
+        if (err) throw err
+
+        replicate({ from: admin, to: me, name })
+      })
     })
   })
 })
@@ -352,7 +362,7 @@ test('rebuild (added to group with poBox)', t => {
 
   /* set up listener */
   let rebuildCount = 0
-  me.rebuild.hook((rebuild, [cb]) => {
+  me.db.reindexEncrypted.hook((rebuild, [cb]) => {
     rebuildCount++
     if (rebuildCount === 1) t.pass('rebuild started (group/add-member)')
     else if (rebuildCount === 2) t.pass('rebuild started (group/po-box)')
@@ -378,11 +388,15 @@ test('rebuild (added to group with poBox)', t => {
   admin.tribes.create({ addPOBox: true }, (err, data) => {
     if (err) throw err
 
-    replicate({ from: admin, to: me, name, live: true })
-
-    admin.tribes.invite(data.groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
-      t.error(err, 'admin adds me to group')
+    replicate({ from: admin, to: me, name }, (err) => {
       if (err) throw err
+
+      admin.tribes.invite(data.groupId, [me.id], { text: 'ahoy' }, (err, invite) => {
+        t.error(err, 'admin adds me to group')
+        if (err) throw err
+
+        replicate({ from: admin, to: me, name })
+      })
     })
   })
 })
