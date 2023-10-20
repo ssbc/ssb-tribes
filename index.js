@@ -48,6 +48,9 @@ module.exports = {
 }
 
 function init (ssb, config) {
+
+  if (!(config.box2 && config.box2.legacyMode)) throw Error("ssb-tribes error: config.box2.legacyMode needs to be `true`")
+
   const state = {
     keys: ssb.keys,
     feedId: bfe.encode(ssb.id),
