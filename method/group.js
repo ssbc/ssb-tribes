@@ -43,7 +43,7 @@ module.exports = function GroupMethods (ssb) {
       ]
 
       // TODO
-      // consider making sure creator can always open the group (even if lose keystore)
+      // consider making sure creator can always open the group (even if lose keyring)
       // would also require adding groupKey to this message
 
       ssb.db.create({

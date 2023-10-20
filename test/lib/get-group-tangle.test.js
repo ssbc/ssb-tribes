@@ -13,18 +13,9 @@ test('get-group-tangle unit test', t => {
   //    - creating a group and publishing messages (ssb-tribes)
   server.tribes.create(null, (err, data) => {
     if (err) throw err
-    const keystore = {
-      group: {
-        get (groupId) {
-          return { ...data, root: data.groupInitMsg.key } // rootMsgId
-        }
-      }
-    }
-    // NOTE: Tribes create callback with different data than keystore.group.get :(
-    // Somebody should probably fix that
 
     // NOTE: Publishing has a queue which means if you publish many things in a row there is a delay before those values are in indexes to be queried.
-    const _getGroupTangle = GetGroupTangle(server, keystore)
+    const _getGroupTangle = GetGroupTangle(server)
     const getGroupTangle = (id, cb) => {
       setTimeout(() => _getGroupTangle(id, cb), 300)
     }
@@ -186,20 +177,14 @@ test('get-group-tangle with branch', t => {
   // Alice creates a group
   alice.tribes.create(null, (err, data) => {
     if (err) throw err
+
     // Prepare to get Alice's group tangle from both servers
-    const keystore = {
-      group: {
-        get (groupId) {
-          return { ...data, root: data.groupInitMsg.key } // rootMsgId
-        }
-      }
-    }
     const DELAY = 200
-    const _getAliceGroupTangle = GetGroupTangle(alice, keystore)
+    const _getAliceGroupTangle = GetGroupTangle(alice)
     const getAliceGroupTangle = (id, cb) => {
       setTimeout(() => _getAliceGroupTangle(id, cb), DELAY)
     }
-    const _getBobGroupTangle = GetGroupTangle(bob, keystore)
+    const _getBobGroupTangle = GetGroupTangle(bob)
     const getBobGroupTangle = (id, cb) => {
       setTimeout(() => _getBobGroupTangle(id, cb), DELAY)
     }

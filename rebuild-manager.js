@@ -33,7 +33,7 @@ module.exports = class RebuildManager {
     //  // add it to the current rebuild process (so long as the "reasons" was specific enough)
     //  if (this.requests.has(reason)) this.requests.add(reason, cb)
     //  // otherwise, queue it up for the next round of rebuilds - this is because we may have added new things to
-    //  // the keystore which would justify re-trying decrypting all messages
+    //  // the keyring which would justify re-trying decrypting all messages
     //  else this.nextRequests.add(reason, cb)
 
     //  return

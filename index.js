@@ -1,9 +1,6 @@
-const { join } = require('path')
 const set = require('lodash.set')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
-const KeyRing = require('ssb-keyring')
 const bfe = require('ssb-bfe')
-const Obz = require('obz')
 const pull = require('pull-stream')
 const paraMap = require('pull-paramap')
 
@@ -55,27 +52,11 @@ function init (ssb, config) {
     keys: ssb.keys,
     feedId: bfe.encode(ssb.id),
 
-    loading: {
-      keystore: Obz()
-    },
     newAuthorListeners: [],
 
     closed: false
   }
 
-  /* secret keys store / helper */
-  const keystore = {} // HACK we create an Object so we have a reference to merge into
-  // TODO: ssb-box2 stores the keyring at config.path/keyring. we're gonna have to merge this right?
-  KeyRing(join(config.path, 'tribes/keystore'), (err, api) => {
-    if (err) throw err
-
-    api.signing.addNamed(ssb.keys.id, ssb.keys, (err) => {
-      if (err) throw err
-
-      Object.assign(keystore, api) // merging into existing reference
-      state.loading.keystore.set(false)
-    })
-  })
   ssb.close.hook(function (close, args) {
     state.closed = true
     close.apply(this, args)

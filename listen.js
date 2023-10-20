@@ -37,7 +37,7 @@ module.exports = {
       pull.filter(isAddMember),
       pull.unique('key')
       // NOTE we DO NOT filter our own messages out
-      // this is important for rebuilding indexes and keystore state if we have to restore our feed
+      // this is important for rebuilding indexes and keyring state if we have to restore our feed
     )
   },
   excludeMember (ssb) {
@@ -94,7 +94,7 @@ module.exports = {
       pull.filter(isPOBox),
       pull.unique('key'),
       // NOTE we DO NOT filter our own messages out
-      // this is important for rebuilding indexes and keystore state if we have to restore our feed
+      // this is important for rebuilding indexes and keyring state if we have to restore our feed
       pull.drain(emit)
     )
   }
