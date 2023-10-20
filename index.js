@@ -77,17 +77,9 @@ function init (ssb, config) {
     })
   })
   ssb.close.hook(function (close, args) {
-    const next = () => close.apply(this, args)
-    onKeystoreReady(() => keystore.close(next))
-    state.closed = true // NOTE must be after onKeystoreReady call
+    state.closed = true
+    close.apply(this, args)
   })
-
-  function onKeystoreReady (done) {
-    if (state.closed === true) return
-    if (state.loading.keystore.value === false) return done()
-
-    state.loading.keystore.once(done)
-  }
 
   const processedNewAuthors = {}
 
@@ -225,23 +217,22 @@ function init (ssb, config) {
 
   const tribeCreate = (opts, cb) => {
     opts = opts || {} // NOTE this catches opts = null, leave it like this
-    onKeystoreReady(() => {
-      scuttle.group.init((err, data) => {
+
+    scuttle.group.init((err, data) => {
+      if (err) return cb(err)
+
+      // addMember the admin
+      scuttle.group.addMember(data.groupId, [ssb.id], {}, (err) => {
         if (err) return cb(err)
 
-        // addMember the admin
-        scuttle.group.addMember(data.groupId, [ssb.id], {}, (err) => {
-          if (err) return cb(err)
-
-          // add a P.O. Box to the group (maybe)
-          if (!opts.addPOBox) return cb(null, data)
-          else {
-            scuttle.group.addPOBox(data.groupId, (err, poBoxId) => {
-              if (err) cb(err)
-              cb(null, { ...data, poBoxId })
-            })
-          }
-        })
+        // add a P.O. Box to the group (maybe)
+        if (!opts.addPOBox) return cb(null, data)
+        else {
+          scuttle.group.addPOBox(data.groupId, (err, poBoxId) => {
+            if (err) cb(err)
+            cb(null, { ...data, poBoxId })
+          })
+        }
       })
     })
   }
@@ -391,18 +382,21 @@ function init (ssb, config) {
     },
 
     // for internal use - ssb-ahau uses this for backups
-    ownKeys: {
-      list (cb) {
-        onKeystoreReady(() => {
-          cb(null, [keystore.self.get()])
-        })
-      },
-      register (key, cb) {
-        onKeystoreReady(() => {
-          keystore.self.set(key, cb)
-        })
-      }
-    }
+    // TODO: does ahau use this for backups though?
+    // i couldn't find a self.get function in box2 so we might have to add that if this is needed
+    //ownKeys: {
+    //  list (cb) {
+    //    onKeystoreReady(() => {
+    //      cb(null, [keystore.self.get()])
+    //    })
+    //  },
+    //  register (key, cb) {
+    //    onKeystoreReady(() => {
+    //      //ssb.box2.setOwnDMKey(key)
+    //      keystore.self.set(key, cb)
+    //    })
+    //  }
+    //}
   }
 }
 
