@@ -10,7 +10,7 @@ const addMemberSpec = require('../spec/group/add-member')
 const excludeMemberSpec = require('../spec/group/exclude-member')
 const groupPoBoxSpec = require('../spec/group/po-box')
 
-module.exports = function GroupMethods (ssb, keystore, state) {
+module.exports = function GroupMethods (ssb) {
   const groupPoBoxCrut = new Crut(
     ssb,
     groupPoBoxSpec,

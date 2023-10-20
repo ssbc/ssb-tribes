@@ -172,26 +172,24 @@ function init (ssb, config) {
           .forEach(id => ssb.replicate.request({ id, replicate: true }))
       })
 
-      state.loading.keystore.once(() => {
-        pull(
-          pull.values(keystore.group.listSync()),
-          paraMap(
-            (groupId, cb) => scuttle.group.listAuthors(groupId, (err, feedIds) => {
-              if (err) return cb(new Error('error listing authors to replicate on start'))
-              cb(null, feedIds)
-            }),
-            5
-          ),
-          pull.flatten(),
-          pull.unique(),
-          pull.drain(feedId => {
-            if (feedId === ssb.id) return
-            ssb.replicate.request({ id: feedId, replicate: true })
-          }, (err) => {
-            if (err) console.error('error on initializing replication of group members')
-          })
-        )
-      })
+      pull(
+        ssb.box2.listGroupIds(),
+        paraMap(
+          (groupId, cb) => scuttle.group.listAuthors(groupId, (err, feedIds) => {
+            if (err) return cb(new Error('error listing authors to replicate on start'))
+            cb(null, feedIds)
+          }),
+          5
+        ),
+        pull.flatten(),
+        pull.unique(),
+        pull.drain(feedId => {
+          if (feedId === ssb.id) return
+          ssb.replicate.request({ id: feedId, replicate: true })
+        }, (err) => {
+          if (err) console.error('error on initializing replication of group members')
+        })
+      )
     }
   })
 
@@ -208,12 +206,12 @@ function init (ssb, config) {
   const isMemberType = (type) => type === 'group/add-member' || type === 'group/exclude-member'
 
   /* Tangle: auto-add tangles.group info to all private-group messages */
-  const getGroupTangle = GetGroupTangle(ssb, keystore, 'group')
-  const getMembersTangle = GetGroupTangle(ssb, keystore, 'members')
+  const getGroupTangle = GetGroupTangle(ssb, null, 'group')
+  const getMembersTangle = GetGroupTangle(ssb, null, 'members')
   // TODO: make this a ssb.tribes.publish function instead of a hook
 
   /* API */
-  const scuttle = Method(ssb, keystore, state) // ssb db methods
+  const scuttle = Method(ssb) // ssb db methods
 
   const tribeCreate = (opts, cb) => {
     opts = opts || {} // NOTE this catches opts = null, leave it like this

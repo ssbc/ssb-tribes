@@ -1,30 +1,14 @@
 const Link = require('./link')
 const Group = require('./group')
 
-module.exports = function Method (ssb, keystore, state) {
+module.exports = function Method (ssb) {
   const link = Link(ssb)
-  const group = Group(ssb, keystore, state)
+  const group = Group(ssb)
 
   return {
-    group: {
-      init: patient(group.init),
-      addMember: patient(group.addMember),
-      excludeMembers: patient(group.excludeMembers),
-      listAuthors: group.listAuthors,
-      addPOBox: patient(group.addPOBox),
-      getPOBox: group.getPOBox
-    },
+    group,
 
-    link
+    link,
     // create createSubGroupLink findGroupByFeedId findParentGroupLinks findSubGroupLinks
-  }
-
-  function patient (fn) {
-    // for functions that need keystore to be ready
-    return function (...args) {
-      if (state.loading.keystore.value === false) return fn(...args)
-
-      state.loading.keystore.once(() => fn(...args))
-    }
   }
 }
