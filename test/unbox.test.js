@@ -3,12 +3,7 @@
 const test = require('tape')
 const pull = require('pull-stream')
 const { promisify: p } = require('util')
-const { decodeLeaves, Server, Run } = require('./helpers')
-
-const vectors = [
-  require('./vectors/unbox1.json'),
-  require('./vectors/unbox2.json')
-].map(decodeLeaves)
+const { Server, Run } = require('./helpers')
 
 test.skip('unbox', async t => {
   const run = Run(t)

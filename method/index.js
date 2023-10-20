@@ -8,7 +8,7 @@ module.exports = function Method (ssb) {
   return {
     group,
 
-    link,
+    link
     // create createSubGroupLink findGroupByFeedId findParentGroupLinks findSubGroupLinks
   }
 }
