@@ -27,7 +27,6 @@
     "futoin-hkdf": "^1.5.2",
     "is-my-json-valid": "^2.20.6",
     "is-my-ssb-valid": "^1.2.2",
-    "level": "^6.0.1",
     "lodash.set": "^4.3.2",
     "mkdirp": "^1.0.4",
     "private-group-spec": "^8.0.0",
