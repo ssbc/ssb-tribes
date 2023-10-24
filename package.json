@@ -30,7 +30,6 @@
     "level": "^6.0.1",
     "lodash.set": "^4.3.2",
     "mkdirp": "^1.0.4",
-    "obz": "^1.1.0",
     "private-group-spec": "^8.0.0",
     "pull-level": "^2.0.4",
     "pull-many": "^1.0.9",
