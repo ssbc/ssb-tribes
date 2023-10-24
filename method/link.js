@@ -1,7 +1,8 @@
 const Crut = require('ssb-crut')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
+const { allocAndEncode, seekKey2 } = require('bipf')
 const pull = require('pull-stream')
-const { where, and, type: dbType, author, slowEqual, toPullStream } = require('ssb-db2/operators')
+const { where, and, type: dbType, author, equal, toPullStream } = require('ssb-db2/operators')
 const FeedGroupLink = require('../spec/link/feed-group')
 const GroupSubGroupLink = require('../spec/link/group-subgroup')
 
@@ -23,6 +24,50 @@ module.exports = function Link (ssb) {
     }
   )
 
+  const B_CONTENT = allocAndEncode('content')
+  const B_PARENT = allocAndEncode('parent')
+  const B_CHILD = allocAndEncode('child')
+  const B_TANGLES = allocAndEncode('tangles')
+  const B_LINK = allocAndEncode('link')
+  const B_ROOT = allocAndEncode('root')
+  const B_PREVIOUS = allocAndEncode('previous')
+
+  function seekParent (buffer, start, pValue) {
+    if (pValue < 0) return -1
+    const pValueContent = seekKey2(buffer, pValue, B_CONTENT, 0)
+    if (pValueContent < 0) return -1
+    return seekKey2(buffer, pValueContent, B_PARENT, 0)
+  }
+
+  function seekChild (buffer, start, pValue) {
+    if (pValue < 0) return -1
+    const pValueContent = seekKey2(buffer, pValue, B_CONTENT, 0)
+    if (pValueContent < 0) return -1
+    return seekKey2(buffer, pValueContent, B_CHILD, 0)
+  }
+
+  function seekTanglesLinkRoot (buffer, start, pValue) {
+    if (pValue < 0) return -1
+    const pValueContent = seekKey2(buffer, pValue, B_CONTENT, 0)
+    if (pValueContent < 0) return -1
+    const pValueContentTangles = seekKey2(buffer, pValueContent, B_TANGLES, 0)
+    if (pValueContentTangles < 0) return -1
+    const pValueContentTanglesLink = seekKey2(buffer, pValueContentTangles, B_LINK, 0)
+    if (pValueContentTanglesLink < 0) return -1
+    return seekKey2(buffer, pValueContentTanglesLink, B_ROOT, 0)
+  }
+
+  function seekTanglesLinkPrevious (buffer, start, pValue) {
+    if (pValue < 0) return -1
+    const pValueContent = seekKey2(buffer, pValue, B_CONTENT, 0)
+    if (pValueContent < 0) return -1
+    const pValueContentTangles = seekKey2(buffer, pValueContent, B_TANGLES, 0)
+    if (pValueContentTangles < 0) return -1
+    const pValueContentTanglesLink = seekKey2(buffer, pValueContentTangles, B_LINK, 0)
+    if (pValueContentTanglesLink < 0) return -1
+    return seekKey2(buffer, pValueContentTanglesLink, B_PREVIOUS, 0)
+  }
+
   // NOTE this is not generalised to all links, it's about group links
   function findLinks (type, opts = {}, cb) {
     const { parent, child } = opts
@@ -35,10 +80,10 @@ module.exports = function Link (ssb) {
         where(
           and(
             dbType(type),
-            parent && slowEqual('value.content.parent', parent),
-            child && slowEqual('value.content.child', child),
-            slowEqual('value.content.tangles.link.root', null),
-            slowEqual('value.content.tangles.link.previous', null)
+            parent && equal(seekParent, parent, { indexType: 'parent', prefix: true }),
+            child && equal(seekChild, child, { indexType: 'child', prefix: true }),
+            equal(seekTanglesLinkRoot, null, { indexType: 'tanglesLinkRoot', prefix: true }),
+            equal(seekTanglesLinkPrevious, null, { indexType: 'tanglesLinkPrevious', prefix: true })
           )
         ),
         toPullStream()
@@ -104,9 +149,9 @@ module.exports = function Link (ssb) {
             and(
               author(feedId),
               dbType('link/feed-group'),
-              slowEqual('value.content.parent', feedId),
-              slowEqual('value.content.tangles.link.root', null),
-              slowEqual('value.content.tangles.link.previous', null)
+              equal(seekParent, feedId, { indexType: 'parent', prefix: true }),
+              equal(seekTanglesLinkRoot, null, { indexType: 'tanglesLinkRoot', prefix: true }),
+              equal(seekTanglesLinkPrevious, null, { indexType: 'tanglesLinkPrevious', prefix: true })
             )
           ),
           toPullStream()
