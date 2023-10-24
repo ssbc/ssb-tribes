@@ -256,9 +256,18 @@ function init (ssb, config) {
 
   return {
     publish (content, cb) {
-      if (!content.recps) return cb(Error('recps missing in content'))
+      if (!content.recps) {
+        return ssb.db.create({
+          content,
+        }, cb)
+      }
 
-      if (!isGroup(content.recps[0])) return cb(Error('first recp in recps needs to be a group id'))
+      if (!isGroup(content.recps[0])) {
+        return ssb.db.create({
+          content,
+          encryptionFormat: 'box2'
+        }, cb)
+      }
 
       ssb.box2.getGroupInfo(content.recps[0], (err, groupInfo) => {
         if (err) return cb(Error('error on getting group info in publish', { cause: err }))

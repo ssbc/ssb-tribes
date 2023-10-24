@@ -83,7 +83,7 @@ test('publish (group + feedId)', t => {
   })
 })
 
-test.skip('publish (DMs: myFeedId + feedId)', async t => {
+test('publish (DMs: myFeedId + feedId)', async t => {
   const alice = Server()
   const bob = Server()
   const name = (id) => {
@@ -94,7 +94,6 @@ test.skip('publish (DMs: myFeedId + feedId)', async t => {
   const content = {
     type: 'announce',
     text: 'summer has arrived in wellington!',
-    // TODO: failing here because the first recp isn't a groupId. the old code just published anyway. do we still want to do that? i think the spec might allow it but we disallow it in tribes2
     recps: [alice.id, bob.id]
   }
 
