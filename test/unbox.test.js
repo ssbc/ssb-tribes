@@ -3,9 +3,10 @@
 const test = require('tape')
 const pull = require('pull-stream')
 const { promisify: p } = require('util')
+const { where, and, type, slowEqual, toPullStream } = require('ssb-db2/operators')
 const { Server, Run } = require('./helpers')
 
-test.skip('unbox', async t => {
+test('unbox', async t => {
   const run = Run(t)
   const ssb = Server()
   const { groupId, groupInitMsg } = await p(ssb.tribes.create)({})
@@ -29,10 +30,8 @@ test.skip('unbox', async t => {
   }
 
   const RECPS = [
-    // TODO: i think i asked this somewhere else, but do we actually wanna support DMs in the first slot in this module? what's the usecase?
     ssb.id,
     groupId,
-    // TODO: p.s. do we have some test that tests DMing a pobox actually? that's a non-groupId that should be allowed in the first slot, i guess
     poBoxId
   ]
 
@@ -43,18 +42,15 @@ test.skip('unbox', async t => {
   const backlinks = await run(
     'get backlinks',
     pull(
-      ssb.query.read({
-        query: [{
-          $filter: {
-            value: {
-              content: {
-                type: 'dummy',
-                groupRef: groupInitMsg.key
-              }
-            }
-          }
-        }]
-      }),
+      ssb.db.query(
+        where(
+          and(
+            type('dummy'),
+            slowEqual('value.content.groupRef', groupInitMsg.key)
+          )
+        ),
+        toPullStream()
+      ),
       pull.map(m => m.value.content.recps[0]),
       // just pull the recps on each one
       pull.collectAsPromise()

@@ -258,7 +258,7 @@ function init (ssb, config) {
     publish (content, cb) {
       if (!content.recps) {
         return ssb.db.create({
-          content,
+          content
         }, cb)
       }
 
