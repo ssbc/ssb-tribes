@@ -3,7 +3,7 @@ const { promisify: p } = require('util')
 // const pull = require('pull-stream')
 const { Server, GroupId, replicate, FeedId } = require('./helpers')
 
-test.skip('publish (to groupId)', t => {
+test('publish (to groupId)', t => {
   const server = Server()
 
   server.tribes.create(null, (err, data) => {
@@ -16,11 +16,6 @@ test.skip('publish (to groupId)', t => {
       text: 'summer has arrived in wellington!',
       recps: [groupId]
     }
-    /* NOTE with this we confirm that content.recps isn't mutated while sneakin our own_key in! */
-    // TODO: ssb-tribes/envelope.js has specific logic for if we're in a test or not, we're not using that anymore so this is failing. specifically the msg size. should we maybe just trust that ssb-box2 works correctly/tests this for us?
-    process.env.NODE_ENV = 'production'
-    console.log('NODE_ENV', process.env.NODE_ENV)
-    Object.freeze(content.recps)
 
     server.tribes.publish(content, (err, msg) => {
       t.error(err, 'msg published to group')
@@ -32,14 +27,10 @@ test.skip('publish (to groupId)', t => {
         t.deepEqual(msg.value.content, content, 'can open envelope!')
 
         const plainTextSize = Buffer.from(JSON.stringify(msg.value.content)).length
-        const expectedSize = 32 + (msg.value.content.recps.length + 1) * 32 + (plainTextSize + 16)
+        const expectedSize = 32 + msg.value.content.recps.length * 32 + (plainTextSize + 16)
         // header + (recp key slots) + (content + HMAC)
-        // NOTE - we sneak ourselves in as a key_slot when we can
-        t.equal(cipherTextSize, expectedSize, 'cipherTextSize overhead correct') // 112 bytes
+        t.equal(cipherTextSize, expectedSize, 'cipherTextSize overhead correct')
 
-        /* return ENV to testing */
-        process.env.NODE_ENV = 'test'
-        console.log('NODE_ENV', process.env.NODE_ENV)
         server.close(t.end)
       })
     })
