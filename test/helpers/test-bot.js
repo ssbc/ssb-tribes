@@ -51,11 +51,5 @@ module.exports = function TestBot (opts = {}) {
     ssb.tribes.application = Application(ssb)
   }
 
-  ssb.close.hook((close, args) => {
-    return setTimeout(() => {
-      close(...args)
-    }, 10 * 1000)
-  })
-
   return ssb
 }
