@@ -88,6 +88,16 @@ function init (ssb, config) {
 
   /* start listeners */
 
+  /* We care about group/add-member messages others have posted which:
+   * 1. add us to a new group
+   * 2. add other people to a group we're already in
+   *
+   * In (2) we may be able to skip re-indexing if they haven't published
+   * any brand new private messages since they were added.
+   * This would require knowing their feed seq at time they were entrusted with key
+   * (because they can't post messages to the group before then)
+   */
+
   pull(
     listen.addMember(ssb),
     pull.asyncMap((m, cb) => {
@@ -176,24 +186,62 @@ function init (ssb, config) {
     }
   })
 
-  /* We care about group/add-member messages others have posted which:
-   * 1. add us to a new group
-   * 2. add other people to a group we're already in
-   *
-   * In (2) we may be able to skip re-indexing if they haven't published
-   * any brand new private messages since they were added.
-   * This would require knowing their feed seq at time they were entrusted with key
-   * (because they can't post messages to the group before then)
-   */
+  /* API */
 
   const isMemberType = (type) => type === 'group/add-member' || type === 'group/exclude-member'
 
   /* Tangle: auto-add tangles.group info to all private-group messages */
   const getGroupTangle = GetGroupTangle(ssb, null, 'group')
   const getMembersTangle = GetGroupTangle(ssb, null, 'members')
-  // TODO: make this a ssb.tribes.publish function instead of a hook
 
-  /* API */
+  const tribePublish = (content, cb) => {
+      if (!content.recps) {
+        return ssb.db.create({
+          content
+        }, cb)
+      }
+
+      if (!isGroup(content.recps[0])) {
+        return ssb.db.create({
+          content,
+          encryptionFormat: 'box2'
+        }, cb)
+      }
+
+      ssb.box2.getGroupInfo(content.recps[0], (err, groupInfo) => {
+        if (err) return cb(Error('error on getting group info in publish', { cause: err }))
+
+        if (!groupInfo) return cb(Error('unknown groupId'))
+
+        getGroupTangle(content.recps[0], (err, groupTangle) => {
+          if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
+
+          set(content, 'tangles.group', groupTangle)
+          tanglePrune(content) // prune the group tangle down if needed
+
+          // we only want to have to calculate the members tangle if it's gonna be used
+          if (!isMemberType(content.type)) {
+            return ssb.db.create({
+              content,
+              encryptionFormat: 'box2'
+            }, cb)
+          }
+
+          getMembersTangle(content.recps[0], (err, membersTangle) => {
+            if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
+
+            set(content, 'tangles.members', membersTangle)
+            tanglePrune(content, 'members')
+
+            ssb.db.create({
+              content,
+              encryptionFormat: 'box2'
+            }, cb)
+          })
+        })
+      })
+    }
+
   const scuttle = Method(ssb) // ssb db methods
 
   const tribeCreate = (opts, cb) => {
@@ -255,53 +303,7 @@ function init (ssb, config) {
   }
 
   return {
-    publish (content, cb) {
-      if (!content.recps) {
-        return ssb.db.create({
-          content
-        }, cb)
-      }
-
-      if (!isGroup(content.recps[0])) {
-        return ssb.db.create({
-          content,
-          encryptionFormat: 'box2'
-        }, cb)
-      }
-
-      ssb.box2.getGroupInfo(content.recps[0], (err, groupInfo) => {
-        if (err) return cb(Error('error on getting group info in publish', { cause: err }))
-
-        if (!groupInfo) return cb(Error('unknown groupId'))
-
-        getGroupTangle(content.recps[0], (err, groupTangle) => {
-          if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
-
-          set(content, 'tangles.group', groupTangle)
-          tanglePrune(content) // prune the group tangle down if needed
-
-          // we only want to have to calculate the members tangle if it's gonna be used
-          if (!isMemberType(content.type)) {
-            return ssb.db.create({
-              content,
-              encryptionFormat: 'box2'
-            }, cb)
-          }
-
-          getMembersTangle(content.recps[0], (err, membersTangle) => {
-            if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
-
-            set(content, 'tangles.members', membersTangle)
-            tanglePrune(content, 'members')
-
-            ssb.db.create({
-              content,
-              encryptionFormat: 'box2'
-            }, cb)
-          })
-        })
-      })
-    },
+    publish: tribePublish,
     register (groupId, info, cb) {
       ssb.box2.addGroupInfo(groupId, info, cb)
     },
