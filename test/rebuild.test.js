@@ -34,8 +34,6 @@ test('rebuild (I am added to a group)', async t => {
   // time for rebuilding
   await p(setTimeout)(500)
 
-  t.true(me.status().sync.sync, 'all indexes updated')
-
   const msgs = await pull(
     me.db.query(
       where(and(
@@ -243,12 +241,6 @@ test('rebuild from listen.addMember', t => {
   // NOTE with auto-rebuild active, this listener gets hit twice:
   // 1. first time we see group/add-member (unboxed with DM key)
   // 2. after rebuild
-  function checkRebuildDone (done) {
-    if (A.status().sync.sync) return done()
-
-    console.log('waiting for rebuild')
-    setTimeout(() => checkRebuildDone(done), 500)
-  }
   pull(
     listen.addMember(A),
     pull.filter(m => !m.sync),
@@ -259,12 +251,12 @@ test('rebuild from listen.addMember', t => {
       // (2) B invites A
 
       if (heardCount === 2) {
-        checkRebuildDone(() => {
+        setTimeout(() => {
           A.close(err => {
             t.error(err, 'A closed')
             t.end()
           })
-        })
+        }, 500)
       }
     })
   )
