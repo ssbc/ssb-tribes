@@ -334,4 +334,3 @@ Find subGroups which have linked with a groupId (see `ssb.tribes.link.createSubG
 ## TODO
 
 - [ ] add the latest known "sequence" at time of add-member, so we know if we need to reindex!
-
