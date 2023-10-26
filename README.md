@@ -95,7 +95,7 @@ The secret stack option `config.box2.legacyMode` also needs to be `true`.
 
 ## API
 
-## `ssb.tribes.publish(content, cb)`
+### `ssb.tribes.publish(content, cb)`
 
 A wrapper around `ssb.db.create` that makes sure you have correct tangles (if relevant) in your message. Mutates `content`. You need to put recipients in `content.recps` if you want it to be encrypted.
 
