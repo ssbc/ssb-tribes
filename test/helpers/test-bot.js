@@ -34,7 +34,7 @@ module.exports = function TestBot (opts = {}) {
       ...opts.box2
     },
     // we don't want testbot to import db1 or db2 for us, we want to control what db2 plugins get imported
-    noUse: true,
+    noDefaultUse: true,
     ...opts
   })
 
