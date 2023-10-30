@@ -84,13 +84,9 @@ module.exports = function GroupMethods (ssb) {
           groupKey: writeKey.key.toString('base64'),
           root,
           tangles: {
-            members: {
-              root,
-              previous: [root] // TODO calculate previous for members tangle
-            },
-
-            group: { root, previous: [root] }
-            // NOTE: this is a dummy entry which is over-written in publish hook
+            group: { root, previous: [root] },
+            members: { root, previous: [root] }
+            // NOTE: these are dummy entries which are over-written in the publish function
           },
           recps: [groupId, ...authorIds]
         }
@@ -112,9 +108,9 @@ module.exports = function GroupMethods (ssb) {
           type: 'group/exclude-member',
           excludes: authorIds,
           tangles: {
-            members: { root, previous: [root] },
-            group: { root, previous: [root] }
-            // NOTE: these are dummy entries which are over-written in the publish hook
+            group: { root, previous: [root] },
+            members: { root, previous: [root] }
+            // NOTE: these are dummy entries which are over-written in the publish function
           },
           recps: [groupId]
         }
