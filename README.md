@@ -88,7 +88,7 @@ A Secret-Stack server running the plugins:
 - `ssb-tribes`
 - `ssb-db2/compat`
 - `ssb-db2/compat/feedstate`
-- `ssb-box2` >= TODO
+- `ssb-box2` >= 7.2.0
 - `ssb-replicate` - (optional) used to auto-replicate people who you're in groups with
 
 The secret stack option `config.box2.legacyMode` also needs to be `true`.
