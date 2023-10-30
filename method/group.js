@@ -32,11 +32,9 @@ module.exports = function GroupMethods (ssb) {
       if (!initSpec.isValid(content)) return cb(new Error(initSpec.isValid.errorsString))
 
       /* enveloping */
-      // we have to do it manually this one time, because the auto-boxing checks for a known groupId
+      // we have to do it differently this one time, because the auto-boxing checks for a known groupId
       // but the groupId is derived from the messageId of this message (which does not exist yet
-      // const plain = Buffer.from(JSON.stringify(content), 'utf8')
 
-      // const msgKey = new SecretKey().toBuffer()
       const recps = [
         { key: groupKey.toBuffer(), scheme: keySchemes.private_group },
         ssb.id // sneak this in so can decrypt it ourselves without rebuild!
