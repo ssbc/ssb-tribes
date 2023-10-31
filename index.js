@@ -195,52 +195,52 @@ function init (ssb, config) {
   const getMembersTangle = GetGroupTangle(ssb, null, 'members')
 
   const tribePublish = (content, cb) => {
-      if (!content.recps) {
-        return ssb.db.create({
-          content
-        }, cb)
-      }
+    if (!content.recps) {
+      return ssb.db.create({
+        content
+      }, cb)
+    }
 
-      if (!isGroup(content.recps[0])) {
-        return ssb.db.create({
-          content,
-          encryptionFormat: 'box2'
-        }, cb)
-      }
+    if (!isGroup(content.recps[0])) {
+      return ssb.db.create({
+        content,
+        encryptionFormat: 'box2'
+      }, cb)
+    }
 
-      ssb.box2.getGroupInfo(content.recps[0], (err, groupInfo) => {
-        if (err) return cb(Error('error on getting group info in publish', { cause: err }))
+    ssb.box2.getGroupInfo(content.recps[0], (err, groupInfo) => {
+      if (err) return cb(Error('error on getting group info in publish', { cause: err }))
 
-        if (!groupInfo) return cb(Error('unknown groupId'))
+      if (!groupInfo) return cb(Error('unknown groupId'))
 
-        getGroupTangle(content.recps[0], (err, groupTangle) => {
-          if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
+      getGroupTangle(content.recps[0], (err, groupTangle) => {
+        if (err) return cb(Error("Couldn't get group tangle", { cause: err }))
 
-          set(content, 'tangles.group', groupTangle)
-          tanglePrune(content) // prune the group tangle down if needed
+        set(content, 'tangles.group', groupTangle)
+        tanglePrune(content) // prune the group tangle down if needed
 
-          // we only want to have to calculate the members tangle if it's gonna be used
-          if (!isMemberType(content.type)) {
-            return ssb.db.create({
-              content,
-              encryptionFormat: 'box2'
-            }, cb)
-          }
+        // we only want to have to calculate the members tangle if it's gonna be used
+        if (!isMemberType(content.type)) {
+          return ssb.db.create({
+            content,
+            encryptionFormat: 'box2'
+          }, cb)
+        }
 
-          getMembersTangle(content.recps[0], (err, membersTangle) => {
-            if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
+        getMembersTangle(content.recps[0], (err, membersTangle) => {
+          if (err) return cb(Error("Couldn't get members tangle", { cause: err }))
 
-            set(content, 'tangles.members', membersTangle)
-            tanglePrune(content, 'members')
+          set(content, 'tangles.members', membersTangle)
+          tanglePrune(content, 'members')
 
-            ssb.db.create({
-              content,
-              encryptionFormat: 'box2'
-            }, cb)
-          })
+          ssb.db.create({
+            content,
+            encryptionFormat: 'box2'
+          }, cb)
         })
       })
-    }
+    })
+  }
 
   const scuttle = Method(ssb) // ssb db methods
 
