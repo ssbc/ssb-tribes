@@ -12,15 +12,12 @@ module.exports = function TestBot (opts = {}) {
   // }
 
   let stack = Server // eslint-disable-line
-    // .use(require('ssb-backlinks'))
-    // .use(require('ssb-query'))
     .use(require('ssb-db2/core'))
     .use(require('ssb-classic'))
     .use(require('ssb-db2/compat'))
     .use(require('ssb-db2/compat/feedstate'))
-    // .use(require("ssb-db2/compat/publish"))
     .use(require('ssb-box2'))
-    .use(require('../..')) // ssb-tribes - NOTE load it after ssb-backlinks
+    .use(require('../..'))
 
   if (opts.installReplicate === true) {
     stack = stack.use(require('ssb-replicate'))

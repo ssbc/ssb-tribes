@@ -48,7 +48,11 @@
     "ssb-replicate": "^1.3.3",
     "standard": "^17.1.0",
     "tap-arc": "^0.4.0",
-    "tape": "^5.7.0"
+    "tape": "^5.7.0",
+    "ssb-tribes-3-1-3": "npm:ssb-tribes@3.1.3",
+    "ssb-backlinks-2-1-1": "npm:ssb-backlinks@2.1.1",
+    "ssb-query-2-4-5": "npm:ssb-query@2.4.5",
+    "scuttle-testbot-1-11-0": "npm:scuttle-testbot@1.11.0"
   },
   "keywords": [
     "scuttlebutt",
