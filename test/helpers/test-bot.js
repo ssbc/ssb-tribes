@@ -23,16 +23,14 @@ module.exports = function TestBot (opts = {}) {
     stack = stack.use(require('ssb-replicate'))
   }
 
-  if (opts.name) opts.name = 'ssb-tribes/' + opts.name
-
   const ssb = stack({
+    ...opts,
     box2: {
       legacyMode: true,
-      ...opts.box2
+      ...opts.box2,
     },
     // we don't want testbot to import db2 for us, we want more granularity and control of dep versions
     db1: true,
-    ...opts
   })
 
   if (opts.debug) {

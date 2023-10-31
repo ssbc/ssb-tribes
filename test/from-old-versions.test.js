@@ -16,7 +16,6 @@ const OldBot = (opts) => {
 test('can continue from old keyring from ssb-tribes 3.1.3', async t => {
   const oldAlice = OldBot({ name: 'alice' })
 
-
   const oldGroup = await p(oldAlice.tribes.create)({})
 
   t.equal(typeof oldGroup.groupId, 'string', "got a group id")
@@ -30,7 +29,15 @@ test('can continue from old keyring from ssb-tribes 3.1.3', async t => {
 
   await p(setTimeout)(500)
 
-  const newAlice = NewBot({ name: 'alice' })
+  // TODO: try creating bot without box2.path, but it should crash since it sees the old keystore
+
+  const newAlice = NewBot({
+    name: 'alice',
+    startUnclean: true,
+    box2: {
+      path: 'tribes/keystore',
+    }
+  })
 
   const newList = await p(newAlice.tribes.list)()
   t.deepEqual(newList, oldList, 'new bot has same group list as old')

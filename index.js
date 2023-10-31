@@ -50,6 +50,8 @@ module.exports = {
 function init (ssb, config) {
   if (!(config.box2 && config.box2.legacyMode)) throw Error('ssb-tribes error: config.box2.legacyMode needs to be `true`')
 
+  // TODO: check if the old keyring path exists, in that case require config.box2.path to be set to point to it
+
   const state = {
     keys: ssb.keys,
     feedId: bfe.encode(ssb.id),
