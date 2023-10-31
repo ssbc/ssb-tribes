@@ -13,15 +13,20 @@ const config = require('ssb-config')
 const caps = require('ssb-caps')
 
 const stack = SecretStack({ caps })
-  .use(require('ssb-db'))        // << required
-  .use(require('ssb-backlinks')) // << required index
-  .use(require('ssb-query'))     // << required index
-  .use(require('ssb-tribes'))
-  .use(require('ssb-private1'))  // if you want to support old decryption
-                                 // *order matters*, load tribes first
+  .use(require('ssb-db2/core'))
+  .use(require('ssb-classic'))
+  .use(require('ssb-db2/compat'))
+  .use(require('ssb-db2/compat/feedstate'))
+  .use(require('ssb-box2'))
   .use(...)
 
-const ssb = stack(config)
+const ssb = stack({
+  ...config,
+  box2: {
+    ...config.box2,
+    legacyMode: true
+  }
+})
 ```
 
 
@@ -34,7 +39,7 @@ ssb.tribes.create({}, (err, info) => {
     test: 'kia ora, e te whānau',
     recps: [groupId] // <<< you can now put a groupId in the recps
   }
-  ssb.publish(content, (err, msg) => {
+  ssb.tribes.publish(content, (err, msg) => {
     // tada msg is encrypted to group!
 
     const cookie = '@YXkE3TikkY4GFMX3lzXUllRkNTbj5E+604AkaO1xbz8=.ed25519'
@@ -53,7 +58,7 @@ ssb.tribes.create({}, (err, info) => {
 
 This plugin provides functions for creating groups and administering things about them, but it also provides a bunch of "automatic" behviour.
 
-1. **When you publish a message with `recps` it will auto-encrypt** the content when:
+1. **When you publish a message with `recps` using `ssb.tribes.publish` it will auto-encrypt** the content when:
     - there are 1-16 FeedIds (direct mesaaging)
     - there is 1 GroupId (private group messaging)
     - there is 1 GroupId followed by 1-15 FeedId
@@ -78,13 +83,21 @@ This plugin provides functions for creating groups and administering things abou
 ## Requirements
 
 A Secret-Stack server running the plugins:
-- `ssb-db` >= 20.3.0
+- `ssb-db2/core` >= 7.1.1
+- `ssb-classic`
 - `ssb-tribes`
-- `ssb-backlinks` >= 2.1.1 - used for adding group tangle meta data to messages
-- `ssb-query` >= 2.4.5 - used for listing groups linked to your feedId, or subgroup linked to groups
+- `ssb-db2/compat`
+- `ssb-db2/compat/feedstate`
+- `ssb-box2` >= 7.2.0
 - `ssb-replicate` - (optional) used to auto-replicate people who you're in groups with
 
+The secret stack option `config.box2.legacyMode` also needs to be `true`.
+
 ## API
+
+### `ssb.tribes.publish(content, cb)`
+
+A wrapper around `ssb.db.create` that makes sure you have correct tangles (if relevant) in your message. Mutates `content`. You need to put recipients in `content.recps` if you want it to be encrypted.
 
 ### `ssb.tribes.create(opts, cb)`
 
@@ -325,4 +338,3 @@ Find subGroups which have linked with a groupId (see `ssb.tribes.link.createSubG
 ## TODO
 
 - [ ] add the latest known "sequence" at time of add-member, so we know if we need to reindex!
-

@@ -24,7 +24,7 @@ test('lib/tangle-prune', async t => {
     }
 
     return new Promise((resolve, reject) => {
-      ssb.publish(content, (err, msg) => {
+      ssb.tribes.publish(content, (err, msg) => {
         if (err) return resolve(false)
 
         ssb.get({ id: msg.key, private: true }, (err, msgVal) => {

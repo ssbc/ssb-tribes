@@ -1,3 +1,5 @@
+const pull = require('pull-stream')
+const { where, author, toPromise, descending } = require('ssb-db2/operators')
 const { test, p, Run, Server, replicate, FeedId } = require('../helpers')
 
 test('tribes.invite', async t => {
@@ -5,10 +7,21 @@ test('tribes.invite', async t => {
   const kaitiaki = Server({ name: 'kaitiaki' })
   const newPerson = Server({ name: 'new-person', debug: !true })
 
-  const { groupId, groupKey, groupInitMsg } = await p(kaitiaki.tribes.create)({})
+  const { groupId, groupKey, groupInitMsg } = await p(kaitiaki.tribes.create)({}).catch(err => {
+    console.error(err)
+    t.fail(err)
+  })
   t.true(groupId, 'creates group')
 
-  const selfAdd = await p(kaitiaki.getLatest)(kaitiaki.id)
+  const selfAdd = (await pull(
+    kaitiaki.db.query(
+      where(author(kaitiaki.id)),
+      descending(),
+      toPromise()
+    )
+  ))[0]
+
+  t.true(selfAdd, 'got addition of self')
 
   const authorIds = [
     newPerson.id,
@@ -44,36 +57,14 @@ test('tribes.invite', async t => {
   }
   const { key: greetingKey } = await run(
     'kaitiaki published message',
-    p(kaitiaki.publish)(greetingContent)
+    p(kaitiaki.tribes.publish)(greetingContent)
   )
-
-  let numberRebuilds = 0
-  const rebuildPromise = new Promise((resolve, reject) => {
-    // hook ssb.rebuild - this way we can piggyback the "done" callback of that
-    // and know when the get requests "should" work by
-    newPerson.rebuild.hook(function (rebuild, args) {
-      const [cb] = args
-      rebuild.call(this, (err) => {
-        numberRebuilds++
-        if (typeof cb === 'function') cb(err)
-        if (numberRebuilds === 1) resolve()
-      })
-    })
-  })
 
   await run(
     'replicated',
     p(replicate)({ from: kaitiaki, to: newPerson, live: false })
   )
-  await rebuildPromise
-
-  // const pull = require('pull-stream')
-  // const msgs = await pull(
-  //   newPerson.createLogStream({ private: true }),
-  //   pull.map(m => m.value.content),
-  //   pull.collectAsPromise()
-  // )
-  // console.log(msgs)
+  await p(setTimeout)(500)
 
   const greetingMsg = await run(
     'new-person can get message',
@@ -87,7 +78,7 @@ test('tribes.invite', async t => {
     text: 'Thank you kaitiaki',
     recps: [groupId]
   }
-  const { key: replyKey } = await p(newPerson.publish)(replyContent)
+  const { key: replyKey } = await p(newPerson.tribes.publish)(replyContent)
   await p(replicate)({ from: newPerson, to: kaitiaki, live: false })
   const replyMsg = await Getter(kaitiaki)(replyKey)
   t.deepEqual(replyMsg.value.content, replyContent, 'kaitiaki can read things from new person')

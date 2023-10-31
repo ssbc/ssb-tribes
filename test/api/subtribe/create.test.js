@@ -2,6 +2,7 @@ const test = require('tape')
 const { isCloakedMsg: isGroup } = require('ssb-ref')
 const isPoBox = require('ssb-private-group-keys/lib/is-po-box') // TODO find better home
 const pull = require('pull-stream')
+const { where, type, toPullStream } = require('ssb-db2/operators')
 
 const { Server } = require('../../helpers')
 
@@ -62,18 +63,11 @@ test('tribes.subtribe.create', t => {
   })
 
   function getLink (cb) {
-    const query = [{
-      $filter: {
-        value: {
-          content: {
-            type: 'link/group-group/subgroup'
-          }
-        }
-      }
-    }]
-
     pull(
-      server.query.read({ query }),
+      server.db.query(
+        where(type('link/group-group/subgroup')),
+        toPullStream()
+      ),
       pull.collect((err, msgs) => err ? cb(err) : cb(null, msgs[0]))
     )
   }

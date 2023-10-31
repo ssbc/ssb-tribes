@@ -12,8 +12,14 @@ module.exports = function TestBot (opts = {}) {
   // }
 
   let stack = Server // eslint-disable-line
-    .use(require('ssb-backlinks'))
-    .use(require('ssb-query'))
+    // .use(require('ssb-backlinks'))
+    // .use(require('ssb-query'))
+    .use(require('ssb-db2/core'))
+    .use(require('ssb-classic'))
+    .use(require('ssb-db2/compat'))
+    .use(require('ssb-db2/compat/feedstate'))
+    // .use(require("ssb-db2/compat/publish"))
+    .use(require('ssb-box2'))
     .use(require('../..')) // ssb-tribes - NOTE load it after ssb-backlinks
 
   if (opts.installReplicate === true) {
@@ -23,6 +29,11 @@ module.exports = function TestBot (opts = {}) {
   if (opts.name) opts.name = 'ssb-tribes/' + opts.name
 
   const ssb = stack({
+    box2: {
+      legacyMode: true,
+      ...opts.box2
+    },
+    // we don't want testbot to import db2 for us, we want more granularity and control of dep versions
     db1: true,
     ...opts
   })
@@ -39,12 +50,6 @@ module.exports = function TestBot (opts = {}) {
   if (opts.application === true) {
     ssb.tribes.application = Application(ssb)
   }
-
-  ssb.close.hook((close, args) => {
-    return setTimeout(() => {
-      close(...args)
-    }, 10 * 1000)
-  })
 
   return ssb
 }

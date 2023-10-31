@@ -20,7 +20,7 @@ const generators = [
         recps: [groupId]
       }
 
-      server.publish(content, (err, msg) => {
+      server.tribes.publish(content, (err, msg) => {
         if (err) throw err
 
         server.close()
@@ -50,7 +50,7 @@ const generators = [
 
     const content1 = { type: 'first' }
 
-    server.publish(content1, (_, firstMsg) => {
+    server.tribes.publish(content1, (_, firstMsg) => {
       const groupId = GroupId()
       const groupKey = GroupKey()
       const root = MsgId()
@@ -62,7 +62,7 @@ const generators = [
           recps: [groupId]
         }
 
-        server.publish(content2, (err, msg) => {
+        server.tribes.publish(content2, (err, msg) => {
           if (err) throw err
 
           server.close()
@@ -99,7 +99,7 @@ const generators = [
       body: { tick: Date.now() }
     }
 
-    server.publish(content1, (_, firstMsg) => {
+    server.tribes.publish(content1, (_, firstMsg) => {
       const groupId = GroupId()
       const groupKey = GroupKey()
       const root = MsgId()
@@ -113,7 +113,7 @@ const generators = [
           recps: [groupId, friendId.toSSB()]
         }
 
-        server.publish(content2, (err, msg) => {
+        server.tribes.publish(content2, (err, msg) => {
           if (err) throw err
 
           const key = directMessageKey.easy(server.keys)(friendId.toSSB())

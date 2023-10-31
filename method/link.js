@@ -1,12 +1,72 @@
 const Crut = require('ssb-crut')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
+const { allocAndEncode, seekKey2 } = require('bipf')
 const pull = require('pull-stream')
+const { where, and, type: dbType, author, equal, toPullStream } = require('ssb-db2/operators')
 const FeedGroupLink = require('../spec/link/feed-group')
 const GroupSubGroupLink = require('../spec/link/group-subgroup')
 
 module.exports = function Link (ssb) {
-  const feedGroupLink = new Crut(ssb, FeedGroupLink)
-  const groupSubGroupLink = new Crut(ssb, GroupSubGroupLink)
+  const feedGroupLink = new Crut(
+    ssb,
+    FeedGroupLink,
+    {
+      publish: (...args) => ssb.tribes.publish(...args),
+      feedId: ssb.id
+    }
+  )
+  const groupSubGroupLink = new Crut(
+    ssb,
+    GroupSubGroupLink,
+    {
+      publish: (...args) => ssb.tribes.publish(...args),
+      feedId: ssb.id
+    }
+  )
+
+  const B_CONTENT = allocAndEncode('content')
+  const B_PARENT = allocAndEncode('parent')
+  const B_CHILD = allocAndEncode('child')
+  const B_TANGLES = allocAndEncode('tangles')
+  const B_LINK = allocAndEncode('link')
+  const B_ROOT = allocAndEncode('root')
+  const B_PREVIOUS = allocAndEncode('previous')
+
+  function seekParent (buffer, start, pValue) {
+    if (pValue < 0) return -1
+    const pValueContent = seekKey2(buffer, pValue, B_CONTENT, 0)
+    if (pValueContent < 0) return -1
+    return seekKey2(buffer, pValueContent, B_PARENT, 0)
+  }
+
+  function seekChild (buffer, start, pValue) {
+    if (pValue < 0) return -1
+    const pValueContent = seekKey2(buffer, pValue, B_CONTENT, 0)
+    if (pValueContent < 0) return -1
+    return seekKey2(buffer, pValueContent, B_CHILD, 0)
+  }
+
+  function seekTanglesLinkRoot (buffer, start, pValue) {
+    if (pValue < 0) return -1
+    const pValueContent = seekKey2(buffer, pValue, B_CONTENT, 0)
+    if (pValueContent < 0) return -1
+    const pValueContentTangles = seekKey2(buffer, pValueContent, B_TANGLES, 0)
+    if (pValueContentTangles < 0) return -1
+    const pValueContentTanglesLink = seekKey2(buffer, pValueContentTangles, B_LINK, 0)
+    if (pValueContentTanglesLink < 0) return -1
+    return seekKey2(buffer, pValueContentTanglesLink, B_ROOT, 0)
+  }
+
+  function seekTanglesLinkPrevious (buffer, start, pValue) {
+    if (pValue < 0) return -1
+    const pValueContent = seekKey2(buffer, pValue, B_CONTENT, 0)
+    if (pValueContent < 0) return -1
+    const pValueContentTangles = seekKey2(buffer, pValueContent, B_TANGLES, 0)
+    if (pValueContentTangles < 0) return -1
+    const pValueContentTanglesLink = seekKey2(buffer, pValueContentTangles, B_LINK, 0)
+    if (pValueContentTanglesLink < 0) return -1
+    return seekKey2(buffer, pValueContentTanglesLink, B_PREVIOUS, 0)
+  }
 
   // NOTE this is not generalised to all links, it's about group links
   function findLinks (type, opts = {}, cb) {
@@ -15,25 +75,19 @@ module.exports = function Link (ssb) {
     if (child && !isGroup(child)) return cb(new Error(`findLinks expected a groupId for child, got ${child} instead.`))
     if (!parent && !child) return cb(new Error('findLinks expects a parent or child id to be given'))
 
-    const query = [{
-      $filter: {
-        value: {
-          content: {
-            type,
-            ...opts,
-            tangles: {
-              link: { root: null, previous: null }
-            }
-          }
-        }
-      }
-    }]
-
     pull(
-      // NOTE: using ssb-query instead of ssb-backlinks
-      // because the backlinks query will get EVERY message which contains the groupId in it, which will be a LOT for a group
-      // then filters that massive amount down to the ones which have the dest in the right place
-      ssb.query.read({ query }),
+      ssb.db.query(
+        where(
+          and(
+            dbType(type),
+            parent && equal(seekParent, parent, { indexType: 'linkParent', prefix: true }),
+            child && equal(seekChild, child, { indexType: 'linkChild', prefix: true }),
+            equal(seekTanglesLinkRoot, null, { indexType: 'tanglesLinkRoot', prefix: true }),
+            equal(seekTanglesLinkPrevious, null, { indexType: 'tanglesLinkPrevious', prefix: true })
+          )
+        ),
+        toPullStream()
+      ),
       pull.unique(link => {
         if (parent) return link.value.content.child
         else return link.value.content.parent
@@ -89,26 +143,19 @@ module.exports = function Link (ssb) {
     findGroupByFeedId (feedId, cb) {
       if (!isFeed(feedId)) return cb(new Error('requires a valid feedId'))
 
-      const query = [{
-        $filter: {
-          value: {
-            author: feedId, // link published by this person
-            content: {
-              type: 'link/feed-group',
-              parent: feedId, // and linking from that feedId
-              tangles: {
-                link: { root: null, previous: null }
-              }
-            }
-          }
-        }
-      }]
-
       pull(
-        // NOTE: using ssb-query instead of ssb-backlinks
-        // because the backlinks query will get EVERY message which contains the groupId in it, which will be a LOT for a group
-        // then filters that massive amount down to the ones which have the dest in the right place
-        ssb.query.read({ query }),
+        ssb.db.query(
+          where(
+            and(
+              author(feedId),
+              dbType('link/feed-group'),
+              equal(seekParent, feedId, { indexType: 'parent', prefix: true }),
+              equal(seekTanglesLinkRoot, null, { indexType: 'tanglesLinkRoot', prefix: true }),
+              equal(seekTanglesLinkPrevious, null, { indexType: 'tanglesLinkPrevious', prefix: true })
+            )
+          ),
+          toPullStream()
+        ),
         pull.filter(feedGroupLink.spec.isRoot),
         pull.filter(link => {
           return link.value.content.child === link.value.content.recps[0]

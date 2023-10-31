@@ -4,6 +4,7 @@ const { Server, replicate } = require('../helpers')
 const pull = require('pull-stream')
 const paraMap = require('pull-paramap')
 const { GetGroupTangle } = require('../../lib')
+const { where, author, descending, toPullStream, toCallback } = require('ssb-db2/operators')
 
 test('get-group-tangle unit test', t => {
   const name = `get-group-tangle-${Date.now()}`
@@ -12,18 +13,9 @@ test('get-group-tangle unit test', t => {
   //    - creating a group and publishing messages (ssb-tribes)
   server.tribes.create(null, (err, data) => {
     if (err) throw err
-    const keystore = {
-      group: {
-        get (groupId) {
-          return { ...data, root: data.groupInitMsg.key } // rootMsgId
-        }
-      }
-    }
-    // NOTE: Tribes create callback with different data than keystore.group.get :(
-    // Somebody should probably fix that
 
     // NOTE: Publishing has a queue which means if you publish many things in a row there is a delay before those values are in indexes to be queried.
-    const _getGroupTangle = GetGroupTangle(server, keystore)
+    const _getGroupTangle = GetGroupTangle(server)
     const getGroupTangle = (id, cb) => {
       setTimeout(() => _getGroupTangle(id, cb), 300)
     }
@@ -33,7 +25,11 @@ test('get-group-tangle unit test', t => {
       const rootKey = data.groupInitMsg.key
 
       pull(
-        server.createUserStream({ id: server.id, reverse: true }),
+        server.db.query(
+          where(author(server.id)),
+          descending(),
+          toPullStream()
+        ),
         pull.map(m => m.key),
         pull.take(1),
         pull.collect((err, keys) => {
@@ -53,14 +49,14 @@ test('get-group-tangle unit test', t => {
             recps: [data.groupId]
           })
 
-          server.publish(content(), (err, msg) => {
+          server.tribes.publish(content(), (err, msg) => {
             if (err) throw err
 
             getGroupTangle(data.groupId, (err, { root, previous }) => {
               if (err) throw err
               t.deepEqual({ root, previous }, { root: data.groupInitMsg.key, previous: [msg.key] }, 'adding message to root')
 
-              server.publish(content(), (err, msg) => {
+              server.tribes.publish(content(), (err, msg) => {
                 if (err) throw err
                 getGroupTangle(data.groupId, (err, { root, previous }) => {
                   if (err) throw err
@@ -77,34 +73,6 @@ test('get-group-tangle unit test', t => {
   })
 })
 
-test('get-group-tangle (cache)', t => {
-  const name = `get-group-tangle-cache-${Date.now()}`
-  const server = Server({ name })
-
-  let queryCalls = 0
-  server.backlinks.read.hook(function (read, args) {
-    queryCalls += 1
-
-    return read(...args)
-  })
-  server.tribes.create(null, (err, data) => {
-    if (err) throw err
-
-    // 1 for group tangle, 1 for members tangle
-    t.equal(queryCalls, 2, 'no cache for publishing of group/add-member, a backlink query was run')
-    const content = { type: 'memo', recps: [data.groupId] }
-
-    server.publish(content, (err, msg) => {
-      if (err) throw err
-
-      t.equal(queryCalls, 2, 'cache used for publishing next message')
-
-      server.close()
-      t.end()
-    })
-  })
-})
-
 const n = 100
 test(`get-group-tangle-${n}-publishes`, t => {
   const publishArray = new Array(n).fill().map((item, i) => i)
@@ -117,7 +85,7 @@ test(`get-group-tangle-${n}-publishes`, t => {
     pull(
       pull.values(publishArray),
       paraMap(
-        (value, cb) => server.publish({ type: 'memo', value, recps: [groupId] }, cb),
+        (value, cb) => server.tribes.publish({ type: 'memo', value, recps: [groupId] }, cb),
         4
       ),
       paraMap(
@@ -129,7 +97,6 @@ test(`get-group-tangle-${n}-publishes`, t => {
           count += (m.value.content.tangles.group.previous.length)
         },
         () => {
-          // t.equal(count, n, 'We expect there to be no branches in our groupTangle')
           t.true(count < n * 8, 'We expect bounded branching with fast publishing')
 
           server.close()
@@ -146,39 +113,43 @@ test('get-group-tangle', t => {
       plan: 5,
       test: (t) => {
         const DESCRIPTION = 'auto adds group tangle'
-        // this is an integration test, as we've hooked get-group-tangle into ssb.publish
+        // this is an integration test, as we've hooked get-group-tangle into ssb.tribes.publish
         const ssb = Server()
 
         ssb.tribes.create(null, (err, data) => {
           t.error(err, 'create group')
 
-          ssb.getLatest(ssb.id, (err, selfAdd) => {
-            t.error(err, 'get self invite')
+          ssb.db.query(
+            where(author(ssb.id)),
+            descending(),
+            toCallback((err, [selfAdd]) => {
+              t.error(err, 'got self add')
 
-            const groupRoot = data.groupInitMsg.key
-            const groupId = data.groupId
+              const groupRoot = data.groupInitMsg.key
+              const groupId = data.groupId
 
-            const content = {
-              type: 'yep',
-              recps: [groupId]
-            }
+              const content = {
+                type: 'yep',
+                recps: [groupId]
+              }
 
-            ssb.publish(content, (err, msg) => {
-              t.error(err, 'publish a message')
+              ssb.tribes.publish(content, (err, msg) => {
+                t.error(err, 'publish a message')
 
-              ssb.get({ id: msg.key, private: true }, (err, A) => {
-                t.error(err, 'get that message back')
+                ssb.get({ id: msg.key, private: true }, (err, A) => {
+                  t.error(err, 'get that message back')
 
-                t.deepEqual(
-                  A.content.tangles.group, // actual
-                  { root: groupRoot, previous: [selfAdd.key] }, // expected
-                  DESCRIPTION + ' (auto added tangles.group)'
-                )
+                  t.deepEqual(
+                    A.content.tangles.group, // actual
+                    { root: groupRoot, previous: [selfAdd.key] }, // expected
+                    DESCRIPTION + ' (auto added tangles.group)'
+                  )
 
-                ssb.close()
+                  ssb.close()
+                })
               })
             })
-          })
+          )
         })
       }
     }
@@ -206,20 +177,14 @@ test('get-group-tangle with branch', t => {
   // Alice creates a group
   alice.tribes.create(null, (err, data) => {
     if (err) throw err
+
     // Prepare to get Alice's group tangle from both servers
-    const keystore = {
-      group: {
-        get (groupId) {
-          return { ...data, root: data.groupInitMsg.key } // rootMsgId
-        }
-      }
-    }
     const DELAY = 200
-    const _getAliceGroupTangle = GetGroupTangle(alice, keystore)
+    const _getAliceGroupTangle = GetGroupTangle(alice)
     const getAliceGroupTangle = (id, cb) => {
       setTimeout(() => _getAliceGroupTangle(id, cb), DELAY)
     }
-    const _getBobGroupTangle = GetGroupTangle(bob, keystore)
+    const _getBobGroupTangle = GetGroupTangle(bob)
     const getBobGroupTangle = (id, cb) => {
       setTimeout(() => _getBobGroupTangle(id, cb), DELAY)
     }
@@ -251,13 +216,13 @@ test('get-group-tangle with branch', t => {
               recps: [data.groupId]
             })
 
-            alice.publish(content(), (err, msg) => {
+            alice.tribes.publish(content(), (err, msg) => {
               t.error(err, 'alice publishes a new message')
 
               // NOTE With the content.recps we are adding we are asking Bob to know about a group before he's
               // found out about it for himself
               whenBobHasGroup(data.groupId, () => {
-                bob.publish(content(), (err, msg) => {
+                bob.tribes.publish(content(), (err, msg) => {
                   if (err) throw err
                   // Then Bob shares his message with Alice
                   replicate({ from: bob, to: alice, name }, (err) => {
@@ -301,10 +266,8 @@ test('members tangle', async t => {
   await p(setTimeout)(300)
   const bobInvite = await p(alice.tribes.invite)(groupId, [bob.id], {})
 
-  const keystore = { group: { get: () => ({ root }) } }
-
-  const _getGroupTangle = p(GetGroupTangle(alice, keystore, 'group'))
-  const _getMembersTangle = p(GetGroupTangle(alice, keystore, 'members'))
+  const _getGroupTangle = p(GetGroupTangle(alice, null, 'group'))
+  const _getMembersTangle = p(GetGroupTangle(alice, null, 'members'))
   const getGroupTangle = p((id, cb) => {
     setTimeout(() => _getGroupTangle(id, cb), 300)
   })

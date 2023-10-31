@@ -1,9 +1,8 @@
-const { box } = require('envelope-js')
 const { keySchemes } = require('private-group-spec')
 const { SecretKey } = require('ssb-private-group-keys')
-const bfe = require('ssb-bfe')
 const Crut = require('ssb-crut')
 const pull = require('pull-stream')
+const { where, type: dbType, toPullStream } = require('ssb-db2/operators')
 
 const { groupId: buildGroupId, poBoxKeys } = require('../lib')
 const initSpec = require('../spec/group/init')
@@ -11,8 +10,15 @@ const addMemberSpec = require('../spec/group/add-member')
 const excludeMemberSpec = require('../spec/group/exclude-member')
 const groupPoBoxSpec = require('../spec/group/po-box')
 
-module.exports = function GroupMethods (ssb, keystore, state) {
-  const groupPoBoxCrut = new Crut(ssb, groupPoBoxSpec)
+module.exports = function GroupMethods (ssb) {
+  const groupPoBoxCrut = new Crut(
+    ssb,
+    groupPoBoxSpec,
+    {
+      publish: (...args) => ssb.tribes.publish(...args),
+      feedId: ssb.id
+    }
+  )
 
   return {
     init (cb) {
@@ -26,39 +32,39 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       if (!initSpec.isValid(content)) return cb(new Error(initSpec.isValid.errorsString))
 
       /* enveloping */
-      // we have to do it manually this one time, because the auto-boxing checks for a known groupId
+      // we have to do it differently this one time, because the auto-boxing checks for a known groupId
       // but the groupId is derived from the messageId of this message (which does not exist yet
-      const plain = Buffer.from(JSON.stringify(content), 'utf8')
 
-      const msgKey = new SecretKey().toBuffer()
-      const recipientKeys = [
+      const recps = [
         { key: groupKey.toBuffer(), scheme: keySchemes.private_group },
-        keystore.self.get() // sneak this in so can decrypt it ourselves without rebuild!
+        ssb.id // sneak this in so can decrypt it ourselves without rebuild!
       ]
 
       // TODO
-      // consider making sure creator can always open the group (even if lose keystore)
+      // consider making sure creator can always open the group (even if lose keyring)
       // would also require adding groupKey to this message
 
-      ssb.getFeedState(ssb.id, (err, previousFeedState) => {
+      ssb.db.create({
+        content,
+        recps,
+        encryptionFormat: 'box2'
+      }, (err, initMsg) => {
         if (err) return cb(err)
 
-        const previousMessageId = bfe.encode(previousFeedState.id)
-
-        const envelope = box(plain, state.feedId, previousMessageId, msgKey, recipientKeys)
-        const ciphertext = envelope.toString('base64') + '.box2'
-
-        ssb.publish(ciphertext, (err, groupInitMsg) => {
+        ssb.get({ id: initMsg.key, meta: true }, (err, groupInitMsg) => {
           if (err) return cb(err)
 
           const data = {
-            groupId: buildGroupId({ groupInitMsg, msgKey }),
+            groupId: buildGroupId({
+              groupInitMsg,
+              groupKey: groupKey.toBuffer()
+            }),
             groupKey: groupKey.toBuffer(),
             root: groupInitMsg.key,
             groupInitMsg
           }
 
-          keystore.group.add(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
+          ssb.box2.addGroupInfo(data.groupId, { key: data.groupKey, root: data.root }, (err) => {
             if (err) return cb(err)
             cb(null, data)
           })
@@ -67,62 +73,59 @@ module.exports = function GroupMethods (ssb, keystore, state) {
     },
 
     addMember (groupId, authorIds, opts = {}, cb) {
-      const { writeKey, root } = keystore.group.get(groupId)
+      ssb.box2.getGroupInfo(groupId, (err, groupInfo) => {
+        if (err) return cb(err)
 
-      const content = {
-        type: 'group/add-member',
-        version: 'v1',
-        groupKey: writeKey.key.toString('base64'),
-        root,
-        tangles: {
-          members: {
-            root,
-            previous: [root] // TODO calculate previous for members tangle
+        const { writeKey, root } = groupInfo
+
+        const content = {
+          type: 'group/add-member',
+          version: 'v1',
+          groupKey: writeKey.key.toString('base64'),
+          root,
+          tangles: {
+            group: { root, previous: [root] },
+            members: { root, previous: [root] }
+            // NOTE: these are dummy entries which are over-written in the publish function
           },
+          recps: [groupId, ...authorIds]
+        }
 
-          group: { root, previous: [root] }
-          // NOTE: this is a dummy entry which is over-written in publish hook
-        },
-        recps: [groupId, ...authorIds]
-      }
+        if (opts.text) content.text = opts.text
 
-      if (opts.text) content.text = opts.text
+        if (!addMemberSpec.isValid(content)) return cb(new Error(addMemberSpec.isValid.errorsString))
 
-      if (!addMemberSpec.isValid(content)) return cb(new Error(addMemberSpec.isValid.errorsString))
-
-      ssb.publish(content, cb)
+        ssb.tribes.publish(content, cb)
+      })
     },
     excludeMembers (groupId, authorIds, cb) {
-      const { root } = keystore.group.get(groupId)
+      ssb.box2.getGroupInfo(groupId, (err, groupInfo) => {
+        if (err) return cb(Error("Couldn't get group info when excluding", { cause: err }))
 
-      const content = {
-        type: 'group/exclude-member',
-        excludes: authorIds,
-        tangles: {
-          members: { root, previous: [root] },
-          group: { root, previous: [root] }
-          // NOTE: these are dummy entries which are over-written in the publish hook
-        },
-        recps: [groupId]
-      }
+        const { root } = groupInfo
 
-      if (!excludeMemberSpec.isValid(content)) return cb(new Error(excludeMemberSpec.isValid.errorsString))
+        const content = {
+          type: 'group/exclude-member',
+          excludes: authorIds,
+          tangles: {
+            group: { root, previous: [root] },
+            members: { root, previous: [root] }
+            // NOTE: these are dummy entries which are over-written in the publish function
+          },
+          recps: [groupId]
+        }
 
-      ssb.publish(content, cb)
+        if (!excludeMemberSpec.isValid(content)) return cb(new Error(excludeMemberSpec.isValid.errorsString))
+
+        ssb.tribes.publish(content, cb)
+      })
     },
     listAuthors (groupId, cb) {
-      const query = [{
-        $filter: {
-          value: {
-            content: {
-              type: 'group/add-member'
-            }
-          }
-        }
-      }]
-
       pull(
-        ssb.query.read({ query }),
+        ssb.db.query(
+          where(dbType('group/add-member')),
+          toPullStream()
+        ),
         pull.filter(addMemberSpec.isValid),
         pull.filter(msg =>
           groupId === msg.value.content.recps[0]
@@ -133,18 +136,11 @@ module.exports = function GroupMethods (ssb, keystore, state) {
         pull.collect((err, addedMembers) => {
           if (err) return cb(err)
 
-          const excludedQuery = [{
-            $filter: {
-              value: {
-                content: {
-                  type: 'group/exclude-member'
-                }
-              }
-            }
-          }]
-
           pull(
-            ssb.query.read({ query: excludedQuery }),
+            ssb.db.query(
+              where(dbType('group/exclude-member')),
+              toPullStream()
+            ),
             pull.filter(excludeMemberSpec.isValid),
             pull.filter(msg =>
               groupId === msg.value.content.recps[0]
@@ -166,13 +162,13 @@ module.exports = function GroupMethods (ssb, keystore, state) {
       )
     },
     addPOBox (groupId, cb) {
-      const info = keystore.group.get(groupId)
+      const info = ssb.box2.getGroupInfo(groupId)
       if (!info) return cb(new Error('unknown groupId: ' + groupId))
 
       const { id: poBoxId, secret } = poBoxKeys.generate()
 
-      keystore.poBox.add(poBoxId, { key: secret }, (err) => {
-        if (err) return cb(err)
+      ssb.box2.addPoBox(poBoxId, { key: secret }, (err) => {
+        if (err) return cb(Error("Couldn't add pbox to box2 when adding pobox", { cause: err }))
 
         const props = {
           keys: {

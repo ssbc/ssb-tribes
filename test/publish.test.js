@@ -16,12 +16,8 @@ test('publish (to groupId)', t => {
       text: 'summer has arrived in wellington!',
       recps: [groupId]
     }
-    /* NOTE with this we confirm that content.recps isn't mutated while sneakin our own_key in! */
-    process.env.NODE_ENV = 'production'
-    console.log('NODE_ENV', process.env.NODE_ENV)
-    Object.freeze(content.recps)
 
-    server.publish(content, (err, msg) => {
+    server.tribes.publish(content, (err, msg) => {
       t.error(err, 'msg published to group')
       t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
       const cipherTextSize = Buffer.from(msg.value.content.replace('.box2', ''), 'base64').length
@@ -31,14 +27,10 @@ test('publish (to groupId)', t => {
         t.deepEqual(msg.value.content, content, 'can open envelope!')
 
         const plainTextSize = Buffer.from(JSON.stringify(msg.value.content)).length
-        const expectedSize = 32 + (msg.value.content.recps.length + 1) * 32 + (plainTextSize + 16)
+        const expectedSize = 32 + msg.value.content.recps.length * 32 + (plainTextSize + 16)
         // header + (recp key slots) + (content + HMAC)
-        // NOTE - we sneak ourselves in as a key_slot when we can
-        t.equal(cipherTextSize, expectedSize, 'cipherTextSize overhead correct') // 112 bytes
+        t.equal(cipherTextSize, expectedSize, 'cipherTextSize overhead correct')
 
-        /* return ENV to testing */
-        process.env.NODE_ENV = 'test'
-        console.log('NODE_ENV', process.env.NODE_ENV)
         server.close(t.end)
       })
     })
@@ -55,7 +47,7 @@ test('publish (to groupId we dont have key for)', t => {
     recps: [groupId]
   }
 
-  server.publish(content, (err) => {
+  server.tribes.publish(content, (err) => {
     t.match(err.message, /unknown groupId/, 'returns error')
     server.close(t.end)
   })
@@ -76,7 +68,7 @@ test('publish (group + feedId)', t => {
       recps: [groupId, feedId]
     }
 
-    server.publish(content, (err, msg) => {
+    server.tribes.publish(content, (err, msg) => {
       t.error(err)
 
       t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
@@ -106,8 +98,8 @@ test('publish (DMs: myFeedId + feedId)', async t => {
   }
 
   try {
-    const msg = await p(alice.publish)(content)
-    await p(alice.publish)({ type: 'doop' })
+    const msg = await p(alice.tribes.publish)(content)
+    await p(alice.tribes.publish)({ type: 'doop' })
     t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
 
     const aliceGet = await p(alice.get)({ id: msg.key, private: true, meta: true })
@@ -134,7 +126,7 @@ test('publish (bulk)', t => {
       .map(() => ({ type: 'test', recps: [groupId] }))
 
     bulk.forEach((content, i) => {
-      server.publish(content, (err, msg) => {
+      server.tribes.publish(content, (err, msg) => {
         if (err) t.error(err, `${i + 1} published`)
         if (typeof msg.value.content !== 'string') t.fail(`${i + 1} encrypted`)
 
@@ -152,7 +144,7 @@ test('publish (bulk)', t => {
     /* works fine */
     // pull(
     //   pull.values(bulk),
-    //   pull.asyncMap(server.publish),
+    //   pull.asyncMap(server.tribes.publish),
     //   pull.drain(
     //     () => process.stdout.write('✓'),
     //     (err) => {
