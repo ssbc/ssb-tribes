@@ -29,11 +29,16 @@ test('can continue from old keyring from ssb-tribes 3.1.3', async t => {
 
   await p(setTimeout)(500)
 
-  // TODO: try creating bot without box2.path, but it should crash since it sees the old keystore
-
-  const newAlice = NewBot({
+  const newOpts = {
     name: 'alice',
     startUnclean: true,
+  }
+  t.throws(() => {
+    NewBot(newOpts)
+  }, /found old keystore/, "Error when there's an old keystore but we don't use it")
+
+  const newAlice = NewBot({
+    ...newOpts,
     box2: {
       path: 'tribes/keystore',
     }
