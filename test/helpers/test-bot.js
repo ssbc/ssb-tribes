@@ -27,10 +27,10 @@ module.exports = function TestBot (opts = {}) {
     ...opts,
     box2: {
       legacyMode: true,
-      ...opts.box2,
+      ...opts.box2
     },
     // we don't want testbot to import db2 for us, we want more granularity and control of dep versions
-    db1: true,
+    db1: true
   })
 
   if (opts.debug) {
