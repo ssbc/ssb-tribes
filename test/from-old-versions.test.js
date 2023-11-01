@@ -19,12 +19,17 @@ test('can continue from old keyring from ssb-tribes 3.1.3', async t => {
 
   const oldGroup = await p(oldAlice.tribes.create)({})
 
-  t.equal(typeof oldGroup.groupId, 'string', "got a group id")
+  t.equal(typeof oldGroup.groupId, 'string', "got a group id when creating using old bot")
 
   const oldList = await p(oldAlice.tribes.list)()
-  t.deepEqual(oldList, [oldGroup.groupId], 'group got listed')
+  t.deepEqual(oldList, [oldGroup.groupId], 'group got listed by old bot')
 
-  // TODO: get group as well
+  const oldGet = await p(oldAlice.tribes.get)(oldGroup.groupId)
+
+  t.equal(oldGet.groupId, oldGroup.groupId, "got correct groupId")
+  t.equal(oldGet.key, oldGroup.groupKey, "got correct key")
+  t.equal(typeof oldGet.scheme, "string", "got scheme")
+  t.equal(typeof oldGet.root, "string", "got root")
 
   await p(oldAlice.close)(true)
 
@@ -49,7 +54,14 @@ test('can continue from old keyring from ssb-tribes 3.1.3', async t => {
   const newList = await p(newAlice.tribes.list)()
   t.deepEqual(newList, oldList, 'new bot has same group list as old')
 
-  // TODO: make sure old get matches new get
+  const newGet = await p(newAlice.tribes.get)(oldGroup.groupId)
+
+  t.deepEqual(newGet, {
+    groupId: oldGet.groupId,
+    writeKey: { key: oldGet.key, scheme: oldGet.scheme },
+    readKeys: [{ key: oldGet.key, scheme: oldGet.scheme }],
+    root: oldGet.root,
+  }, "get with new bot matches get with old bot")
 
   await p(newAlice.close)()
 })
