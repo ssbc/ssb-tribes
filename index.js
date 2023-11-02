@@ -371,24 +371,20 @@ function init (ssb, config) {
         })
       },
       get: scuttle.group.getPOBox
-    }
+    },
 
     // for internal use - ssb-ahau uses this for backups
-    // TODO: does ahau use this for backups though?
-    // i couldn't find a self.get function in box2 so we might have to add that if this is needed
-    // ownKeys: {
-    //  list (cb) {
-    //    onKeystoreReady(() => {
-    //      cb(null, [keystore.self.get()])
-    //    })
-    //  },
-    //  register (key, cb) {
-    //    onKeystoreReady(() => {
-    //      //ssb.box2.setOwnDMKey(key)
-    //      keystore.self.set(key, cb)
-    //    })
-    //  }
-    // }
+    ownKeys: {
+      list (cb) {
+        ssb.box2.getOwnDMKey((err, dmKeyInfo) => {
+          if (err) return cb(Error("Couldn't get own dm key on ownKeys.list", { cause: err }))
+          return cb(null, [dmKeyInfo])
+        })
+      },
+      register (key) {
+        ssb.box2.setOwnDMKey(key)
+      }
+    }
   }
 }
 

@@ -212,6 +212,9 @@ These endpoints give you access to additional features, such as:
     - `ssb.tribes.poBox.create(opts, cb)`
     - `ssb.tribes.addPOBox(groupId, cb)`
     - `ssb.tribes.poBox.get(groupId, cb)`
+- **self-DM keys**
+    - `ssb.tribes.ownKeys.list(cb)`: returns a list of self-DM keyinfo. Always a length of 1 (only a list for historical reasons). The keyinfo has the format `{ key: Buffer, scheme: String }`.
+    - `ssb.tribes.ownKeys.register(key)`: sets the self-DM key (buffer).
 - **managing people applying to join to a group**
     - deprecated, please use [ssb-tribes-registration](https://gitlab.com/ahau/lib/ssb-plugins/ssb-tribes-registration)
     - for the old docs, [see here](./README.deprecated.md)
