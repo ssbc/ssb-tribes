@@ -32,11 +32,9 @@ module.exports = function GroupMethods (ssb) {
       if (!initSpec.isValid(content)) return cb(new Error(initSpec.isValid.errorsString))
 
       /* enveloping */
-      // we have to do it manually this one time, because the auto-boxing checks for a known groupId
+      // we have to do it differently this one time, because the auto-boxing checks for a known groupId
       // but the groupId is derived from the messageId of this message (which does not exist yet
-      // const plain = Buffer.from(JSON.stringify(content), 'utf8')
 
-      // const msgKey = new SecretKey().toBuffer()
       const recps = [
         { key: groupKey.toBuffer(), scheme: keySchemes.private_group },
         ssb.id // sneak this in so can decrypt it ourselves without rebuild!
@@ -86,13 +84,9 @@ module.exports = function GroupMethods (ssb) {
           groupKey: writeKey.key.toString('base64'),
           root,
           tangles: {
-            members: {
-              root,
-              previous: [root] // TODO calculate previous for members tangle
-            },
-
-            group: { root, previous: [root] }
-            // NOTE: this is a dummy entry which is over-written in publish hook
+            group: { root, previous: [root] },
+            members: { root, previous: [root] }
+            // NOTE: these are dummy entries which are over-written in the publish function
           },
           recps: [groupId, ...authorIds]
         }
@@ -114,9 +108,9 @@ module.exports = function GroupMethods (ssb) {
           type: 'group/exclude-member',
           excludes: authorIds,
           tangles: {
-            members: { root, previous: [root] },
-            group: { root, previous: [root] }
-            // NOTE: these are dummy entries which are over-written in the publish hook
+            group: { root, previous: [root] },
+            members: { root, previous: [root] }
+            // NOTE: these are dummy entries which are over-written in the publish function
           },
           recps: [groupId]
         }

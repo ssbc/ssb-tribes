@@ -80,8 +80,8 @@ module.exports = function Link (ssb) {
         where(
           and(
             dbType(type),
-            parent && equal(seekParent, parent, { indexType: 'parent', prefix: true }),
-            child && equal(seekChild, child, { indexType: 'child', prefix: true }),
+            parent && equal(seekParent, parent, { indexType: 'linkParent', prefix: true }),
+            child && equal(seekChild, child, { indexType: 'linkChild', prefix: true }),
             equal(seekTanglesLinkRoot, null, { indexType: 'tanglesLinkRoot', prefix: true }),
             equal(seekTanglesLinkPrevious, null, { indexType: 'tanglesLinkPrevious', prefix: true })
           )

@@ -23,12 +23,7 @@ module.exports = {
           dbLive({ old: true }),
           toPullStream()
         ),
-        pull(
-          ssb.db.reindexed(),
-          pull.filter((msg) => {
-            return msg.value.content.type === 'group/add-member'
-          })
-        )
+        ssb.db.reindexed()
       ]),
       // NOTE this will run through all messages on each startup, which will help guarentee
       // all messages have been emitted AND processed
@@ -53,12 +48,7 @@ module.exports = {
           dbLive({ old: true }),
           toPullStream()
         ),
-        pull(
-          ssb.db.reindexed(),
-          pull.filter((msg) => {
-            return msg.value.content.type === 'group/exclude-member'
-          })
-        )
+        ssb.db.reindexed()
       ]),
       pull.filter(m => m.sync !== true),
       pull.filter(isExcludeMember),
@@ -82,9 +72,7 @@ module.exports = {
         ),
         pull(
           ssb.db.reindexed(),
-          pull.filter((msg) => {
-            return msg.value.content.type === 'group/po-box'
-          })
+          pull.filter(msg => msg.value.content.type === 'group/po-box')
         )
       ]),
       // NOTE this will run through all messages on each startup, which will help guarentee
