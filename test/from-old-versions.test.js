@@ -49,7 +49,7 @@ test('can continue from old keyring from ssb-tribes 3.1.3', async t => {
     })
   })
 
-  await p(setTimeout)(500)
+  await p(setTimeout)(1000)
 
   const newOpts = {
     name: 'alice',
