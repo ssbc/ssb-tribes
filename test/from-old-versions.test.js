@@ -1,8 +1,10 @@
 const test = require('tape')
 const { promisify: p } = require('util')
+const childProcess = require('node:child_process')
 
 const OldTestBot = require('scuttle-testbot-1-11-0')
 const NewBot = require('./helpers/test-bot')
+const { join } = require('path')
 
 const OldBot = (opts) => {
   let stack = OldTestBot // eslint-disable-line
@@ -34,14 +36,23 @@ test('can continue from old keyring from ssb-tribes 3.1.3', async t => {
 
   await p(setTimeout)(500)
 
+  // we have to do it this way because we have no normal way of killing a bot that's crashed and therefore releasing its DB locks.
+  const throwChild = childProcess.fork(join(__dirname, 'helpers/throw-bot.js'))
+
+  await new Promise((res) => {
+    throwChild.on("message", (msg) => {
+      t.match(msg, /found an old keystore/, "error when there's an old keystore but we don't use it")
+
+      throwChild.kill()
+
+      res()
+    })
+  })
+
   const newOpts = {
     name: 'alice',
     startUnclean: true
   }
-
-  // t.throws(() => {
-  //  NewBot(newOpts)
-  // }, /found an old keystore/, "Error when there's an old keystore but we don't use it")
 
   const newAlice = NewBot({
     ...newOpts,
