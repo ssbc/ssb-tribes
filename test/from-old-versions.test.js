@@ -39,15 +39,17 @@ test('can continue from old keyring from ssb-tribes 3.1.3', async t => {
   // we have to do it this way because we have no normal way of killing a bot that's crashed and therefore releasing its DB locks.
   const throwChild = childProcess.fork(join(__dirname, 'helpers/throw-bot.js'))
 
-  await new Promise((res) => {
-    throwChild.on("message", (msg) => {
+  await new Promise((resolve) => {
+    throwChild.on('message', (msg) => {
       t.match(msg, /found an old keystore/, "error when there's an old keystore but we don't use it")
 
       throwChild.kill()
 
-      res()
+      resolve()
     })
   })
+
+  await p(setTimeout)(500)
 
   const newOpts = {
     name: 'alice',
