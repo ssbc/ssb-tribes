@@ -202,14 +202,19 @@ function init (ssb, config) {
   const getMembersTangle = GetGroupTangle(ssb, null, 'members')
 
   const tribePublish = (content, cb) => {
+    // e.g. ssb-recps-guard hides options in .options, we should pass those along
+    const passAlongOpts = content.options ? {options: content.options} : {}
+
     if (!content.recps) {
       return ssb.db.create({
+        ...passAlongOpts,
         content
       }, cb)
     }
 
     if (!isGroup(content.recps[0])) {
       return ssb.db.create({
+        ...passAlongOpts,
         content,
         encryptionFormat: 'box2'
       }, cb)
@@ -229,6 +234,7 @@ function init (ssb, config) {
         // we only want to have to calculate the members tangle if it's gonna be used
         if (!isMemberType(content.type)) {
           return ssb.db.create({
+            ...passAlongOpts,
             content,
             encryptionFormat: 'box2'
           }, cb)
@@ -241,6 +247,7 @@ function init (ssb, config) {
           tanglePrune(content, 'members')
 
           ssb.db.create({
+            ...passAlongOpts,
             content,
             encryptionFormat: 'box2'
           }, cb)
