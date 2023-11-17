@@ -1,3 +1,4 @@
+const fs = require('fs')
 const set = require('lodash.set')
 const { isFeed, isCloakedMsg: isGroup } = require('ssb-ref')
 const bfe = require('ssb-bfe')
@@ -8,6 +9,7 @@ const listen = require('./listen')
 const { GetGroupTangle, tanglePrune, groupId: buildGroupId, poBoxKeys } = require('./lib')
 
 const Method = require('./method')
+const { join } = require('path')
 
 module.exports = {
   name: 'tribes',
@@ -49,6 +51,11 @@ module.exports = {
 
 function init (ssb, config) {
   if (!(config.box2 && config.box2.legacyMode)) throw Error('ssb-tribes error: config.box2.legacyMode needs to be `true`')
+
+  // where old versions of ssb-tribes used to store the keyring. now we use ssb-box2 (which uses keyring internally) which defaults to a different location. if we detect that there's something at the old path we need to prompt the user to config ssb-box2 differently
+  const oldKeyringPathExists = fs.existsSync(join(config.path, 'tribes/keystore'))
+  const box2PathPointsToOldLocation = (config.box2 && config.box2.path) === 'tribes/keystore'
+  if (oldKeyringPathExists && !box2PathPointsToOldLocation) throw Error('ssb-tribes found an old keystore at SSB_PATH/tribes/keystore but ssb-box2 is not configured to use it. Please set config.box2.path = "tribes/keystore"')
 
   const state = {
     keys: ssb.keys,

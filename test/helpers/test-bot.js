@@ -12,30 +12,26 @@ module.exports = function TestBot (opts = {}) {
   // }
 
   let stack = Server // eslint-disable-line
-    // .use(require('ssb-backlinks'))
-    // .use(require('ssb-query'))
     .use(require('ssb-db2/core'))
     .use(require('ssb-classic'))
     .use(require('ssb-db2/compat'))
     .use(require('ssb-db2/compat/feedstate'))
-    .use(require("ssb-db2/compat/post"))
+    .use(require('ssb-db2/compat/post'))
     .use(require('ssb-box2'))
-    .use(require('../..')) // ssb-tribes - NOTE load it after ssb-backlinks
+    .use(require('../..'))
 
   if (opts.installReplicate === true) {
     stack = stack.use(require('ssb-replicate'))
   }
 
-  if (opts.name) opts.name = 'ssb-tribes/' + opts.name
-
   const ssb = stack({
+    ...opts,
     box2: {
       legacyMode: true,
       ...opts.box2
     },
     // we don't want testbot to import db1 or db2 for us, we want to control what db2 plugins get imported
-    noDefaultUse: true,
-    ...opts
+    noDefaultUse: true
   })
 
   if (opts.debug) {
