@@ -99,7 +99,6 @@ test('publish (DMs: myFeedId + feedId)', async t => {
 
   try {
     const msg = await p(alice.tribes.publish)(content)
-    await p(alice.tribes.publish)({ type: 'doop' })
     t.true(msg.value.content.endsWith('.box2'), 'publishes envelope cipherstring')
 
     const aliceGet = await p(alice.get)({ id: msg.key, private: true, meta: true })

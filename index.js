@@ -202,11 +202,7 @@ function init (ssb, config) {
   const getMembersTangle = GetGroupTangle(ssb, null, 'members')
 
   const tribePublish = (content, cb) => {
-    if (!content.recps) {
-      return ssb.db.create({
-        content
-      }, cb)
-    }
+    if (!content.recps) return cb(Error('tribes.publish requires content.recps'))
 
     if (!isGroup(content.recps[0])) {
       return ssb.db.create({
