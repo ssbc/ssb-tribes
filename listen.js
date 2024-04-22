@@ -1,7 +1,7 @@
 // const flumeView = require('flumeview-reduce')
 const pull = require('pull-stream')
 const pullMany = require('pull-many')
-const CRUT = require('ssb-crut')
+const Crut = require('ssb-crut')
 const { where, and, type, isDecrypted, live: dbLive, toPullStream } = require('ssb-db2/operators')
 
 const { isValid: isAddMember } = require('./spec/group/add-member')
@@ -56,7 +56,7 @@ module.exports = {
     )
   },
   poBox (ssb, emit) {
-    const { isUpdate: isPOBox } = new CRUT(ssb, poBoxSpec).spec
+    const { isUpdate: isPOBox } = new Crut(ssb, poBoxSpec).spec
 
     pull(
       pullMany([

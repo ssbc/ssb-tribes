@@ -201,7 +201,7 @@ function init (ssb, config) {
   const getGroupTangle = GetGroupTangle(ssb, null, 'group')
   const getMembersTangle = GetGroupTangle(ssb, null, 'members')
 
-  const tribePublish = (content, cb) => {
+  function tribesPublish (content, cb) {
     if (!content.recps) return cb(Error('tribes.publish requires content.recps'))
 
     if (!isGroup(content.recps[0])) {
@@ -306,7 +306,7 @@ function init (ssb, config) {
   }
 
   return {
-    publish: tribePublish,
+    publish: tribesPublish,
     register (groupId, info, cb) {
       ssb.box2.addGroupInfo(groupId, info, cb)
     },

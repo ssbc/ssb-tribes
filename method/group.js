@@ -15,7 +15,7 @@ module.exports = function GroupMethods (ssb) {
     ssb,
     groupPoBoxSpec,
     {
-      publish: (...args) => ssb.tribes.publish(...args),
+      create: ({ content }, cb) => ssb.tribes.publish(content, cb),
       feedId: ssb.id
     }
   )
@@ -188,8 +188,7 @@ module.exports = function GroupMethods (ssb) {
       groupPoBoxCrut.readGroup(groupId, (err, data) => {
         if (err) return cb(err)
 
-        const keys = data.states[0].keys
-        if (keys) cb(null, keys)
+        if (data.keys) cb(null, data.keys)
         else cb(new Error('no poBox found for this group'))
       })
     }

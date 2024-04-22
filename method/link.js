@@ -11,7 +11,7 @@ module.exports = function Link (ssb) {
     ssb,
     FeedGroupLink,
     {
-      publish: (...args) => ssb.tribes.publish(...args),
+      create: ({ content }, cb) => ssb.tribes.publish(content, cb),
       feedId: ssb.id
     }
   )
@@ -19,7 +19,7 @@ module.exports = function Link (ssb) {
     ssb,
     GroupSubGroupLink,
     {
-      publish: (...args) => ssb.tribes.publish(...args),
+      create: ({ content }, cb) => ssb.tribes.publish(content, cb),
       feedId: ssb.id
     }
   )
